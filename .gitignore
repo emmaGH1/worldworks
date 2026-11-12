@@ -1,0 +1,14 @@
+# internal deliberation and competitor research stay private
+research/
+HACKATHON.md
+# build output and secrets
+target/
+node_modules/
+.env
+.env.*
+*.pem
+*.key
+.near-credentials/
+.vercel/
+# third-party reference images: local only, not ours to publish
+docs/design/refs/

@@ -1,0 +1,58 @@
+{
+  "portal_cap_wei": "1000000000000000",
+  "nodes": {
+    "slot": {
+      "type": "CoinSlot",
+      "price": "1000000000000000000000000",
+      "output": "fees"
+    },
+    "fees": {
+      "type": "Splitter",
+      "outputs": [
+        {
+          "bps": 7000,
+          "target": "reserve_fee"
+        },
+        {
+          "bps": 3000,
+          "target": "creator"
+        }
+      ]
+    },
+    "reserve_fee": {
+      "type": "Splitter",
+      "outputs": [
+        {
+          "bps": 9000,
+          "target": "reserve"
+        },
+        {
+          "bps": 1000,
+          "target": "delivery"
+        }
+      ]
+    },
+    "reserve": {
+      "type": "Vault",
+      "name": "reserve"
+    },
+    "creator": {
+      "type": "Payout",
+      "account": "creator.testnet"
+    },
+    "portal": {
+      "type": "Portal",
+      "chain": "sepolia",
+      "wei": "1000000000000000"
+    },
+    "delivery": {
+      "type": "Gate",
+      "condition": {
+        "type": "MinAmount",
+        "amount": "0"
+      },
+      "pass": "portal",
+      "fail": "portal"
+    }
+  }
+}

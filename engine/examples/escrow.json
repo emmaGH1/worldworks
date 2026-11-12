@@ -1,0 +1,10 @@
+{
+  "portal_cap_wei":"0",
+  "nodes": {
+    "slot":{"type":"CoinSlot","price":"1000000000000000000000000","output":"review"},
+    "review":{"type":"Gate","condition":{"type":"NeedsApproval","worker":"inspector"},"pass":"seller","fail":"refund"},
+    "inspector":{"type":"Worker","gates":["review"]},
+    "seller":{"type":"Payout","account":"seller.testnet"},
+    "refund":{"type":"Payout","account":"$payer"}
+  }
+}
