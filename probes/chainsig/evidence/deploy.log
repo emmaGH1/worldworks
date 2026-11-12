@@ -1,0 +1,42 @@
+├  Unsigned transaction:
+│    signer_id:    ww-chainsig-261112.testnet
+│    receiver_id:  ww-chainsig-261112.testnet
+│    actions:
+│       -- deploy code <HX2ykB2WpcgBgPiqexNZnPbmkteRyustFu87195Bqpou> to a account <ww-chainsig-261112.testnet>
+│       -- function call:      
+│                       method name:  new
+│                       args:         {
+│                                       "cap": "100000000000000",
+│                                       "max_fee_per_gas": "20000000000"
+│                                     }
+│                       gas:          100.0 Tgas
+│                       deposit:      0 NEAR
+│     [0m
+├  Your transaction was signed successfully.
+│    Public key: ed25519:BrGDitH2mh1VGDezr5NZV2FDG7dtwW6Xpua8CKT5BLMX
+│    Signature:  ed25519:25WTXhoU8QZ5gEPuo5ikxR8QRcbw8qzJyYbwH8pwYgVBDTuKBLpRYuZerzG7Xzu2cLfQ5jVyUEYht871GEGLncD6
+│     [0m
+├  Transaction Execution Info:
+│    Gas used: 12.7 Tgas
+│    Transaction fee: 0.0012405160770988 NEAR
+│    Transaction ID: 83rajaWoeyKfMSSEqHt4RphBB7QEwDb5oUw8Q3SrJ9aD
+│    To see the transaction in the transaction explorer, please open this url in your browser:
+│    https://explorer.testnet.near.org/transactions/83rajaWoeyKfMSSEqHt4RphBB7QEwDb5oUw8Q3SrJ9aD
+│     [0m
+├  Function execution logs:
+│    [36mLogs [ww-chainsig-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-chainsig-261112.testnet]:[39m   [2mNo logs[0m
+│     [0m
+├  Function execution return value:
+│    Empty return value
+│     [0m
+
+Contract code has been successfully deployed.
+The "new" call to <ww-chainsig-261112.testnet> on behalf of <ww-chainsig-261112.testnet> succeeded.
+
+
+
+
+Here is your console command if you need to script it or re-run:
+    [33m/data/home/.cargo/bin/near contract deploy ww-chainsig-261112.testnet use-file /opt/ww-target/chainsig/ww_chainsig_probe.wasm with-init-call new json-args '{"cap":"100000000000000","max_fee_per_gas":"20000000000"}' prepaid-gas '100.0 Tgas' attached-deposit '0 NEAR' network-config testnet sign-with-legacy-keychain send[39m
+

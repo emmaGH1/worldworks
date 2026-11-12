@@ -1,0 +1,11 @@
+{
+  "id": "above-cap",
+  "amount": "100000000000001",
+  "code": 1,
+  "started_at": "2026-11-12T21:53:58.933Z",
+  "near_call_returned_at": "2026-11-12T21:54:02.577Z",
+  "call_wall_ms": 3644,
+  "hash": "CVCCM6zBzgL6CX1AaHU65E7HZV9HQRCKuLP9s5yJu6yY",
+  "total_tokens_burnt_yocto": "155404992939000000000",
+  "signer_receipts": []
+}

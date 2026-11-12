@@ -1,0 +1,49 @@
+├  Unsigned transaction:
+│    signer_id:    ww-chainsig-261112.testnet
+│    receiver_id:  ww-chainsig-261112.testnet
+│    actions:
+│       -- function call:      
+│                       method name:  pay
+│                       args:         {
+│                                       "payout_id": "run-3",
+│                                       "recipient_evm_address": "0x000000000000000000000000000000000000dEaD",
+│                                       "wei": "1"
+│                                     }
+│                       gas:          300.0 Tgas
+│                       deposit:      0 NEAR
+│     [0m
+├  Your transaction was signed successfully.
+│    Public key: ed25519:BrGDitH2mh1VGDezr5NZV2FDG7dtwW6Xpua8CKT5BLMX
+│    Signature:  ed25519:4CumwCC31Tps4JeozaRxpTki9QRYLPBfq2CHxU8KRTJ5N7CU5jYigztV8QGzVhTzgPTHuUiTDRPCCo5DFncmWaTX
+│     [0m
+├  Transaction Execution Info:
+│    Gas used: 13.6 Tgas
+│    Transaction fee: 0.0012666954211285 NEAR
+│    Transaction ID: ATn2n9tTsMfMLxmjJ5Kh9WTgz75y7S1puowsqKaf8DdR
+│    To see the transaction in the transaction explorer, please open this url in your browser:
+│    https://explorer.testnet.near.org/transactions/ATn2n9tTsMfMLxmjJ5Kh9WTgz75y7S1puowsqKaf8DdR
+│     [0m
+├  Function execution logs:
+│    [36mLogs [ww-chainsig-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [v1.signer-prod.testnet]:[39m
+│      sign: predecessor=AccountId("ww-chainsig-261112.testnet"), request=SignRequestArgs { path: "worldworks/sepolia/v1", payload: Ecdsa(BoundedVec { inner: [46, 178, 152, 139, 53, 124, 223, 215, 234, 207, 113, 151, 167, 180, 130, 86, 251, 129, 38, 100, 145, 17, 73, 105, 37, 248, 234, 108, 28, 189, 69, 251], witness: NonEmpty(()) }), domain_id: DomainId(0) }
+│    [36mLogs [v1.signer-prod.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-chainsig-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-chainsig-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-chainsig-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-chainsig-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-chainsig-261112.testnet]:[39m   [2mNo logs[0m
+│     [0m
+
+Function execution return value (printed to stdout):
+
+
+The "pay" call to <ww-chainsig-261112.testnet> on behalf of <ww-chainsig-261112.testnet> succeeded.
+
+
+
+
+Here is your console command if you need to script it or re-run:
+    [33m/data/home/.cargo/bin/near contract call-function as-transaction ww-chainsig-261112.testnet pay json-args '{"payout_id":"run-3","recipient_evm_address":"0x000000000000000000000000000000000000dEaD","wei":"1"}' prepaid-gas '300.0 Tgas' attached-deposit '0 NEAR' sign-as ww-chainsig-261112.testnet network-config testnet sign-with-legacy-keychain send[39m
+
+true

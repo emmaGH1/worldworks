@@ -1,0 +1,109 @@
+
+> relay
+> tsx relay.ts relay run-1
+
+/data/home/.t3/projects/near-hackathon/probes/chainsig/relayer/node_modules/viem/utils/buildRequest.ts:199
+                  throw new TransactionRejectedRpcError(err)
+                        ^
+
+TransactionRejectedRpcError: Transaction creation failed.
+
+URL: https://rpc.sepolia.ethpandaops.io
+Request body: {"method":"eth_sendRawTransaction","params":["0x02f86e83aa36a780843b9aca008504a817c80082520894000000000000000000000000000000000000dead0180c080a0cdcee8cc140ceeeda6c53eb585cf7f451bd20c63c54ef3a2cf8acbcc6b737563a0592b995983c1a384c772e7c70efdcd27d2394a45aec25f7f3f5ab9c46ac98251"]}
+
+Details: insufficient funds for gas * price + value: have 0 want 420000000000001
+Version: viem@2.57.19
+    at withRetry.delay.count.count (/data/home/.t3/projects/near-hackathon/probes/chainsig/relayer/node_modules/viem/utils/buildRequest.ts:199:25)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async attemptRetry (/data/home/.t3/projects/near-hackathon/probes/chainsig/relayer/node_modules/viem/utils/promise/withRetry.ts:67:22) {
+  details: 'insufficient funds for gas * price + value: have 0 want 420000000000001',
+  docsPath: undefined,
+  metaMessages: [
+    'URL: https://rpc.sepolia.ethpandaops.io',
+    'Request body: {"method":"eth_sendRawTransaction","params":["0x02f86e83aa36a780843b9aca008504a817c80082520894000000000000000000000000000000000000dead0180c080a0cdcee8cc140ceeeda6c53eb585cf7f451bd20c63c54ef3a2cf8acbcc6b737563a0592b995983c1a384c772e7c70efdcd27d2394a45aec25f7f3f5ab9c46ac98251"]}'
+  ],
+  shortMessage: 'Transaction creation failed.',
+  version: '2.57.19',
+  code: -32003,
+  [cause]: RpcRequestError: RPC Request failed.
+  
+  URL: https://rpc.sepolia.ethpandaops.io
+  Request body: {"method":"eth_sendRawTransaction","params":["0x02f86e83aa36a780843b9aca008504a817c80082520894000000000000000000000000000000000000dead0180c080a0cdcee8cc140ceeeda6c53eb585cf7f451bd20c63c54ef3a2cf8acbcc6b737563a0592b995983c1a384c772e7c70efdcd27d2394a45aec25f7f3f5ab9c46ac98251"]}
+  
+  Details: insufficient funds for gas * price + value: have 0 want 420000000000001
+  Version: viem@2.57.19
+      at request (/data/home/.t3/projects/near-hackathon/probes/chainsig/relayer/node_modules/viem/clients/transports/http.ts:184:19)
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at async withRetry.delay.count.count (/data/home/.t3/projects/near-hackathon/probes/chainsig/relayer/node_modules/viem/utils/buildRequest.ts:164:22)
+      at async attemptRetry (/data/home/.t3/projects/near-hackathon/probes/chainsig/relayer/node_modules/viem/utils/promise/withRetry.ts:67:22) {
+    details: 'insufficient funds for gas * price + value: have 0 want 420000000000001',
+    docsPath: undefined,
+    metaMessages: [
+      'URL: https://rpc.sepolia.ethpandaops.io',
+      'Request body: {"method":"eth_sendRawTransaction","params":["0x02f86e83aa36a780843b9aca008504a817c80082520894000000000000000000000000000000000000dead0180c080a0cdcee8cc140ceeeda6c53eb585cf7f451bd20c63c54ef3a2cf8acbcc6b737563a0592b995983c1a384c772e7c70efdcd27d2394a45aec25f7f3f5ab9c46ac98251"]}'
+    ],
+    shortMessage: 'RPC Request failed.',
+    version: '2.57.19',
+    code: -32003,
+    data: {
+      code: 'ErrUpstreamRequest',
+      message: 'failed to make request to upstream',
+      details: {
+        hedges: 0,
+        upstreamId: 'sepolia-09-reth',
+        durationMs: 2,
+        networkId: 'evm:11155111',
+        method: 'eth_sendRawTransaction',
+        attempts: 2,
+        retries: 0
+      },
+      cause: {
+        code: 'ErrEndpointExecutionException',
+        message: 'execution exception on node',
+        details: { retryableTowardNetwork: false },
+        cause: {
+          code: 'ErrJsonRpcExceptionInternal',
+          message: 'insufficient funds for gas * price + value: have 0 want 420000000000001',
+          details: {
+            statusCode: 200,
+            headers: [Object],
+            originalCode: -32003,
+            normalizedCode: -32003
+          }
+        }
+      }
+    },
+    headers: undefined,
+    status: undefined,
+    url: 'https://rpc.sepolia.ethpandaops.io',
+    [cause]: {
+      code: -32003,
+      message: 'insufficient funds for gas * price + value: have 0 want 420000000000001',
+      data: {
+        code: 'ErrUpstreamRequest',
+        message: 'failed to make request to upstream',
+        details: {
+          hedges: 0,
+          upstreamId: 'sepolia-09-reth',
+          durationMs: 2,
+          networkId: 'evm:11155111',
+          method: 'eth_sendRawTransaction',
+          attempts: 2,
+          retries: 0
+        },
+        cause: {
+          code: 'ErrEndpointExecutionException',
+          message: 'execution exception on node',
+          details: { retryableTowardNetwork: false },
+          cause: {
+            code: 'ErrJsonRpcExceptionInternal',
+            message: 'insufficient funds for gas * price + value: have 0 want 420000000000001',
+            details: [Object]
+          }
+        }
+      }
+    }
+  }
+}
+
+Node.js v22.23.3

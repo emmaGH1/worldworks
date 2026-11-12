@@ -1,0 +1,237 @@
+{
+  "final_execution_status": "FINAL",
+  "receipts_outcome": [
+    {
+      "block_hash": "8fAbDK4CphF9kq9T3RKBxwzez35PQXiJrnomUKiypuda",
+      "id": "132DuA1a7AcG8VW3HN5Qj9EZb7SRjfHW8QcbTMbhJjEQ",
+      "outcome": {
+        "executor_id": "ww-chainsig-261112.testnet",
+        "gas_burnt": 1245719881376,
+        "logs": [],
+        "metadata": {
+          "contracts": [
+            {
+              "local": "HX2ykB2WpcgBgPiqexNZnPbmkteRyustFu87195Bqpou"
+            }
+          ],
+          "gas_profile": [
+            {
+              "cost": "BASE",
+              "cost_category": "WASM_HOST_COST",
+              "gas_used": "3177217332"
+            },
+            {
+              "cost": "CONTRACT_LOADING_BASE",
+              "cost_category": "WASM_HOST_COST",
+              "gas_used": "35445963"
+            },
+            {
+              "cost": "CONTRACT_LOADING_BYTES",
+              "cost_category": "WASM_HOST_COST",
+              "gas_used": "159965149340"
+            },
+            {
+              "cost": "READ_MEMORY_BASE",
+              "cost_category": "WASM_HOST_COST",
+              "gas_used": "7829589600"
+            },
+            {
+              "cost": "READ_MEMORY_BYTE",
+              "cost_category": "WASM_HOST_COST",
+              "gas_used": "292702641"
+            },
+            {
+              "cost": "READ_REGISTER_BASE",
+              "cost_category": "WASM_HOST_COST",
+              "gas_used": "7551495558"
+            },
+            {
+              "cost": "READ_REGISTER_BYTE",
+              "cost_category": "WASM_HOST_COST",
+              "gas_used": "21585078"
+            },
+            {
+              "cost": "STORAGE_READ_BASE",
+              "cost_category": "WASM_HOST_COST",
+              "gas_used": "112713691498"
+            },
+            {
+              "cost": "STORAGE_READ_KEY_BYTE",
+              "cost_category": "WASM_HOST_COST",
+              "gas_used": "588098127"
+            },
+            {
+              "cost": "STORAGE_READ_VALUE_BYTE",
+              "cost_category": "WASM_HOST_COST",
+              "gas_used": "420825300"
+            },
+            {
+              "cost": "UTF8_DECODING_BASE",
+              "cost_category": "WASM_HOST_COST",
+              "gas_used": "3111779061"
+            },
+            {
+              "cost": "UTF8_DECODING_BYTE",
+              "cost_category": "WASM_HOST_COST",
+              "gas_used": "16911667782"
+            },
+            {
+              "cost": "WASM_INSTRUCTION",
+              "cost_category": "WASM_HOST_COST",
+              "gas_used": "23934794796"
+            },
+            {
+              "cost": "WRITE_MEMORY_BASE",
+              "cost_category": "WASM_HOST_COST",
+              "gas_used": "11215179444"
+            },
+            {
+              "cost": "WRITE_MEMORY_BYTE",
+              "cost_category": "WASM_HOST_COST",
+              "gas_used": "640086420"
+            },
+            {
+              "cost": "WRITE_REGISTER_BASE",
+              "cost_category": "WASM_HOST_COST",
+              "gas_used": "8596567458"
+            },
+            {
+              "cost": "WRITE_REGISTER_BYTE",
+              "cost_category": "WASM_HOST_COST",
+              "gas_used": "383957964"
+            }
+          ],
+          "version": 4
+        },
+        "receipt_ids": [
+          "HqzxcWSnJBPLnGCoGPooKh4VignH8arwtgy5zB8yLgPh"
+        ],
+        "status": {
+          "Failure": {
+            "ActionError": {
+              "index": 0,
+              "kind": {
+                "FunctionCallError": {
+                  "ExecutionError": "Smart contract panicked: panicked at src/lib.rs:58:9:\namount exceeds cap or is zero"
+                }
+              }
+            }
+          }
+        },
+        "tokens_burnt": "124571988137600000000"
+      },
+      "proof": [
+        {
+          "direction": "Right",
+          "hash": "6PDtks2EwedecFyh7RsZ4j71WxAmJNEPynVKMWg4YqZf"
+        },
+        {
+          "direction": "Left",
+          "hash": "9yutYpZKSFgtLuh6eh5a4p1Fb9m5erzrzoTpXHB5k47s"
+        },
+        {
+          "direction": "Right",
+          "hash": "7Eu8KpymnKkm2Y42tQHck6LTjYiuMH5Tsgf2TWgGYPv7"
+        }
+      ]
+    },
+    {
+      "block_hash": "9y1LFRL5BLHf7eSeGivkTC9vgMJJ39J155FKeTFYxZHT",
+      "id": "HqzxcWSnJBPLnGCoGPooKh4VignH8arwtgy5zB8yLgPh",
+      "outcome": {
+        "executor_id": "ww-chainsig-261112.testnet",
+        "gas_burnt": 223182562500,
+        "logs": [],
+        "metadata": {
+          "contracts": [
+            {
+              "local": "HX2ykB2WpcgBgPiqexNZnPbmkteRyustFu87195Bqpou"
+            }
+          ],
+          "gas_profile": [],
+          "version": 4
+        },
+        "receipt_ids": [],
+        "status": {
+          "SuccessValue": ""
+        },
+        "tokens_burnt": "0"
+      },
+      "proof": [
+        {
+          "direction": "Left",
+          "hash": "7AZt43GL3PPVmkByBr6jjBBpeEfpXNm9xed86yYJq8Yd"
+        },
+        {
+          "direction": "Right",
+          "hash": "2MYZaqfbp3vuDD9j6bUub7xPDxqWkAts2eB1bzGfkK2y"
+        }
+      ]
+    }
+  ],
+  "status": {
+    "Failure": {
+      "ActionError": {
+        "index": 0,
+        "kind": {
+          "FunctionCallError": {
+            "ExecutionError": "Smart contract panicked: panicked at src/lib.rs:58:9:\namount exceeds cap or is zero"
+          }
+        }
+      }
+    }
+  },
+  "transaction": {
+    "actions": [
+      {
+        "FunctionCall": {
+          "args": "eyJwYXlvdXRfaWQiOiJhYm92ZS1jYXAiLCJyZWNpcGllbnRfZXZtX2FkZHJlc3MiOiIweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMGRFYUQiLCJ3ZWkiOiIxMDAwMDAwMDAwMDAwMDEifQ==",
+          "deposit": "0",
+          "gas": 300000000000000,
+          "method_name": "pay"
+        }
+      }
+    ],
+    "hash": "CVCCM6zBzgL6CX1AaHU65E7HZV9HQRCKuLP9s5yJu6yY",
+    "nonce": 277420594000006,
+    "priority_fee": 0,
+    "public_key": "ed25519:BrGDitH2mh1VGDezr5NZV2FDG7dtwW6Xpua8CKT5BLMX",
+    "receiver_id": "ww-chainsig-261112.testnet",
+    "signature": "ed25519:bGjyF9rqQkwxayTGuuxNjrJ5rFZcsAUvDKErGjei75r6hU2uspusfNjtCy77G9reWREcS6QTRjm1nH2q1si28Jy",
+    "signer_id": "ww-chainsig-261112.testnet"
+  },
+  "transaction_outcome": {
+    "block_hash": "8fAbDK4CphF9kq9T3RKBxwzez35PQXiJrnomUKiypuda",
+    "id": "CVCCM6zBzgL6CX1AaHU65E7HZV9HQRCKuLP9s5yJu6yY",
+    "outcome": {
+      "executor_id": "ww-chainsig-261112.testnet",
+      "gas_burnt": 308330048014,
+      "logs": [],
+      "metadata": {
+        "gas_profile": null,
+        "version": 1
+      },
+      "receipt_ids": [
+        "132DuA1a7AcG8VW3HN5Qj9EZb7SRjfHW8QcbTMbhJjEQ"
+      ],
+      "status": {
+        "SuccessReceiptId": "132DuA1a7AcG8VW3HN5Qj9EZb7SRjfHW8QcbTMbhJjEQ"
+      },
+      "tokens_burnt": "30833004801400000000"
+    },
+    "proof": [
+      {
+        "direction": "Right",
+        "hash": "3J9Kh8JUyV1LpxnY8ghTA4Q5i8RwbPE9Rmsr8aVed2RR"
+      },
+      {
+        "direction": "Right",
+        "hash": "EbWBE9xAk15ziGoy5qwU5AYTBV156Y9v9CRirGPtdbGB"
+      },
+      {
+        "direction": "Right",
+        "hash": "7Eu8KpymnKkm2Y42tQHck6LTjYiuMH5Tsgf2TWgGYPv7"
+      }
+    ]
+  }
+}

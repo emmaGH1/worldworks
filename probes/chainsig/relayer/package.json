@@ -1,0 +1,1 @@
+{"name":"ww-chainsig-relayer","private":true,"type":"module","scripts":{"derive":"tsx relay.ts derive","relay":"tsx relay.ts relay","check":"tsc --noEmit","test":"tsx --test relay.test.ts"},"dependencies":{"bs58":"6.0.0","viem":"^2.57.19"},"devDependencies":{"@types/node":"24.10.1","tsx":"^4.23.15","typescript":"5.9.3"}}

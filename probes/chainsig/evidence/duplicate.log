@@ -1,0 +1,39 @@
+├  Unsigned transaction:
+│    signer_id:    ww-chainsig-261112.testnet
+│    receiver_id:  ww-chainsig-261112.testnet
+│    actions:
+│       -- function call:      
+│                       method name:  pay
+│                       args:         {
+│                                       "payout_id": "run-2",
+│                                       "recipient_evm_address": "0x000000000000000000000000000000000000dEaD",
+│                                       "wei": "1"
+│                                     }
+│                       gas:          300.0 Tgas
+│                       deposit:      0 NEAR
+│     [0m
+├  Your transaction was signed successfully.
+│    Public key: ed25519:BrGDitH2mh1VGDezr5NZV2FDG7dtwW6Xpua8CKT5BLMX
+│    Signature:  ed25519:4rWeQ4cgzgZmW3tJ2x1ffZ3rb8eVucVGyJPdeF6sRDnamM8iCPbYNe1g64a5XSW3r43WmSJ91aK8DmwfgNWC8oq
+│     [0m
+[31m├  ERROR Transaction failed
+│    Gas used: 1.8 Tgas
+│    Transaction fee: 0.0001573271106231 NEAR
+│    Transaction ID: zNudfiXK2G6ERX2aXbmvLfxqUeodA4s3E3NCZ2u7KzQ
+│    To see the transaction in the transaction explorer, please open this url in your browser:
+│    https://explorer.testnet.near.org/transactions/zNudfiXK2G6ERX2aXbmvLfxqUeodA4s3E3NCZ2u7KzQ
+│     [0m
+├  Function execution logs:
+│    [31mLogs [ww-chainsig-261112.testnet] (failed):[39m   [2mNo logs[0m
+│    [36mLogs [ww-chainsig-261112.testnet]:[39m   [2mNo logs[0m
+│     [0m
+
+Here is your console command if you need to script it or re-run:
+    [33m/data/home/.cargo/bin/near contract call-function as-transaction ww-chainsig-261112.testnet pay json-args '{"payout_id":"run-2","recipient_evm_address":"0x000000000000000000000000000000000000dEaD","wei":"1"}' prepaid-gas '300.0 Tgas' attached-deposit '0 NEAR' sign-as ww-chainsig-261112.testnet network-config testnet sign-with-legacy-keychain send[39m
+
+Error: 
+   0: [91mError: An error occurred during a `FunctionCall` action.
+      ExecutionError("Smart contract panicked: panicked at src/lib.rs:57:9:\nduplicate payout id")[0m
+
+Location:
+   [35msrc/common.rs[0m:[35m1864[0m

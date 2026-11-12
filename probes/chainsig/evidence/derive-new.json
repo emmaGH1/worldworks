@@ -1,0 +1,5 @@
+
+> derive
+> tsx relay.ts derive
+
+{"account":"ww-chainsig-261112.testnet","path":"worldworks/sepolia/v1","address":"0x3BeF4f8A2eeEB1B9FaD8ba9ED44C23497F0CF9Ce","balance":"0","chainId":11155111}

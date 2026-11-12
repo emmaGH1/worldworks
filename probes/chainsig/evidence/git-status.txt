@@ -1,0 +1,13 @@
+ M PLAN.md
+ M STATUS.md
+ M contract/Cargo.lock
+ M contract/src/lib.rs
+ M engine/Cargo.lock
+ M engine/Cargo.toml
+ M engine/examples/vending.json
+ M engine/src/lib.rs
+ M engine/tests/engine.rs
+?? docs/DEPLOYMENTS.md
+?? docs/EVIDENCE-chainsig.md
+?? engine/tests/cost.rs
+?? probes/

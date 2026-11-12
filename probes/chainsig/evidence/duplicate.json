@@ -1,0 +1,11 @@
+{
+  "id": "run-2",
+  "amount": "1",
+  "code": 1,
+  "started_at": "2026-11-12T21:53:51.383Z",
+  "near_call_returned_at": "2026-11-12T21:53:55.146Z",
+  "call_wall_ms": 3763,
+  "hash": "zNudfiXK2G6ERX2aXbmvLfxqUeodA4s3E3NCZ2u7KzQ",
+  "total_tokens_burnt_yocto": "157327110623100000000",
+  "signer_receipts": []
+}

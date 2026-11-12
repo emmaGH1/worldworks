@@ -1,0 +1,62 @@
+
+> test
+> tsx --test relay.test.ts
+
+TAP version 13
+# Subtest: live signature recovers contract-derived address and fixes transaction fields
+ok 1 - live signature recovers contract-derived address and fixes transaction fields
+  ---
+  duration_ms: 21.867948
+  type: 'test'
+  ...
+# Subtest: relayer rejects altered recipient
+ok 2 - relayer rejects altered recipient
+  ---
+  duration_ms: 0.30514
+  type: 'test'
+  ...
+# Subtest: relayer rejects altered wei
+ok 3 - relayer rejects altered wei
+  ---
+  duration_ms: 0.09762
+  type: 'test'
+  ...
+# Subtest: relayer rejects altered nonce
+ok 4 - relayer rejects altered nonce
+  ---
+  duration_ms: 0.10613
+  type: 'test'
+  ...
+# Subtest: relayer rejects altered chain_id
+ok 5 - relayer rejects altered chain_id
+  ---
+  duration_ms: 0.05187
+  type: 'test'
+  ...
+# Subtest: relayer rejects altered max_fee_per_gas
+ok 6 - relayer rejects altered max_fee_per_gas
+  ---
+  duration_ms: 0.35768
+  type: 'test'
+  ...
+# Subtest: relayer rejects altered gas_limit
+ok 7 - relayer rejects altered gas_limit
+  ---
+  duration_ms: 0.10488
+  type: 'test'
+  ...
+# Subtest: relayer rejects unsigned payout
+ok 8 - relayer rejects unsigned payout
+  ---
+  duration_ms: 0.06818
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 442.093284
