@@ -23,7 +23,7 @@ Factorio for programmable money: build money machines in a game world, then open
 | Portal | pays out on another chain (Sepolia ETH) via Chain Signatures, bounded amount | yes, if gate 2 passes |
 
 ## Architecture
-- One NEAR testnet contract (factory + interpreter). Each published machine is stored as a validated graph and gets its own address (sub-account, if gate testing confirms it is cheap enough).
+- One NEAR testnet contract (factory + interpreter). Each published machine is stored as a validated graph. Decision 2026-11-12: no sub-account per machine (measured ~2.92 NEAR storage each). A machine's "own address" is its id in the shared contract and its /m/<id> app URL. Portal payouts come from ONE shared Chain Signatures treasury address per contract (funded once), bounded per machine by its portal cap; per-machine derived addresses are roadmap.
 - The contract runs the graph deterministically; invalid graphs (unfunded output, loops, duplicate execution) are rejected at publish time.
 - Portal: the contract builds a constrained Sepolia transaction (fixed recipient rules, amount cap, nonce) and asks the Chain Signatures signer (v1.signer-prod.testnet) to sign it; a relayer only broadcasts. No server-held ETH key.
 - AI customer: a small script with its own testnet account that buys from machines; labeled as a seeded customer.
