@@ -1,0 +1,1441 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WORLDWORKS · Visual directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Nunito:wght@600;700;800;900&family=JetBrains+Mono:wght@500;700&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=Pixelify+Sans:wght@500;700&family=Silkscreen&family=Space+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+<style>
+/* =====================================================================
+   PAGE CHROME (neutral so it doesn't bias the choice)
+   ===================================================================== */
+:root{--page:#E8E5DF;--ink:#1E1C26;--muted:#6C6976;--line:#D6D1C7}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:64px}
+body{margin:0;background:var(--page);color:var(--ink);font:15px/1.55 "Nunito",system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:6px;padding:10px 24px;background:rgba(232,229,223,.9);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav .brand{font:800 15px/1 "Bricolage Grotesque";letter-spacing:.01em;margin-right:14px;white-space:nowrap}
+.nav .brand small{font:600 12px "Nunito";color:var(--muted);margin-left:8px;letter-spacing:0}
+.nav a{white-space:nowrap;text-decoration:none;color:var(--ink);font:800 13px/1 "Nunito";padding:9px 14px;border-radius:999px;border:1px solid transparent;transition:background .15s,border-color .15s}
+.nav a:hover{background:#fff6}
+.nav a.on{background:#fff;border-color:var(--line);box-shadow:0 1px 0 var(--line)}
+.nav a b{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:6px;background:var(--ink);color:#fff;font-size:11px;margin-right:7px}
+.wrap{max-width:1328px;margin:0 auto;padding:0 24px}
+.intro{padding:40px 0 8px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:40px;align-items:end}
+.intro h1{font:800 clamp(30px,4vw,48px)/1.02 "Bricolage Grotesque";margin:0 0 12px;letter-spacing:-.02em}
+.intro p{margin:0;color:var(--muted);max-width:60ch}
+.cmp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.cmp a{display:block;text-decoration:none;color:inherit;background:#fff;border-radius:14px;padding:12px 14px;border:1px solid var(--line);transition:transform .15s}
+.cmp a:hover{transform:translateY(-2px)}
+.cmp .k{font:800 11px/1 "Nunito";letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.cmp .n{font:800 17px/1.2 "Bricolage Grotesque";margin:6px 0 4px}
+.cmp .r{font-size:12.5px;color:var(--muted);line-height:1.4}
+.cmp .rec{display:inline-block;margin-top:8px;font:800 11px/1 "Nunito";padding:5px 8px;border-radius:999px;background:#00EC97;color:#05261a}
+.cmp .risk{display:inline-block;margin-top:8px;font:800 11px/1 "Nunito";padding:5px 8px;border-radius:999px;background:#eee;color:#555}
+section.dir{padding:64px 0 8px}
+.dir-head{display:flex;align-items:flex-end;gap:22px;flex-wrap:wrap;margin-bottom:18px}
+.dir-letter{font:800 112px/.78 "Bricolage Grotesque";letter-spacing:-.04em}
+.dir-title{flex:1;min-width:260px}
+.dir-title h2{margin:0;font:800 clamp(34px,4.4vw,56px)/1 "Bricolage Grotesque";letter-spacing:-.025em}
+.dir-title p{margin:8px 0 0;color:var(--muted);max-width:72ch}
+.badge{display:inline-flex;align-items:center;gap:6px;font:800 12px/1 "Nunito";padding:7px 11px;border-radius:999px;background:#00EC97;color:#05261a;vertical-align:middle;margin-left:10px;letter-spacing:.01em}
+.badge.grey{background:#dedad2;color:#4a4752}
+#night-shift .dir-title h2{font:italic 400 clamp(40px,5vw,64px)/1 "Instrument Serif";letter-spacing:-.01em}
+#night-shift .dir-letter{font:italic 400 128px/.72 "Instrument Serif"}
+#pixel-works .dir-title h2{font:700 clamp(32px,4vw,52px)/1 "Pixelify Sans";letter-spacing:0}
+#pixel-works .dir-letter{font:700 104px/.8 "Pixelify Sans"}
+
+.frame{position:relative;width:100%;max-width:1280px;margin:0 auto;aspect-ratio:16/9;border-radius:18px;overflow:hidden;box-shadow:0 1px 0 rgba(0,0,0,.04),0 40px 80px -40px rgba(30,20,10,.45);contain:layout paint}
+.stage{position:absolute;left:0;top:0;width:1280px;height:720px;transform-origin:0 0;overflow:hidden}
+.stage svg.board{position:absolute;inset:0;overflow:visible}
+.stage .ov{position:absolute}
+
+.spec{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr);gap:28px;max-width:1280px;margin:22px auto 0;font-size:13.5px}
+.spec h4{margin:0 0 8px;font:800 11px/1 "Nunito";letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.spec p{margin:0;color:#3b3944}
+.sw{display:flex;flex-wrap:wrap;gap:6px}
+.sw i{display:block;width:30px;height:30px;border-radius:8px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);position:relative}
+.sw i::after{content:attr(data-h);position:absolute;left:50%;top:34px;transform:translateX(-50%);font:500 9px "JetBrains Mono";color:var(--muted);white-space:nowrap;opacity:0;transition:opacity .15s}
+.sw i:hover::after{opacity:1}
+.type-sample span{display:block;line-height:1.25}
+
+.sheet{max-width:1280px;margin:26px auto 0;border-radius:18px;padding:22px;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:12px}
+.sheet .cell{text-align:center}
+.sheet svg{display:block;margin:0 auto;width:100%;max-width:120px;height:auto;aspect-ratio:1}
+.sheet .nm{margin-top:6px}
+.sheet .ds{opacity:.75}
+.sheet-cap{max-width:1280px;margin:10px auto 0;font-size:12.5px;color:var(--muted)}
+.sheet-cap code{font:500 11.5px "JetBrains Mono";background:#fff8;padding:1px 5px;border-radius:5px}
+.refine{max-width:1280px;margin:18px auto 0;padding:16px 18px;border-left:3px solid var(--ink);background:#fff7;border-radius:0 12px 12px 0;font-size:13.5px}
+.refine b{font-weight:900}
+footer{padding:56px 0 72px;color:var(--muted);font-size:13px}
+
+@media (max-width:900px){
+  .intro{grid-template-columns:1fr;gap:20px}
+  .spec{grid-template-columns:1fr;gap:16px}
+  .sheet{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .dir-letter{font-size:72px!important}
+}
+@media (max-width:560px){
+  .wrap{padding:0 16px}
+  .cmp{grid-template-columns:1fr}
+  .sheet{grid-template-columns:repeat(2,minmax(0,1fr));padding:14px}
+  .frame{border-radius:12px}
+}
+
+/* shared motion helpers */
+.squash{transform-box:fill-box;transform-origin:50% 100%}
+.bump>.squash{animation:squash .2s cubic-bezier(.3,1.6,.5,1)}
+@keyframes squash{0%{transform:scale(1,1)}40%{transform:scale(1.08,.93)}100%{transform:scale(1,1)}}
+.float{position:absolute;pointer-events:none;white-space:nowrap;transform:translate(-50%,-50%);animation:floatUp 1.1s cubic-bezier(.2,.7,.2,1) forwards}
+@keyframes floatUp{0%{opacity:0;transform:translate(-50%,-30%) scale(.7)}18%{opacity:1;transform:translate(-50%,-80%) scale(1.08)}100%{opacity:0;transform:translate(-50%,-260%) scale(1)}}
+
+/* =====================================================================
+   A · TOY WORKS
+   ===================================================================== */
+.a{--paper:#F4EEE3;--dot:#E4DACA;--ink:#24203A;--ink2:#6B6680;--pipe:#36314D;--stripe:#4A4466;--coin:#FFC53D;--rim:#E39A17;--green:#00EC97;--amber:#FFB547;--coral:#FF7966;--lilac:#9797FF;--card-sh:#DED2BE;
+  background:var(--paper) radial-gradient(circle at 1.5px 1.5px,var(--dot) 1.6px,transparent 2px) 0 0/24px 24px;color:var(--ink);font-family:"Nunito",sans-serif}
+.a .a-top{left:0;right:0;top:0;height:68px;display:flex;align-items:center;gap:14px;padding:0 20px 0 22px}
+.a .logo{display:flex;align-items:center;gap:9px;font:800 21px/1 "Bricolage Grotesque";letter-spacing:-.01em}
+.a .logo svg{width:30px;height:30px}
+.a .mname{display:flex;align-items:center;gap:8px;margin-left:10px;background:#fff;border-radius:999px;padding:8px 14px 8px 12px;font:800 14px/1 "Nunito";box-shadow:0 4px 0 var(--card-sh)}
+.a .mname em{font-style:normal;color:var(--ink2);font-weight:700}
+.a .stamp-broke{font:800 13px/1 "Bricolage Grotesque";letter-spacing:.08em;color:var(--coral);border:3px solid var(--coral);border-radius:8px;padding:5px 8px 4px;transform:rotate(-7deg);margin-left:4px;background:rgba(255,121,102,.06)}
+.a .sp{flex:1}
+.a .pill{font:800 12px/1 "Nunito";color:var(--ink2);background:#fff;border-radius:999px;padding:8px 12px;display:flex;align-items:center;gap:6px;box-shadow:0 4px 0 var(--card-sh)}
+.a .pill i{width:8px;height:8px;border-radius:50%;background:var(--amber)}
+.a .round{width:38px;height:38px;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:0 4px 0 var(--card-sh)}
+.a .open-app{display:flex;align-items:center;gap:9px;background:var(--ink);color:#fff;border:0;border-radius:999px;padding:12px 18px 12px 20px;font:900 15px/1 "Nunito";box-shadow:0 5px 0 #0d0b18;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.a .open-app:hover{transform:translateY(2px);box-shadow:0 3px 0 #0d0b18}
+.a .open-app span{display:grid;place-items:center;width:22px;height:22px;border-radius:7px;background:var(--green);color:var(--ink)}
+
+.a .a-rail{left:18px;top:84px;width:116px;height:616px;background:#fff;border-radius:26px;box-shadow:0 6px 0 var(--card-sh);padding:12px 8px;display:flex;flex-direction:column;gap:2px}
+.a .a-rail h5{margin:2px 0 4px;text-align:center;font:900 11px/1 "Nunito";letter-spacing:.12em;text-transform:uppercase;color:var(--ink2)}
+.a .chip{position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 2px 5px;border-radius:18px;cursor:grab}
+.a .chip:hover{background:#F7F2E9}
+.a .chip svg{width:46px;height:46px}
+.a .chip b{font:800 12px/1.1 "Nunito"}
+.a .chip .dots{display:flex;gap:3px;margin-top:3px}
+.a .chip .dots i{width:5px;height:5px;border-radius:50%;background:var(--ink)}
+.a .chip.try{background:#FFF3D6;box-shadow:inset 0 0 0 2px var(--coin)}
+.a .chip.try::after{content:"try me";position:absolute;right:-50px;top:18px;font:900 11px/1 "Nunito";background:var(--coin);color:var(--ink);padding:5px 8px;border-radius:999px;box-shadow:0 3px 0 var(--rim)}
+
+.a .a-head{left:166px;top:88px}
+.a .a-head h1{margin:0;font:800 44px/1 "Bricolage Grotesque";letter-spacing:-.025em}
+.a .a-head h1 span{position:relative;color:var(--coral);white-space:nowrap}
+.a .a-head h1 svg{position:absolute;left:0;bottom:-12px;width:100%;height:12px}
+.a .a-head p{margin:16px 0 0;font:700 16px/1.4 "Nunito";color:var(--ink2)}
+.a .a-head p b{color:var(--ink)}
+
+.a .hint{left:404px;top:278px;transform:rotate(-4deg);font:800 15px/1.2 "Nunito";color:var(--ink)}
+.a .hint small{display:block;font:700 13px/1.2 "Nunito";color:var(--ink2)}
+.a .bubble{left:150px;top:286px;background:#fff;border-radius:16px;padding:9px 12px;font:800 13px/1.2 "Nunito";box-shadow:0 4px 0 var(--card-sh)}
+.a .bubble::after{content:"";position:absolute;left:58px;bottom:-9px;border:9px solid transparent;border-top-color:#fff;border-bottom:0}
+.a .bubble small{display:block;font:700 10.5px/1.2 "JetBrains Mono";color:var(--ink2);margin-top:3px}
+
+.a .reserve{left:160px;bottom:20px;display:flex;align-items:center;gap:14px;background:#fff;border-radius:26px;padding:12px 20px 12px 12px;box-shadow:0 6px 0 var(--card-sh)}
+.a .reserve .ring{width:78px;height:78px;position:relative}
+.a .reserve .ring div{position:absolute;inset:0;display:grid;place-items:center;text-align:center;font:700 16px/1 "JetBrains Mono"}
+.a .reserve .ring div small{display:block;font:700 10px/1 "JetBrains Mono";color:var(--ink2);margin-top:3px}
+.a .reserve h6{margin:0;font:900 16px/1 "Nunito"}
+.a .reserve .empty{margin-top:5px;font:800 13px/1.2 "Nunito";color:var(--coral);display:flex;gap:6px;align-items:center}
+.a .reserve .stats{margin-top:8px;font:500 12px/1 "JetBrains Mono";color:var(--ink2)}
+.a .reserve .stats b{color:var(--ink);font-weight:700}
+
+.a .ledger{right:16px;bottom:16px;width:340px;background:#fff;border-radius:24px;box-shadow:0 6px 0 var(--card-sh);padding:10px 14px 12px}
+.a .ledger .grab{width:40px;height:5px;border-radius:9px;background:#E9E1D3;margin:0 auto 8px}
+.a .ledger header{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.a .ledger header b{font:900 16px/1 "Nunito"}
+.a .ledger header .tn{font:800 11px/1 "Nunito";color:var(--ink2);background:#F4EEE3;border-radius:999px;padding:4px 8px}
+.a .ledger header .all{margin-left:auto;font:800 12px/1 "Nunito";color:var(--ink2)}
+.a .row{position:relative;display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 8px;border-radius:16px}
+.a .row+.row{margin-top:4px}
+.a .row .ic{width:34px;height:34px;border-radius:50%;display:grid;place-items:center}
+.a .row .t{font:800 14px/1.15 "Nunito"}
+.a .row .s{font:500 11px/1.3 "JetBrains Mono";color:var(--ink2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.a .row .s a{color:inherit}
+.a .row .amt{font:700 13px/1 "JetBrains Mono";text-align:right;white-space:nowrap}
+.a .row .amt small{display:block;font:800 10.5px/1 "Nunito";margin-top:5px;letter-spacing:.02em}
+.a .row.ok .ic{background:var(--green)}
+.a .row.ok .amt small{color:#00A86B}
+.a .row.ok .ic.stamp{animation:stampIn .45s cubic-bezier(.3,1.7,.5,1)}
+@keyframes stampIn{0%{transform:scale(1.35) rotate(-14deg)}100%{transform:scale(1) rotate(0)}}
+.a .row.pend{background:#FFF8EC}
+.a .row.pend::before{content:"";position:absolute;inset:0;border-radius:16px;padding:2px;background:repeating-linear-gradient(90deg,var(--amber) 0 8px,transparent 8px 14px) 0 0/28px 2px repeat-x,repeating-linear-gradient(90deg,var(--amber) 0 8px,transparent 8px 14px) 0 100%/28px 2px repeat-x;animation:march 0.9s linear infinite}
+@keyframes march{to{background-position:28px 0,-28px 100%}}
+.a .row.pend .ic{background:#fff;box-shadow:inset 0 0 0 3px var(--lilac)}
+.a .row.pend .amt{color:#5E5EDB}
+.a .row.pend .amt small{color:#C8811A}
+
+.a .a-orbit{transform-box:view-box;transform-origin:780px 246px;animation:spin 2.6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.a .walker{transform:translateX(-300px)}
+.a.live .walker{animation:walkIn 1.9s cubic-bezier(.25,.8,.3,1) forwards}
+.a.live .walker .bob{animation:bob .32s ease-in-out 6 alternate}
+@keyframes walkIn{to{transform:translateX(0)}}
+@keyframes bob{to{transform:translateY(-6px)}}
+.a .breathe{transform-box:fill-box;transform-origin:50% 100%;animation:breathe 2.8s ease-in-out infinite}
+@keyframes breathe{50%{transform:scale(1.02,.975)}}
+.a .hand-coin{transition:opacity .12s}
+.a .hand-coin.gone{opacity:0}
+.a [data-part=slot] .glow{opacity:0;transition:opacity .3s}
+.a [data-part=slot].expect .glow{opacity:1}
+.a [data-part=portal].bump .ring-pulse{animation:ringPulse .6s ease-out}
+@keyframes ringPulse{0%{opacity:.9;transform:scale(.6)}100%{opacity:0;transform:scale(1.5)}}
+.a .ring-pulse{opacity:0;transform-box:fill-box;transform-origin:center}
+.a [data-part=recipient].bump>.squash{animation:squash .25s cubic-bezier(.3,1.6,.5,1)}
+.a .float{font:900 18px/1 "Nunito";color:#00A86B;-webkit-text-stroke:0;text-shadow:0 2px 0 #fff}
+
+/* =====================================================================
+   B · NIGHT SHIFT
+   ===================================================================== */
+.b{--bg:#0B0C10;--dot:#1C1F27;--node:#14161C;--bord:#262A35;--tx:#EDEEF0;--mut:#8B90A0;--coin:#FFD24A;--trail:#FF9F1C;--green:#00EC97;--lilac:#9797FF;--amber:#FFB020;--red:#FF5D5D;
+  background:radial-gradient(ellipse 60% 55% at 46% 55%,#151821 0%,rgba(11,12,16,0) 70%),radial-gradient(circle at 1px 1px,var(--dot) 1.1px,transparent 1.4px) 0 0/22px 22px,var(--bg);color:var(--tx);font-family:"Geist",sans-serif}
+.b .b-top{left:0;right:0;top:0;height:60px;display:flex;align-items:center;gap:12px;padding:0 18px 0 20px;border-bottom:1px solid #171A21}
+.b .logo{display:flex;align-items:center;gap:9px;font:600 15px/1 "Geist";letter-spacing:-.01em}
+.b .crumb{color:#3A3F4C;font:400 18px/1 "Geist"}
+.b .mname{font:500 14px/1 "Geist";color:var(--tx)}
+.b .status{display:flex;align-items:center;gap:7px;font:500 12px/1 "Geist";color:#FF9C8F;background:rgba(255,93,93,.09);border:1px solid rgba(255,93,93,.22);padding:6px 9px;border-radius:999px}
+.b .status i{width:6px;height:6px;border-radius:50%;background:var(--red);box-shadow:0 0 0 3px rgba(255,93,93,.18)}
+.b .tick{margin:0 auto;font:400 12px/1 "Geist";color:var(--mut);display:flex;gap:8px;align-items:center}
+.b .tick b{font:500 13px/1 "Geist Mono";color:var(--tx);font-variant-numeric:tabular-nums}
+.b .tick b span{color:var(--mut)}
+.b .tn{font:500 12px/1 "Geist";color:var(--mut);border:1px solid var(--bord);padding:7px 10px;border-radius:8px;display:flex;gap:6px;align-items:center}
+.b .tn i{width:6px;height:6px;border-radius:50%;background:var(--amber)}
+.b .icbtn{width:32px;height:32px;border-radius:8px;border:1px solid var(--bord);display:grid;place-items:center}
+.b .open-app{display:flex;align-items:center;gap:8px;background:#F4F4F5;color:#0B0C10;border:0;border-radius:9px;padding:10px 14px;font:600 13.5px/1 "Geist";cursor:pointer;box-shadow:0 0 0 1px rgba(255,255,255,.1),0 8px 24px -8px rgba(255,210,74,.35)}
+.b .open-app kbd{font:500 11px/1 "Geist Mono";color:#6B6F7B;border:1px solid #D4D4D8;border-radius:4px;padding:2px 4px}
+
+.b .b-rail{left:16px;top:76px;width:120px;height:628px;background:rgba(17,19,24,.85);border:1px solid #1E222B;border-radius:14px;padding:10px 8px;display:flex;flex-direction:column;gap:2px}
+.b .b-rail h5{margin:2px 6px 6px;font:500 11px/1 "Geist";color:var(--mut);display:flex;justify-content:space-between}
+.b .b-rail h5 kbd{font:400 10px/1 "Geist Mono";color:#5B6070}
+.b .item{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:9px 4px 8px;border-radius:10px;color:var(--mut)}
+.b .item:hover{background:#181B22}
+.b .item .tile{width:42px;height:42px;border-radius:10px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 12%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 24%,transparent);color:var(--c)}
+.b .item .tile svg{width:28px;height:28px}
+.b .item b{font:500 12px/1 "Geist";color:#C9CCD4}
+.b .item kbd{position:absolute;right:8px;top:8px;font:400 9.5px/1 "Geist Mono";color:#4D5261}
+.b .item.try{background:#171A21;box-shadow:inset 0 0 0 1px #2E3340}
+.b .item.try::after{content:"";position:absolute;right:-5px;top:50%;width:8px;height:8px;margin-top:-4px;border-radius:50%;background:var(--coin);box-shadow:0 0 12px var(--coin)}
+
+.b .b-head{left:168px;top:84px}
+.b .b-head h1{margin:0;font:italic 400 54px/1 "Instrument Serif";letter-spacing:-.01em}
+.b .b-head h1 span{color:#FF8A7E}
+.b .b-head p{margin:12px 0 0;font:400 15px/1.45 "Geist";color:var(--mut)}
+.b .b-head p b{color:#D5D7DD;font-weight:500}
+
+.b .tip{left:466px;top:326px;background:#1A1D24;border:1px solid #2A2E39;border-radius:8px;padding:7px 10px;font:500 12.5px/1.2 "Geist";color:var(--tx);display:flex;gap:8px;align-items:center;box-shadow:0 10px 30px -10px #000}
+.b .tip kbd{font:400 10.5px/1 "Geist Mono";color:var(--mut);border:1px solid #333845;border-radius:4px;padding:2px 5px}
+.b .tip::after{content:"";position:absolute;left:62px;bottom:-5px;width:9px;height:9px;background:#1A1D24;border-right:1px solid #2A2E39;border-bottom:1px solid #2A2E39;transform:rotate(45deg)}
+.b .cust-tag{left:142px;top:444px;text-align:center;width:160px}
+.b .cust-tag b{display:block;font:500 13px/1.2 "Geist"}
+.b .cust-tag span{font:400 11px/1.3 "Geist Mono";color:var(--mut)}
+.b .say{left:160px;top:330px;font:italic 400 19px/1.2 "Instrument Serif";color:#C9CCD4}
+
+.b .reserve{left:168px;bottom:22px;display:flex;align-items:center;gap:16px;background:rgba(17,19,24,.85);border:1px solid #1E222B;border-radius:14px;padding:12px 18px 12px 12px}
+.b .reserve .g{width:72px;height:72px;position:relative}
+.b .reserve .g span{position:absolute;inset:0;display:grid;place-items:center;font:500 11px/1 "Geist Mono";color:#FF8A7E}
+.b .reserve .lbl{font:500 11px/1 "Geist";color:var(--mut);letter-spacing:.02em}
+.b .reserve .num{font:400 30px/1.05 "Geist Mono";letter-spacing:-.02em;margin-top:5px;font-variant-numeric:tabular-nums}
+.b .reserve .num span{color:#4E5363}
+.b .reserve .num small{font:400 13px "Geist";color:var(--mut);margin-left:4px}
+.b .reserve .note{font:400 12px/1.2 "Geist";color:#FF8A7E;margin-top:4px}
+.b .reserve .stats{border-left:1px solid #22262F;padding-left:16px;margin-left:4px;font:400 12px/1.7 "Geist";color:var(--mut)}
+.b .reserve .stats b{font:500 12px "Geist Mono";color:var(--tx);margin-left:6px}
+
+.b .ledger{right:16px;bottom:16px;width:334px;background:rgba(17,19,24,.92);border:1px solid #20242D;border-radius:14px;overflow:hidden}
+.b .ledger header{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid #1C2028;font:500 13px/1 "Geist"}
+.b .ledger header .live{display:flex;align-items:center;gap:5px;font:400 11px "Geist";color:var(--mut)}
+.b .ledger header .live i{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+.b .ledger header .all{margin-left:auto;font:400 12px "Geist";color:var(--mut)}
+.b .row{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:11px;align-items:center;padding:11px 14px;position:relative}
+.b .row+.row{border-top:1px solid #1A1D24}
+.b .row .ic{width:28px;height:28px;border-radius:50%;display:grid;place-items:center}
+.b .row .t{font:500 13px/1.2 "Geist"}
+.b .row .t em{font-style:normal;color:var(--mut)}
+.b .row .s{font:400 11px/1.3 "Geist Mono";color:var(--mut);margin-top:3px;display:flex;gap:6px;align-items:center;white-space:nowrap;overflow:hidden}
+.b .row .amt{text-align:right;font:500 13px/1 "Geist Mono";font-variant-numeric:tabular-nums;white-space:nowrap}
+.b .row .pill{display:inline-block;margin-top:6px;font:500 10.5px/1 "Geist";padding:3px 7px;border-radius:999px}
+.b .row.ok .ic{background:rgba(0,236,151,.12);box-shadow:inset 0 0 0 1px rgba(0,236,151,.35)}
+.b .row.ok .pill{color:var(--green);background:rgba(0,236,151,.1)}
+.b .row.ok.flash::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,236,151,.14),transparent 70%);animation:fade 1.2s ease-out forwards}
+@keyframes fade{to{opacity:0}}
+.b .row.pend .ic{box-shadow:inset 0 0 0 1px rgba(255,176,32,.35)}
+.b .row.pend .ic svg{animation:spin 1.4s linear infinite}
+.b .row.pend .pill{color:var(--amber);background:rgba(255,176,32,.1)}
+.b .row .chain{font:500 10px/1 "Geist";color:var(--lilac);border:1px solid rgba(151,151,255,.35);border-radius:4px;padding:2px 4px}
+.b .row .chain.n{color:var(--green);border-color:rgba(0,236,151,.3)}
+
+.b .wire{fill:none;stroke:#2A2F3B;stroke-width:2}
+.b .wire-glow{fill:none;stroke:var(--coin);stroke-width:2.2;opacity:.15;filter:url(#b-soft)}
+.b .wire-glow.up{stroke:#C9C9FF}
+.b .node-card{fill:var(--node);stroke:var(--bord);stroke-width:1}
+.b .ntitle{font:600 14px "Geist";fill:var(--tx)}
+.b .nread{font:400 11.5px "Geist Mono";fill:var(--mut)}
+.b [data-part].bump .halo{animation:halo .7s ease-out}
+.b .halo{opacity:0;fill:none;stroke-width:1.5}
+@keyframes halo{0%{opacity:.9;stroke-width:6}100%{opacity:0;stroke-width:1}}
+.b [data-part=slot].expect .node-card{stroke:#6B5A22}
+.b .b-ring{transform-box:fill-box;transform-origin:center;animation:spin 6s linear infinite}
+.b .walker{opacity:0;transform:translateX(-80px)}
+.b.live .walker{animation:bIn 1.2s cubic-bezier(.2,.8,.2,1) .2s forwards}
+@keyframes bIn{to{opacity:1;transform:none}}
+.b .hand-coin{transition:opacity .15s}
+.b .hand-coin.gone{opacity:0}
+.b .float{font:500 13px/1 "Geist Mono";color:var(--green);text-shadow:0 0 12px rgba(0,236,151,.6)}
+
+/* =====================================================================
+   C · PIXEL WORKS
+   ===================================================================== */
+.c{--k:#1A1C2C;--p:#5D275D;--r:#B13E53;--o:#EF7D57;--y:#FFCD75;--l:#A7F070;--g:#38B764;--t:#257179;--n:#29366F;--b:#3B5DC9;--s:#41A6F6;--cy:#73EFF7;--w:#F4F4F4;--lg:#94B0C2;--sl:#566C86;--ds:#333C57;
+  background:
+    linear-gradient(90deg,rgba(26,28,44,.35) 2px,transparent 2px) 0 0/48px 48px,
+    linear-gradient(rgba(26,28,44,.35) 2px,transparent 2px) 0 0/48px 48px,
+    conic-gradient(#333C57 25%,#2F3751 0 50%,#333C57 0 75%,#2F3751 0) 0 0/96px 96px;
+  color:var(--w);font-family:"Space Mono",monospace;image-rendering:pixelated}
+.c *{border-radius:0!important}
+.c .px-box{background:var(--k);box-shadow:0 0 0 3px var(--k),inset 0 0 0 3px var(--sl),inset 0 -6px 0 3px #232639}
+.c .c-top{left:0;right:0;top:0;height:60px;display:flex;align-items:center;gap:14px;padding:0 18px;background:var(--k);border-bottom:6px solid #12131F}
+.c .logo{font:700 24px/1 "Pixelify Sans";color:var(--y);text-shadow:3px 3px 0 var(--r);letter-spacing:.02em}
+.c .mname{font:400 13px/1 "Silkscreen";color:var(--lg);padding:8px 10px;background:#232639}
+.c .broke{font:400 13px/1 "Silkscreen";color:var(--w);background:var(--r);padding:7px 9px;box-shadow:3px 3px 0 #5D1E2D;animation:blinkStep 1.1s steps(1) infinite}
+@keyframes blinkStep{50%{background:#7C2638}}
+.c .sp{flex:1}
+.c .score{display:flex;gap:16px;font:400 26px/1 "VT323";color:var(--lg);background:#0F1019;padding:6px 12px 4px;box-shadow:inset 0 0 0 3px #232639}
+.c .score b{font-weight:400;color:var(--y)}
+.c .score b.neg{color:#FF8A7E}
+.c .score em{font-style:normal;font:400 10px/1 "Silkscreen";color:var(--sl);display:block;margin-bottom:2px}
+.c .mute{width:36px;height:36px;display:grid;place-items:center;background:#232639}
+.c .open-app{font:400 14px/1 "Silkscreen";color:var(--k);background:var(--l);border:0;padding:11px 14px 9px;cursor:pointer;box-shadow:inset -3px -4px 0 var(--g),0 0 0 3px var(--k),3px 6px 0 3px #0F1019;display:flex;gap:8px;align-items:center}
+.c .open-app:active{transform:translateY(3px)}
+
+.c .c-rail{left:20px;top:84px;width:112px;height:612px;padding:10px 6px;display:flex;flex-direction:column;gap:3px}
+.c .c-rail h5{margin:0 0 4px;text-align:center;font:400 11px/1 "Silkscreen";color:var(--y)}
+.c .slot{position:relative;display:flex;flex-direction:column;align-items:center;padding:4px 0 5px}
+.c .slot:hover{background:#232639}
+.c .slot svg{width:48px;height:48px}
+.c .slot b{font:400 10px/1 "Silkscreen";color:var(--w);font-weight:400;margin-top:2px}
+.c .slot .pips{display:flex;gap:3px;margin-top:4px}
+.c .slot .pips i{width:4px;height:4px;background:var(--y)}
+.c .slot.try{background:#2B2E46;box-shadow:inset 0 0 0 3px var(--y)}
+.c .slot.try::after{content:"◀ NEW";position:absolute;right:-56px;top:22px;font:400 10px/1 "Silkscreen";color:var(--k);background:var(--y);padding:5px 6px 4px;animation:nudge .6s steps(2) infinite}
+@keyframes nudge{50%{transform:translateX(-4px)}}
+
+.c .c-head{left:166px;top:84px}
+.c .c-head h1{margin:0;font:700 42px/1.05 "Pixelify Sans";color:var(--w);text-shadow:4px 4px 0 var(--r)}
+.c .c-head p{margin:12px 0 0;font:400 14px/1.45 "Space Mono";color:var(--lg)}
+.c .c-head p b{color:var(--y);font-weight:700}
+.c .put{left:458px;top:316px;font:400 12px/1.25 "Silkscreen";color:var(--k);background:var(--y);padding:7px 9px 6px;box-shadow:3px 3px 0 #9C6A2B;animation:hopStep .8s steps(2) infinite}
+.c .put::after{content:"";position:absolute;left:46px;bottom:-12px;border:6px solid transparent;border-top:6px solid var(--y);border-bottom:0}
+@keyframes hopStep{50%{transform:translateY(-4px)}}
+.c .say{left:156px;top:318px;font:400 11px/1.3 "Silkscreen";color:var(--k);background:var(--w);padding:7px 9px 6px;box-shadow:0 0 0 3px var(--k)}
+.c .say::after{content:"";position:absolute;left:62px;bottom:-9px;width:9px;height:9px;background:var(--w);box-shadow:3px 3px 0 0 var(--k)}
+.c .say small{display:block;font:400 9px/1 "Silkscreen";color:var(--sl);margin-top:4px}
+
+.c .reserve{left:166px;bottom:22px;display:flex;gap:16px;align-items:center;padding:12px 16px}
+.c .reserve .lbl{font:400 12px/1 "Silkscreen";color:var(--y)}
+.c .bar{display:flex;gap:3px;margin-top:7px}
+.c .bar i{width:14px;height:20px;background:#232639;box-shadow:inset 0 0 0 2px #3A3F5E}
+.c .bar i:first-child{box-shadow:inset 0 0 0 2px var(--r);animation:barBlink .7s steps(1) infinite}
+@keyframes barBlink{50%{box-shadow:inset 0 0 0 2px #232639}}
+.c .reserve .val{font:400 30px/1 "VT323";color:var(--w)}
+.c .reserve .val small{font:400 18px "VT323";color:var(--lg)}
+.c .reserve .emp{font:400 11px/1 "Silkscreen";color:#FF8A7E;margin-top:5px;animation:blinkTxt 1s steps(1) infinite}
+@keyframes blinkTxt{50%{opacity:.25}}
+.c .reserve .stats{font:400 20px/1.05 "VT323";color:var(--lg);border-left:3px solid #2B2E46;padding-left:14px}
+.c .reserve .stats b{color:var(--w);font-weight:400}
+
+.c .ledger{right:18px;bottom:22px;width:332px;padding:10px 12px 12px}
+.c .ledger header{display:flex;align-items:center;gap:8px;margin-bottom:8px;font:400 13px/1 "Silkscreen";color:var(--y)}
+.c .ledger header span{margin-left:auto;font:400 10px "Silkscreen";color:var(--sl)}
+.c .row{display:grid;grid-template-columns:27px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px;background:#232639}
+.c .row+.row{margin-top:6px}
+.c .row svg{width:27px;height:27px}
+.c .row .t{font:700 12px/1.2 "Space Mono";color:var(--w)}
+.c .row .s{font:400 10.5px/1.3 "Space Mono";color:var(--lg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c .row .amt{text-align:right;font:400 22px/1 "VT323";color:var(--w);white-space:nowrap}
+.c .row .amt small{display:block;font:400 9.5px/1 "Silkscreen";margin-top:3px}
+.c .row.ok{box-shadow:inset 3px 0 0 var(--g)}
+.c .row.ok .amt small{color:var(--l)}
+.c .row.ok.flash{animation:okFlash .5s steps(3)}
+@keyframes okFlash{0%,66%{background:#2A4E3A}}
+.c .row.pend{box-shadow:inset 3px 0 0 var(--y)}
+.c .row.pend .amt{color:var(--s)}
+.c .row.pend .amt small{color:var(--y);animation:blinkTxt 1s steps(1) infinite}
+.c .row.pend svg{animation:flip 1.2s steps(1) infinite}
+@keyframes flip{50%{transform:rotate(180deg)}}
+
+.c .belt-edge{fill:none;stroke:var(--k);stroke-width:40;stroke-linejoin:miter;stroke-linecap:square}
+.c .belt{fill:none;stroke:#566C86;stroke-width:28;stroke-linejoin:miter;stroke-linecap:square}
+.c .belt-run{fill:none;stroke:#7F95AD;stroke-width:28;stroke-dasharray:6 12;stroke-linecap:butt;animation:belt .5s steps(3) infinite}
+@keyframes belt{to{stroke-dashoffset:-18}}
+.c .lbl-plate{fill:var(--k)}
+.c .lbl-t{font:400 11px "Silkscreen";fill:var(--w)}
+.c .lbl-r{font:400 16px "VT323";fill:var(--y)}
+.c .walker{transform:translateX(-240px)}
+.c.live .walker{animation:pxWalk 2.4s steps(20) forwards}
+@keyframes pxWalk{to{transform:translateX(0)}}
+.c .frameA{animation:fA .5s steps(1) infinite}
+.c .frameB{animation:fB .5s steps(1) infinite}
+@keyframes fA{50%{opacity:0}}
+@keyframes fB{0%{opacity:0}50%{opacity:1}}
+.c.idle .frameA{animation:none;opacity:1}
+.c.idle .frameB{animation:none;opacity:0}
+.c .hand-coin.gone{opacity:0}
+.c [data-part].bump>.squash{animation:pxSquash .24s steps(2)}
+@keyframes pxSquash{0%{transform:scale(1.08,.92)}100%{transform:none}}
+.c [data-part=slot] .glow{opacity:0}
+.c [data-part=slot].expect .glow{opacity:1;animation:blinkTxt .25s steps(1) infinite}
+.c .px-orbit{transform-box:view-box;transform-origin:780px 250px;animation:spin 1.6s steps(8) infinite}
+.c [data-part=portal].bump .spark{animation:spark .4s steps(4)}
+.c .spark{opacity:0;transform-box:fill-box;transform-origin:center}
+@keyframes spark{0%{opacity:1;transform:scale(.5)}100%{opacity:0;transform:scale(1.6)}}
+.c .float{font:700 22px/1 "Pixelify Sans";color:var(--l);text-shadow:3px 3px 0 var(--k);animation-timing-function:steps(8)}
+
+/* sheets */
+.sheet.a-sheet{background:#F4EEE3 radial-gradient(circle at 1.5px 1.5px,#E4DACA 1.6px,transparent 2px) 0 0/24px 24px}
+.sheet.a-sheet .nm{font:900 14px/1.1 "Nunito";color:#24203A}
+.sheet.a-sheet .ds{font:700 12px/1.3 "Nunito";color:#6B6680}
+.sheet.b-sheet{background:#0B0C10}
+.sheet.b-sheet .card{background:#14161C;border:1px solid #262A35;border-radius:12px;padding:14px 8px 12px;position:relative;overflow:hidden}
+.sheet.b-sheet .card::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--c)}
+.sheet.b-sheet .tile{width:56px;height:56px;margin:0 auto;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 12%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 26%,transparent);color:var(--c)}
+.sheet.b-sheet .tile svg{width:36px;height:36px}
+.sheet.b-sheet .nm{font:600 13px/1.1 "Geist";color:#EDEEF0;margin-top:10px}
+.sheet.b-sheet .ds{font:400 11px/1.3 "Geist Mono";color:#8B90A0;margin-top:3px}
+.sheet.c-sheet{background:#333C57;box-shadow:inset 0 0 0 6px #1A1C2C}
+.sheet.c-sheet svg{image-rendering:pixelated}
+.sheet.c-sheet .nm{font:400 11px/1.1 "Silkscreen";color:#FFCD75}
+.sheet.c-sheet .ds{font:400 11px/1.3 "Space Mono";color:#94B0C2;margin-top:3px}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .a .walker,.c .walker{transform:none}
+  .b .walker{opacity:1;transform:none}
+  .c .frameB{opacity:0}
+}
+</style>
+</head>
+<body>
+
+<!-- =====================================================================
+     SYMBOL LIBRARY — lift these into the product.
+     a-*  : Direction A "Toy Works" parts (viewBox 0 0 120 120, body 100x100 r26, hard 6px shadow)
+     b-*  : Direction B "Night Shift" part glyphs (viewBox 0 0 40 40, stroke=currentColor, accent via --accent)
+     px-* : Direction C "Pixel Works" sprites (Sweetie 16, 24x24 grid, draw at integer scale)
+     ===================================================================== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<defs>
+  <!-- ============ A · TOY WORKS ============ -->
+
+  <!-- A · Coin Slot (Input family #FFB547): cheerful block, slot plate on top, blush + smile. -->
+  <symbol id="a-coin-slot" viewBox="0 0 120 120">
+    <rect x="10" y="12" width="100" height="100" rx="26" fill="#D98E22"/>
+    <rect x="10" y="6" width="100" height="100" rx="26" fill="#FFB547"/>
+    <rect x="22" y="12" width="76" height="5" rx="2.5" fill="#fff" opacity=".28"/>
+    <rect x="32" y="20" width="56" height="24" rx="12" fill="#FFD48A"/>
+    <rect x="41" y="28" width="38" height="8" rx="4" fill="#24203A"/>
+    <g fill="#24203A">
+      <ellipse cx="46" cy="64" rx="5.5" ry="7.5"/><ellipse cx="74" cy="64" rx="5.5" ry="7.5"/>
+    </g>
+    <g fill="#fff"><circle cx="48" cy="61" r="2"/><circle cx="76" cy="61" r="2"/></g>
+    <g fill="#FF7E4F" opacity=".45"><ellipse cx="32" cy="78" rx="7" ry="4"/><ellipse cx="88" cy="78" rx="7" ry="4"/></g>
+    <path d="M51 79 Q60 88 69 79" fill="none" stroke="#24203A" stroke-width="4.5" stroke-linecap="round"/>
+  </symbol>
+
+  <!-- A · Splitter (Logic family #17D9D4): 70/30 dial face with a flap needle; curious eyes. -->
+  <symbol id="a-splitter" viewBox="0 0 120 120">
+    <rect x="10" y="12" width="100" height="100" rx="26" fill="#0FA7A3"/>
+    <rect x="10" y="6" width="100" height="100" rx="26" fill="#17D9D4"/>
+    <rect x="22" y="12" width="76" height="5" rx="2.5" fill="#fff" opacity=".3"/>
+    <g fill="#24203A"><ellipse cx="45" cy="36" rx="5" ry="6.5"/><ellipse cx="75" cy="36" rx="5" ry="6.5"/></g>
+    <g fill="#fff"><circle cx="47" cy="33.5" r="1.8"/><circle cx="77" cy="33.5" r="1.8"/></g>
+    <circle cx="60" cy="74" r="24" fill="#fff" stroke="#24203A" stroke-width="4"/>
+    <path d="M60 74 L60 52 A22 22 0 1 1 39.1 67.2 Z" fill="#FFC53D"/>
+    <path d="M60 74 L60 52 A22 22 0 0 0 39.1 67.2 Z" fill="#7C83A6" opacity=".35"/>
+    <path class="flap" d="M60 74 L46 58" stroke="#24203A" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="60" cy="74" r="5" fill="#24203A"/>
+  </symbol>
+
+  <!-- A · Vault (Storage family #7C83A6): squat safe on feet, round door with an EMPTY window.
+       Worried brows + sweat drop live in .mood-worried; set style="--worried:0" on the <use> to calm it. -->
+  <symbol id="a-vault" viewBox="0 0 120 120">
+    <rect x="22" y="98" width="20" height="16" rx="6" fill="#3F4463"/>
+    <rect x="78" y="98" width="20" height="16" rx="6" fill="#3F4463"/>
+    <rect x="10" y="10" width="100" height="96" rx="24" fill="#5A6082"/>
+    <rect x="10" y="4" width="100" height="96" rx="24" fill="#7C83A6"/>
+    <rect x="22" y="10" width="76" height="5" rx="2.5" fill="#fff" opacity=".25"/>
+    <circle cx="60" cy="66" r="28" fill="#9BA1C2" stroke="#5A6082" stroke-width="4"/>
+    <g fill="#5A6082"><circle cx="60" cy="43" r="2.5"/><circle cx="83" cy="66" r="2.5"/><circle cx="60" cy="89" r="2.5"/><circle cx="37" cy="66" r="2.5"/></g>
+    <rect x="45" y="53" width="30" height="27" rx="9" fill="#3A3557"/>
+    <path d="M50 59 h5 M50 66 h5 M50 73 h5" stroke="#7C83A6" stroke-width="2" stroke-linecap="round"/>
+    <path d="M64 56 l7 0 -10 14 -5 0z" fill="#fff" opacity=".12"/>
+    <rect class="fill-level" x="48" y="76" width="24" height="2.5" rx="1.2" fill="#FF7966"/>
+    <g fill="#24203A"><ellipse cx="44" cy="29" rx="4.5" ry="5.5"/><ellipse cx="76" cy="29" rx="4.5" ry="5.5"/></g>
+    <g fill="#fff"><circle cx="45" cy="31.5" r="1.6"/><circle cx="75" cy="31.5" r="1.6"/></g>
+    <g class="mood-worried" style="opacity:var(--worried,1)">
+      <path d="M36 22 L49 17 M84 22 L71 17" stroke="#24203A" stroke-width="3.5" stroke-linecap="round"/>
+      <path d="M97 14 q5 8 0 11 q-5 -3 0 -11z" fill="#9FDCFF"/>
+    </g>
+  </symbol>
+
+  <!-- A · Gate (Logic family #17D9D4): striped boom arm on a pivot (.gate-arm lifts on pass). -->
+  <symbol id="a-gate" viewBox="0 0 120 120">
+    <rect x="10" y="12" width="100" height="100" rx="26" fill="#0FA7A3"/>
+    <rect x="10" y="6" width="100" height="100" rx="26" fill="#17D9D4"/>
+    <g class="gate-arm">
+      <rect x="22" y="22" width="94" height="14" rx="7" fill="#fff" stroke="#24203A" stroke-width="3.5"/>
+      <g fill="#FF7966"><rect x="44" y="24" width="11" height="10"/><rect x="68" y="24" width="11" height="10"/><rect x="92" y="24" width="11" height="10"/></g>
+      <circle cx="30" cy="29" r="9" fill="#24203A"/><circle cx="30" cy="29" r="3" fill="#17D9D4"/>
+    </g>
+    <g fill="#24203A"><ellipse cx="46" cy="64" rx="5.5" ry="7"/><ellipse cx="74" cy="64" rx="5.5" ry="7"/></g>
+    <g fill="#fff"><circle cx="48" cy="61.5" r="1.9"/><circle cx="76" cy="61.5" r="1.9"/></g>
+    <path d="M38 53 L52 55 M82 53 L68 55" stroke="#24203A" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M52 82 H68" stroke="#24203A" stroke-width="4.5" stroke-linecap="round"/>
+  </symbol>
+
+  <!-- A · Worker (Crew family #FFE02A): hard hat, holds a scoped key (.glint flashes on approve). -->
+  <symbol id="a-worker" viewBox="0 0 120 120">
+    <rect x="10" y="12" width="100" height="100" rx="26" fill="#D4B60E"/>
+    <rect x="10" y="6" width="100" height="100" rx="26" fill="#FFE02A"/>
+    <path d="M30 26 Q30 2 60 2 Q90 2 90 26 Z" fill="#FFB547"/>
+    <rect x="56" y="3" width="8" height="22" rx="4" fill="#E39A17"/>
+    <rect x="20" y="22" width="80" height="9" rx="4.5" fill="#E39A17"/>
+    <g fill="#24203A"><ellipse cx="46" cy="52" rx="5" ry="6.5"/><ellipse cx="74" cy="52" rx="5" ry="6.5"/></g>
+    <g fill="#fff"><circle cx="48" cy="49.5" r="1.8"/><circle cx="76" cy="49.5" r="1.8"/></g>
+    <path d="M53 66 Q60 71 67 66" fill="none" stroke="#24203A" stroke-width="4" stroke-linecap="round"/>
+    <g stroke="#24203A" stroke-width="3.5" stroke-linejoin="round">
+      <rect x="44" y="81" width="34" height="8" rx="3" fill="#FFC53D"/>
+      <path d="M48 89 v7 h6 v-7 M58 89 v5 h5 v-5" fill="#FFC53D"/>
+      <circle cx="86" cy="85" r="12" fill="#FFC53D"/>
+      <circle cx="86" cy="85" r="4" fill="#24203A" stroke="none"/>
+    </g>
+    <circle cx="70" cy="85" r="7" fill="#FFE02A" stroke="#D4B60E" stroke-width="3"/>
+    <path class="glint" d="M104 66 l2 6 6 2 -6 2 -2 6 -2 -6 -6 -2 6 -2z" fill="#fff"/>
+  </symbol>
+
+  <!-- A · Payout (Output family #00EC97): happy closed eyes, open grin, chute popping a coin. -->
+  <symbol id="a-payout" viewBox="0 0 120 120">
+    <rect x="10" y="12" width="100" height="100" rx="26" fill="#00B373"/>
+    <rect x="10" y="6" width="100" height="100" rx="26" fill="#00EC97"/>
+    <rect x="22" y="12" width="76" height="5" rx="2.5" fill="#fff" opacity=".3"/>
+    <path d="M86 50 H104 a8 8 0 0 1 8 8 V84 a8 8 0 0 1 -8 8 H86 Z" fill="#00B373"/>
+    <rect x="90" y="56" width="16" height="30" rx="6" fill="#24203A"/>
+    <circle cx="103" cy="70" r="11" fill="#E39A17"/><circle cx="103" cy="70" r="8.5" fill="#FFC53D"/>
+    <rect x="101" y="64" width="3" height="12" rx="1.5" fill="#FFE08A"/>
+    <g fill="none" stroke="#24203A" stroke-width="4.5" stroke-linecap="round">
+      <path d="M32 52 Q38 43 44 52"/><path d="M58 52 Q64 43 70 52"/>
+    </g>
+    <path d="M36 64 H66 Q66 84 51 84 Q36 84 36 64 Z" fill="#24203A"/>
+    <path d="M43 77 Q51 72 59 77 Q55 82 51 82 Q47 82 43 77Z" fill="#FF7966"/>
+    <g fill="#FFF" opacity=".45"><ellipse cx="26" cy="66" rx="6" ry="3.5"/></g>
+  </symbol>
+
+  <!-- A · Portal (the only lilac thing, #9797FF): a ring with a void that has eyes. -->
+  <symbol id="a-portal" viewBox="0 0 120 120">
+    <rect x="10" y="12" width="100" height="100" rx="26" fill="#6E6EE0"/>
+    <rect x="10" y="6" width="100" height="100" rx="26" fill="#9797FF"/>
+    <rect x="22" y="12" width="76" height="5" rx="2.5" fill="#fff" opacity=".3"/>
+    <circle cx="60" cy="56" r="36" fill="#6E6EE0"/>
+    <circle cx="60" cy="56" r="29" fill="#C3C3FF"/>
+    <circle cx="60" cy="56" r="22" fill="#24203A"/>
+    <path d="M60 41 a15 15 0 0 1 15 15 M45 56 a15 15 0 0 1 6 -12 M75 62 a15 15 0 0 1 -22 10" fill="none" stroke="#6E6EE0" stroke-width="3" stroke-linecap="round"/>
+    <g fill="#fff"><ellipse cx="53" cy="56" rx="3.2" ry="4.4"/><ellipse cx="67" cy="56" rx="3.2" ry="4.4"/></g>
+    <g fill="#24203A" opacity=".55"><circle cx="38" cy="99" r="3"/><circle cx="60" cy="99" r="3"/><circle cx="82" cy="99" r="3"/></g>
+  </symbol>
+
+  <!-- A · coin (gold disc, rim, a stripe so rolling reads) -->
+  <symbol id="a-coin" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="11.5" fill="#E39A17"/><circle cx="12" cy="12" r="9" fill="#FFC53D"/>
+    <rect x="10.4" y="5.5" width="3.2" height="13" rx="1.6" fill="#FFE08A"/>
+  </symbol>
+
+  <!-- A · AI customer: soft blue gumdrop with a gold sparkle (the "AI" hint), arm out. -->
+  <symbol id="a-customer" viewBox="0 0 90 110">
+    <ellipse cx="45" cy="104" rx="30" ry="5" fill="#24203A" opacity=".1"/>
+    <g fill="#24203A"><ellipse cx="34" cy="100" rx="8" ry="5"/><ellipse cx="56" cy="100" rx="8" ry="5"/></g>
+    <rect x="16" y="32" width="58" height="68" rx="29" fill="#5A8FE0"/>
+    <rect x="16" y="26" width="58" height="68" rx="29" fill="#7FB5FF"/>
+    <path d="M70 62 L84 54" stroke="#5A8FE0" stroke-width="9" stroke-linecap="round"/>
+    <g fill="#24203A"><ellipse cx="42" cy="54" rx="4.5" ry="6"/><ellipse cx="60" cy="54" rx="4.5" ry="6"/></g>
+    <g fill="#fff"><circle cx="44" cy="52" r="1.6"/><circle cx="62" cy="52" r="1.6"/></g>
+    <path d="M45 67 Q51 72 57 67" fill="none" stroke="#24203A" stroke-width="3.5" stroke-linecap="round"/>
+    <g fill="#FF8AA8" opacity=".5"><ellipse cx="32" cy="64" rx="5" ry="3"/><ellipse cx="68" cy="63" rx="4" ry="3"/></g>
+    <path d="M45 4 l3 8 8 3 -8 3 -3 8 -3 -8 -8 -3 8 -3z" fill="#FFC53D" stroke="#E39A17" stroke-width="1.5" stroke-linejoin="round"/>
+  </symbol>
+
+  <!-- ============ B · NIGHT SHIFT glyphs (stroke=currentColor; gold accents) ============ -->
+  <!-- B · Coin Slot: a box with a slot, a coin dropping in. -->
+  <symbol id="b-coin-slot" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="7" y="17" width="26" height="17" rx="5"/><path d="M14 23.5 H26"/>
+    <circle cx="20" cy="9" r="4.5" fill="#FFD24A" stroke="none"/><path d="M20 15 V19" opacity=".5"/>
+  </symbol>
+  <!-- B · Splitter: one line in, two out, a hinge dot. -->
+  <symbol id="b-splitter" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 20 H15 C21 20 21 10 28 10 H35"/><path d="M15 20 C21 20 21 30 28 30 H35" opacity=".55"/>
+    <path d="M31 6.5 L35 10 L31 13.5"/><path d="M31 26.5 L35 30 L31 33.5" opacity=".55"/>
+    <circle cx="15" cy="20" r="3" fill="currentColor"/>
+  </symbol>
+  <!-- B · Vault: safe with a gauge arc (empty = short coral tick). -->
+  <symbol id="b-vault" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="6" y="7" width="28" height="25" rx="6"/><path d="M11 32 V35 M29 32 V35"/>
+    <circle cx="20" cy="19.5" r="6.5" opacity=".45"/>
+    <path d="M14.3 23 A6.5 6.5 0 0 1 13.6 18.4" stroke="#FF5D5D" stroke-width="2.4"/>
+    <circle cx="20" cy="19.5" r="1.6" fill="currentColor"/>
+  </symbol>
+  <!-- B · Gate: post + boom bar + rule chip. -->
+  <symbol id="b-gate" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 9 V33 M5 33 H15"/><path d="M10 14 H35" stroke-width="3"/>
+    <path d="M18 14 v0 M24 14 v0 M30 14 v0" stroke="#0B0C10" stroke-width="2.4"/>
+    <rect x="18" y="22" width="16" height="7" rx="3.5" opacity=".55"/>
+  </symbol>
+  <!-- B · Worker: person with a key. -->
+  <symbol id="b-worker" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="16" cy="12.5" r="5.5"/><path d="M6 33 C6 24.5 26 24.5 26 33"/>
+    <circle cx="30" cy="20" r="3.5" stroke="#FFD24A"/><path d="M30 23.5 V34 M30 29.5 H33.5 M30 32.5 H32.5" stroke="#FFD24A"/>
+  </symbol>
+  <!-- B · Payout: coin leaving to the right. -->
+  <symbol id="b-payout" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="13" cy="20" r="6.5" fill="#FFD24A" stroke="none"/>
+    <path d="M23 20 H35 M29.5 14.5 L35 20 L29.5 25.5"/><path d="M6 31 H22" opacity=".45"/>
+  </symbol>
+  <!-- B · Portal: two offset rings (inner rotates while pending). -->
+  <symbol id="b-portal" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="20" cy="20" r="14"/>
+    <circle cx="20" cy="20" r="8.5" stroke-dasharray="11 4.5" opacity=".7"/>
+    <circle cx="20" cy="20" r="2.4" fill="currentColor"/>
+  </symbol>
+
+  <!-- ============ C · PIXEL WORKS sprites (generated from 24x24 grids, Sweetie 16 by GrafxKid) ============ -->
+  <!-- Coin Slot: arcade cabinet, smiling screen, glowing coin slot -->
+  <symbol id="px-coin-slot" viewBox="0 0 24 24" shape-rendering="crispEdges">
+    <path fill="#1A1C2C" d="M5 1h14v1h-14zM5 2h1v1h-1zM18 2h1v1h-1zM5 3h1v1h-1zM18 3h1v1h-1zM5 4h1v1h-1zM18 4h1v1h-1zM5 5h14v1h-14zM5 6h1v1h-1zM7 6h10v1h-10zM18 6h1v1h-1zM5 7h1v1h-1zM7 7h1v1h-1zM16 7h1v1h-1zM18 7h1v1h-1zM5 8h1v1h-1zM7 8h1v1h-1zM16 8h1v1h-1zM18 8h1v1h-1zM5 9h1v1h-1zM7 9h1v1h-1zM16 9h1v1h-1zM18 9h1v1h-1zM5 10h1v1h-1zM7 10h1v1h-1zM16 10h1v1h-1zM18 10h1v1h-1zM5 11h1v1h-1zM7 11h1v1h-1zM16 11h1v1h-1zM18 11h1v1h-1zM5 12h1v1h-1zM7 12h1v1h-1zM16 12h1v1h-1zM18 12h1v1h-1zM5 13h1v1h-1zM7 13h10v1h-10zM18 13h1v1h-1zM4 14h16v1h-16zM4 15h1v1h-1zM19 15h1v1h-1zM4 16h1v1h-1zM19 16h1v1h-1zM4 17h16v1h-16zM5 18h1v1h-1zM18 18h1v1h-1zM5 19h1v1h-1zM10 19h4v1h-4zM18 19h1v1h-1zM5 20h1v1h-1zM10 20h1v1h-1zM13 20h1v1h-1zM18 20h1v1h-1zM5 21h1v1h-1zM10 21h4v1h-4zM18 21h1v1h-1zM5 22h1v1h-1zM18 22h1v1h-1zM5 23h14v1h-14z"/>
+    <path fill="#5D275D" d="M6 22h12v1h-12z"/>
+    <path fill="#B13E53" d="M6 6h1v1h-1zM17 6h1v1h-1zM17 7h1v1h-1zM17 8h1v1h-1zM17 9h1v1h-1zM17 10h1v1h-1zM17 11h1v1h-1zM17 12h1v1h-1zM6 13h1v1h-1zM17 13h1v1h-1zM5 16h2v1h-2zM8 16h7v1h-7zM16 16h3v1h-3zM7 18h11v1h-11zM7 19h3v1h-3zM14 19h4v1h-4zM7 20h3v1h-3zM14 20h4v1h-4zM7 21h3v1h-3zM14 21h4v1h-4z"/>
+    <path fill="#EF7D57" d="M6 2h12v1h-12zM6 3h1v1h-1zM17 3h1v1h-1zM6 4h12v1h-12zM6 7h1v1h-1zM6 8h1v1h-1zM6 9h1v1h-1zM6 10h1v1h-1zM6 11h1v1h-1zM6 12h1v1h-1zM5 15h14v1h-14zM6 18h1v1h-1zM6 19h1v1h-1zM6 20h1v1h-1zM6 21h1v1h-1z"/>
+    <path fill="#FFCD75" d="M7 3h1v1h-1zM9 3h1v1h-1zM11 3h1v1h-1zM13 3h1v1h-1zM15 3h1v1h-1zM7 16h1v1h-1zM11 20h2v1h-2z"/>
+    <path fill="#257179" d="M8 7h8v1h-8zM8 8h1v1h-1zM10 8h4v1h-4zM15 8h1v1h-1zM8 9h1v1h-1zM10 9h4v1h-4zM15 9h1v1h-1zM8 10h8v1h-8zM8 11h1v1h-1zM10 11h4v1h-4zM15 11h1v1h-1zM8 12h2v1h-2zM14 12h2v1h-2z"/>
+    <path fill="#41A6F6" d="M15 16h1v1h-1z"/>
+    <path fill="#73EFF7" d="M9 11h1v1h-1zM14 11h1v1h-1zM10 12h4v1h-4z"/>
+    <path fill="#F4F4F4" d="M8 3h1v1h-1zM10 3h1v1h-1zM12 3h1v1h-1zM14 3h1v1h-1zM16 3h1v1h-1zM9 8h1v1h-1zM14 8h1v1h-1zM9 9h1v1h-1zM14 9h1v1h-1z"/>
+  </symbol>
+  <!-- Splitter: teal box with a 70/30 dial and a flap needle -->
+  <symbol id="px-splitter" viewBox="0 0 24 24" shape-rendering="crispEdges">
+    <path fill="#1A1C2C" d="M3 3h18v1h-18zM2 4h1v1h-1zM21 4h1v1h-1zM2 5h1v1h-1zM21 5h2v1h-2zM2 6h1v1h-1zM23 6h1v1h-1zM2 7h1v1h-1zM7 7h1v1h-1zM11 7h2v1h-2zM16 7h1v1h-1zM23 7h1v1h-1zM2 8h1v1h-1zM9 8h2v1h-2zM13 8h2v1h-2zM23 8h1v1h-1zM1 9h2v1h-2zM8 9h1v1h-1zM15 9h1v1h-1zM21 9h2v1h-2zM0 10h1v1h-1zM7 10h1v1h-1zM13 10h1v1h-1zM16 10h1v1h-1zM21 10h1v1h-1zM0 11h1v1h-1zM7 11h1v1h-1zM12 11h1v1h-1zM16 11h1v1h-1zM21 11h1v1h-1zM0 12h1v1h-1zM7 12h1v1h-1zM12 12h1v1h-1zM16 12h1v1h-1zM21 12h1v1h-1zM0 13h1v1h-1zM7 13h1v1h-1zM16 13h1v1h-1zM21 13h1v1h-1zM1 14h2v1h-2zM7 14h1v1h-1zM16 14h1v1h-1zM21 14h2v1h-2zM2 15h1v1h-1zM8 15h1v1h-1zM15 15h1v1h-1zM23 15h1v1h-1zM2 16h1v1h-1zM9 16h2v1h-2zM13 16h2v1h-2zM23 16h1v1h-1zM2 17h1v1h-1zM11 17h2v1h-2zM23 17h1v1h-1zM2 18h1v1h-1zM21 18h2v1h-2zM3 19h18v1h-18z"/>
+    <path fill="#FFCD75" d="M11 8h1v1h-1zM9 9h3v1h-3zM8 10h4v1h-4zM8 11h4v1h-4zM8 12h4v1h-4zM8 13h7v1h-7zM8 14h8v1h-8zM9 15h6v1h-6zM11 16h2v1h-2z"/>
+    <path fill="#257179" d="M3 6h3v1h-3zM8 6h7v1h-7zM17 6h4v1h-4zM3 7h3v1h-3zM8 7h3v1h-3zM13 7h2v1h-2zM17 7h4v1h-4zM3 8h6v1h-6zM15 8h6v1h-6zM3 9h5v1h-5zM16 9h5v1h-5zM3 10h4v1h-4zM17 10h4v1h-4zM3 11h4v1h-4zM17 11h4v1h-4zM3 12h4v1h-4zM17 12h4v1h-4zM3 13h4v1h-4zM17 13h4v1h-4zM3 14h4v1h-4zM17 14h4v1h-4zM3 15h5v1h-5zM16 15h5v1h-5zM3 16h6v1h-6zM15 16h6v1h-6z"/>
+    <path fill="#29366F" d="M3 17h8v1h-8zM13 17h8v1h-8zM3 18h18v1h-18z"/>
+    <path fill="#73EFF7" d="M3 4h18v1h-18zM3 5h18v1h-18z"/>
+    <path fill="#F4F4F4" d="M6 6h2v1h-2zM15 6h2v1h-2zM6 7h1v1h-1zM15 7h1v1h-1zM12 8h1v1h-1zM12 9h3v1h-3zM12 10h1v1h-1zM14 10h2v1h-2zM13 11h3v1h-3zM13 12h3v1h-3zM15 13h1v1h-1z"/>
+    <path fill="#94B0C2" d="M21 6h2v1h-2zM21 7h2v1h-2zM21 8h2v1h-2zM1 10h2v1h-2zM1 11h2v1h-2zM1 12h2v1h-2zM1 13h2v1h-2zM21 15h2v1h-2zM21 16h2v1h-2zM21 17h2v1h-2z"/>
+  </symbol>
+  <!-- Vault: squat safe, worried brows, empty window with a red line -->
+  <symbol id="px-vault" viewBox="0 0 24 24" shape-rendering="crispEdges">
+    <path fill="#1A1C2C" d="M2 2h20v1h-20zM1 3h1v1h-1zM22 3h1v1h-1zM1 4h1v1h-1zM22 4h1v1h-1zM1 5h1v1h-1zM6 5h1v1h-1zM17 5h1v1h-1zM22 5h1v1h-1zM1 6h1v1h-1zM5 6h1v1h-1zM18 6h1v1h-1zM22 6h1v1h-1zM1 7h1v1h-1zM22 7h1v1h-1zM1 8h1v1h-1zM6 8h1v1h-1zM17 8h1v1h-1zM22 8h1v1h-1zM1 9h1v1h-1zM22 9h1v1h-1zM1 10h1v1h-1zM22 10h1v1h-1zM1 11h1v1h-1zM22 11h1v1h-1zM1 12h1v1h-1zM22 12h1v1h-1zM1 13h1v1h-1zM16 13h1v1h-1zM22 13h1v1h-1zM1 14h1v1h-1zM22 14h1v1h-1zM1 15h1v1h-1zM22 15h1v1h-1zM1 16h1v1h-1zM22 16h1v1h-1zM1 17h1v1h-1zM22 17h1v1h-1zM1 18h1v1h-1zM22 18h1v1h-1zM1 19h1v1h-1zM22 19h1v1h-1zM2 20h2v1h-2zM8 20h8v1h-8zM20 20h2v1h-2zM3 21h1v1h-1zM8 21h1v1h-1zM15 21h1v1h-1zM20 21h1v1h-1zM4 22h4v1h-4zM16 22h4v1h-4z"/>
+    <path fill="#B13E53" d="M9 15h6v1h-6z"/>
+    <path fill="#73EFF7" d="M22 0h1v1h-1zM21 1h2v1h-2z"/>
+    <path fill="#F4F4F4" d="M6 7h2v1h-2zM16 7h2v1h-2zM7 8h1v1h-1zM16 8h1v1h-1zM10 9h4v1h-4zM9 10h6v1h-6zM8 11h1v1h-1zM15 11h1v1h-1zM8 12h1v1h-1zM15 12h1v1h-1zM8 13h1v1h-1zM15 13h1v1h-1zM8 14h1v1h-1zM15 14h1v1h-1zM8 15h1v1h-1zM15 15h1v1h-1zM9 16h6v1h-6zM10 17h4v1h-4z"/>
+    <path fill="#94B0C2" d="M2 3h20v1h-20zM2 4h20v1h-20zM9 8h6v1h-6zM8 9h2v1h-2zM14 9h2v1h-2zM7 10h2v1h-2zM15 10h2v1h-2zM7 11h1v1h-1zM16 11h1v1h-1zM6 12h2v1h-2zM16 12h2v1h-2zM6 13h2v1h-2zM6 14h2v1h-2zM16 14h2v1h-2zM7 15h1v1h-1zM16 15h1v1h-1zM7 16h2v1h-2zM15 16h2v1h-2zM8 17h2v1h-2zM14 17h2v1h-2zM9 18h6v1h-6z"/>
+    <path fill="#566C86" d="M2 5h4v1h-4zM7 5h10v1h-10zM18 5h4v1h-4zM2 6h3v1h-3zM6 6h12v1h-12zM19 6h3v1h-3zM2 7h4v1h-4zM8 7h8v1h-8zM18 7h4v1h-4zM2 8h4v1h-4zM8 8h1v1h-1zM15 8h1v1h-1zM18 8h4v1h-4zM2 9h6v1h-6zM16 9h6v1h-6zM2 10h5v1h-5zM17 10h5v1h-5zM2 11h5v1h-5zM17 11h5v1h-5zM2 12h4v1h-4zM18 12h4v1h-4zM2 13h4v1h-4zM17 13h5v1h-5zM2 14h4v1h-4zM18 14h4v1h-4zM2 15h5v1h-5zM17 15h5v1h-5zM2 16h5v1h-5zM17 16h5v1h-5zM2 17h6v1h-6zM16 17h6v1h-6z"/>
+    <path fill="#333C57" d="M9 11h6v1h-6zM9 12h6v1h-6zM9 13h6v1h-6zM9 14h6v1h-6zM2 18h7v1h-7zM15 18h7v1h-7zM2 19h20v1h-20zM4 20h4v1h-4zM16 20h4v1h-4zM4 21h4v1h-4zM16 21h4v1h-4z"/>
+  </symbol>
+  <!-- Gate: booth with eyes and a red/white boom arm -->
+  <symbol id="px-gate" viewBox="0 0 24 24" shape-rendering="crispEdges">
+    <path fill="#1A1C2C" d="M4 4h4v1h-4zM3 5h1v1h-1zM8 5h15v1h-15zM3 6h1v1h-1zM5 6h1v1h-1zM23 6h1v1h-1zM3 7h1v1h-1zM6 7h1v1h-1zM23 7h1v1h-1zM3 8h1v1h-1zM23 8h1v1h-1zM2 9h2v1h-2zM8 9h12v1h-12zM22 9h1v1h-1zM1 10h1v1h-1zM11 10h1v1h-1zM19 10h1v1h-1zM22 10h1v1h-1zM1 11h1v1h-1zM11 11h1v1h-1zM19 11h1v1h-1zM22 11h1v1h-1zM1 12h1v1h-1zM11 12h1v1h-1zM19 12h1v1h-1zM22 12h1v1h-1zM1 13h1v1h-1zM11 13h1v1h-1zM19 13h1v1h-1zM22 13h1v1h-1zM1 14h1v1h-1zM4 14h1v1h-1zM6 14h1v1h-1zM11 14h1v1h-1zM19 14h1v1h-1zM22 14h1v1h-1zM1 15h1v1h-1zM11 15h1v1h-1zM19 15h1v1h-1zM22 15h1v1h-1zM1 16h1v1h-1zM11 16h1v1h-1zM19 16h1v1h-1zM22 16h1v1h-1zM1 17h1v1h-1zM11 17h1v1h-1zM19 17h1v1h-1zM22 17h1v1h-1zM1 18h1v1h-1zM11 18h1v1h-1zM19 18h1v1h-1zM22 18h1v1h-1zM1 19h1v1h-1zM11 19h9v1h-9zM22 19h1v1h-1zM0 20h1v1h-1zM23 20h1v1h-1zM0 21h1v1h-1zM23 21h1v1h-1zM1 22h22v1h-22z"/>
+    <path fill="#B13E53" d="M8 6h1v1h-1zM12 6h3v1h-3zM18 6h3v1h-3zM8 7h1v1h-1zM12 7h3v1h-3zM18 7h3v1h-3zM8 8h1v1h-1zM12 8h3v1h-3zM18 8h3v1h-3z"/>
+    <path fill="#EF7D57" d="M5 16h2v1h-2z"/>
+    <path fill="#257179" d="M2 12h9v1h-9zM2 13h2v1h-2zM5 13h1v1h-1zM7 13h4v1h-4zM2 14h2v1h-2zM5 14h1v1h-1zM7 14h4v1h-4zM2 15h9v1h-9zM2 16h3v1h-3zM7 16h4v1h-4zM2 17h9v1h-9zM2 18h9v1h-9zM2 19h9v1h-9z"/>
+    <path fill="#73EFF7" d="M2 10h9v1h-9zM2 11h9v1h-9z"/>
+    <path fill="#F4F4F4" d="M9 6h3v1h-3zM15 6h3v1h-3zM21 6h2v1h-2zM9 7h3v1h-3zM15 7h3v1h-3zM21 7h2v1h-2zM9 8h3v1h-3zM15 8h3v1h-3zM21 8h2v1h-2zM4 13h1v1h-1zM6 13h1v1h-1z"/>
+    <path fill="#94B0C2" d="M4 5h4v1h-4zM4 6h1v1h-1zM6 6h2v1h-2zM4 7h2v1h-2zM7 7h1v1h-1zM4 8h4v1h-4zM4 9h4v1h-4zM20 9h2v1h-2zM20 10h2v1h-2zM20 11h2v1h-2zM20 12h2v1h-2zM20 13h2v1h-2zM20 14h2v1h-2zM20 15h2v1h-2zM20 16h2v1h-2zM20 17h2v1h-2zM20 18h2v1h-2zM20 19h2v1h-2z"/>
+    <path fill="#566C86" d="M1 20h22v1h-22zM1 21h22v1h-22z"/>
+  </symbol>
+  <!-- Worker: crew member in a hard hat holding a scoped key -->
+  <symbol id="px-worker" viewBox="0 0 24 24" shape-rendering="crispEdges">
+    <path fill="#1A1C2C" d="M8 1h8v1h-8zM7 2h1v1h-1zM16 2h1v1h-1zM7 3h1v1h-1zM16 3h1v1h-1zM6 4h2v1h-2zM16 4h2v1h-2zM5 5h1v1h-1zM18 5h1v1h-1zM6 6h1v1h-1zM17 6h1v1h-1zM6 7h1v1h-1zM17 7h1v1h-1zM6 8h1v1h-1zM9 8h1v1h-1zM14 8h1v1h-1zM17 8h1v1h-1zM6 9h1v1h-1zM9 9h1v1h-1zM14 9h1v1h-1zM17 9h1v1h-1zM19 9h4v1h-4zM6 10h1v1h-1zM17 10h2v1h-2zM23 10h1v1h-1zM6 11h1v1h-1zM17 11h2v1h-2zM23 11h1v1h-1zM5 12h2v1h-2zM17 12h2v1h-2zM23 12h1v1h-1zM4 13h1v1h-1zM19 13h1v1h-1zM22 13h1v1h-1zM4 14h1v1h-1zM19 14h1v1h-1zM22 14h1v1h-1zM4 15h1v1h-1zM17 15h1v1h-1zM22 15h1v1h-1zM4 16h1v1h-1zM17 16h1v1h-1zM22 16h1v1h-1zM4 17h1v1h-1zM17 17h3v1h-3zM22 17h1v1h-1zM5 18h2v1h-2zM17 18h1v1h-1zM20 18h2v1h-2zM7 19h1v1h-1zM11 19h2v1h-2zM16 19h1v1h-1zM7 20h1v1h-1zM11 20h2v1h-2zM16 20h1v1h-1zM7 21h1v1h-1zM11 21h2v1h-2zM16 21h1v1h-1zM8 22h3v1h-3zM13 22h3v1h-3z"/>
+    <path fill="#EF7D57" d="M8 2h1v1h-1zM12 2h4v1h-4zM8 3h8v1h-8zM8 4h8v1h-8zM6 5h12v1h-12zM11 10h2v1h-2zM21 11h1v1h-1z"/>
+    <path fill="#FFCD75" d="M9 2h3v1h-3zM7 6h10v1h-10zM7 7h10v1h-10zM7 8h2v1h-2zM10 8h4v1h-4zM15 8h2v1h-2zM7 9h2v1h-2zM10 9h4v1h-4zM15 9h2v1h-2zM7 10h4v1h-4zM13 10h4v1h-4zM19 10h4v1h-4zM7 11h10v1h-10zM19 11h2v1h-2zM22 11h1v1h-1zM19 12h4v1h-4zM20 13h2v1h-2zM20 14h2v1h-2zM18 15h4v1h-4zM18 16h4v1h-4zM5 17h2v1h-2zM20 17h2v1h-2z"/>
+    <path fill="#29366F" d="M8 12h2v1h-2zM14 12h2v1h-2zM8 13h2v1h-2zM14 13h2v1h-2zM8 14h2v1h-2zM14 14h2v1h-2zM8 19h3v1h-3zM13 19h3v1h-3zM8 20h3v1h-3zM13 20h3v1h-3zM8 21h3v1h-3zM13 21h3v1h-3z"/>
+    <path fill="#3B5DC9" d="M7 12h1v1h-1zM10 12h4v1h-4zM16 12h1v1h-1zM5 13h3v1h-3zM10 13h4v1h-4zM16 13h3v1h-3zM5 14h3v1h-3zM10 14h4v1h-4zM16 14h3v1h-3zM5 15h4v1h-4zM15 15h2v1h-2zM5 16h4v1h-4zM15 16h2v1h-2zM7 17h2v1h-2zM15 17h2v1h-2zM7 18h10v1h-10z"/>
+    <path fill="#41A6F6" d="M9 15h6v1h-6zM9 16h6v1h-6zM9 17h6v1h-6z"/>
+    <path fill="#F4F4F4" d="M23 8h1v1h-1z"/>
+  </symbol>
+  <!-- Payout: green box, happy eyes, chute popping a coin -->
+  <symbol id="px-payout" viewBox="0 0 24 24" shape-rendering="crispEdges">
+    <path fill="#1A1C2C" d="M2 4h16v1h-16zM1 5h1v1h-1zM18 5h1v1h-1zM1 6h1v1h-1zM18 6h1v1h-1zM1 7h1v1h-1zM18 7h1v1h-1zM1 8h1v1h-1zM18 8h3v1h-3zM1 9h1v1h-1zM6 9h1v1h-1zM12 9h1v1h-1zM21 9h1v1h-1zM1 10h1v1h-1zM5 10h1v1h-1zM7 10h1v1h-1zM11 10h1v1h-1zM13 10h1v1h-1zM18 10h4v1h-4zM1 11h1v1h-1zM18 11h1v1h-1zM22 11h1v1h-1zM1 12h1v1h-1zM23 12h1v1h-1zM1 13h1v1h-1zM6 13h5v1h-5zM23 13h1v1h-1zM1 14h1v1h-1zM6 14h1v1h-1zM10 14h1v1h-1zM23 14h1v1h-1zM1 15h1v1h-1zM7 15h3v1h-3zM18 15h1v1h-1zM22 15h1v1h-1zM1 16h1v1h-1zM18 16h4v1h-4zM1 17h1v1h-1zM21 17h1v1h-1zM1 18h1v1h-1zM18 18h3v1h-3zM1 19h1v1h-1zM18 19h1v1h-1zM2 20h16v1h-16z"/>
+    <path fill="#B13E53" d="M7 14h3v1h-3z"/>
+    <path fill="#FFCD75" d="M19 11h3v1h-3zM18 12h2v1h-2zM21 12h2v1h-2zM18 13h5v1h-5zM18 14h5v1h-5zM19 15h3v1h-3z"/>
+    <path fill="#A7F070" d="M2 5h16v1h-16zM2 6h16v1h-16z"/>
+    <path fill="#38B764" d="M2 7h16v1h-16zM2 8h16v1h-16zM2 9h4v1h-4zM7 9h5v1h-5zM13 9h4v1h-4zM2 10h3v1h-3zM6 10h1v1h-1zM8 10h3v1h-3zM12 10h1v1h-1zM14 10h3v1h-3zM2 11h15v1h-15zM2 12h15v1h-15zM2 13h4v1h-4zM11 13h6v1h-6zM2 14h4v1h-4zM11 14h6v1h-6zM2 15h5v1h-5zM10 15h7v1h-7zM2 16h15v1h-15zM2 17h15v1h-15z"/>
+    <path fill="#257179" d="M2 18h16v1h-16zM2 19h16v1h-16z"/>
+    <path fill="#F4F4F4" d="M20 12h1v1h-1z"/>
+    <path fill="#566C86" d="M17 9h4v1h-4zM17 10h1v1h-1zM17 11h1v1h-1zM17 12h1v1h-1zM17 13h1v1h-1zM17 14h1v1h-1zM17 15h1v1h-1zM17 16h1v1h-1zM17 17h4v1h-4z"/>
+  </symbol>
+  <!-- Portal: concentric blue ring; a void with eyes -->
+  <symbol id="px-portal" viewBox="0 0 24 24" shape-rendering="crispEdges">
+    <path fill="#1A1C2C" d="M8 1h8v1h-8zM6 2h2v1h-2zM16 2h2v1h-2zM5 3h1v1h-1zM18 3h1v1h-1zM4 4h1v1h-1zM19 4h1v1h-1zM3 5h1v1h-1zM20 5h1v1h-1zM2 6h1v1h-1zM21 6h1v1h-1zM2 7h1v1h-1zM21 7h1v1h-1zM1 8h1v1h-1zM10 8h4v1h-4zM22 8h1v1h-1zM1 9h1v1h-1zM9 9h6v1h-6zM22 9h1v1h-1zM1 10h1v1h-1zM8 10h8v1h-8zM22 10h1v1h-1zM1 11h1v1h-1zM8 11h2v1h-2zM11 11h2v1h-2zM14 11h2v1h-2zM22 11h1v1h-1zM1 12h1v1h-1zM8 12h2v1h-2zM11 12h2v1h-2zM14 12h2v1h-2zM22 12h1v1h-1zM1 13h1v1h-1zM8 13h8v1h-8zM22 13h1v1h-1zM1 14h1v1h-1zM9 14h6v1h-6zM22 14h1v1h-1zM1 15h1v1h-1zM10 15h4v1h-4zM22 15h1v1h-1zM2 16h1v1h-1zM21 16h1v1h-1zM2 17h1v1h-1zM21 17h1v1h-1zM3 18h1v1h-1zM20 18h1v1h-1zM4 19h1v1h-1zM19 19h1v1h-1zM5 20h1v1h-1zM18 20h1v1h-1zM6 21h2v1h-2zM16 21h2v1h-2zM8 22h8v1h-8z"/>
+    <path fill="#29366F" d="M8 2h4v1h-4zM14 2h2v1h-2zM6 3h4v1h-4zM14 3h4v1h-4zM5 4h2v1h-2zM18 4h1v1h-1zM4 5h2v1h-2zM18 5h2v1h-2zM3 6h2v1h-2zM19 6h2v1h-2zM3 7h1v1h-1zM20 7h1v1h-1zM2 8h2v1h-2zM20 8h2v1h-2zM2 9h2v1h-2zM20 9h2v1h-2zM2 10h1v1h-1zM21 10h1v1h-1zM2 11h1v1h-1zM2 12h1v1h-1zM2 13h1v1h-1zM21 13h1v1h-1zM2 14h1v1h-1zM20 14h2v1h-2zM2 15h2v1h-2zM20 15h2v1h-2zM3 16h1v1h-1zM20 16h1v1h-1zM3 17h2v1h-2zM19 17h2v1h-2zM4 18h1v1h-1zM18 18h1v1h-1zM5 19h2v1h-2zM17 19h2v1h-2zM6 20h4v1h-4zM14 20h4v1h-4zM8 21h2v1h-2zM12 21h4v1h-4z"/>
+    <path fill="#3B5DC9" d="M10 3h4v1h-4zM7 4h10v1h-10zM7 5h2v1h-2zM15 5h3v1h-3zM5 6h3v1h-3zM16 6h3v1h-3zM4 7h3v1h-3zM17 7h3v1h-3zM4 8h2v1h-2zM18 8h2v1h-2zM4 9h1v1h-1zM19 9h1v1h-1zM3 10h2v1h-2zM19 10h2v1h-2zM3 11h2v1h-2zM19 11h2v1h-2zM3 12h2v1h-2zM19 12h2v1h-2zM4 13h1v1h-1zM19 13h2v1h-2zM4 14h1v1h-1zM19 14h1v1h-1zM4 15h2v1h-2zM18 15h2v1h-2zM4 16h3v1h-3zM17 16h3v1h-3zM5 17h3v1h-3zM16 17h3v1h-3zM6 18h3v1h-3zM15 18h3v1h-3zM7 19h10v1h-10zM10 20h4v1h-4z"/>
+    <path fill="#41A6F6" d="M12 2h2v1h-2zM9 5h6v1h-6zM8 6h8v1h-8zM7 7h2v1h-2zM15 7h2v1h-2zM6 8h2v1h-2zM16 8h2v1h-2zM5 9h2v1h-2zM17 9h2v1h-2zM5 10h2v1h-2zM17 10h2v1h-2zM5 11h2v1h-2zM17 11h2v1h-2zM21 11h1v1h-1zM5 12h2v1h-2zM17 12h2v1h-2zM21 12h1v1h-1zM3 13h1v1h-1zM5 13h2v1h-2zM17 13h2v1h-2zM3 14h1v1h-1zM5 14h2v1h-2zM17 14h2v1h-2zM6 15h2v1h-2zM16 15h2v1h-2zM7 16h2v1h-2zM15 16h2v1h-2zM8 17h8v1h-8zM9 18h6v1h-6zM10 21h2v1h-2z"/>
+    <path fill="#73EFF7" d="M17 4h1v1h-1zM6 5h1v1h-1zM9 7h6v1h-6zM8 8h2v1h-2zM14 8h2v1h-2zM7 9h2v1h-2zM15 9h2v1h-2zM7 10h1v1h-1zM16 10h1v1h-1zM7 11h1v1h-1zM16 11h1v1h-1zM7 12h1v1h-1zM16 12h1v1h-1zM7 13h1v1h-1zM16 13h1v1h-1zM7 14h2v1h-2zM15 14h2v1h-2zM8 15h2v1h-2zM14 15h2v1h-2zM9 16h6v1h-6zM5 18h1v1h-1zM19 18h1v1h-1z"/>
+    <path fill="#F4F4F4" d="M10 11h1v1h-1zM13 11h1v1h-1zM10 12h1v1h-1zM13 12h1v1h-1z"/>
+  </symbol>
+  <!-- Coin: 8x8 gold coin -->
+  <symbol id="px-coin" viewBox="0 0 8 8" shape-rendering="crispEdges">
+    <path fill="#1A1C2C" d="M2 0h4v1h-4zM1 1h1v1h-1zM6 1h1v1h-1zM0 2h1v1h-1zM7 2h1v1h-1zM0 3h1v1h-1zM7 3h1v1h-1zM0 4h1v1h-1zM7 4h1v1h-1zM0 5h1v1h-1zM7 5h1v1h-1zM1 6h1v1h-1zM6 6h1v1h-1zM2 7h4v1h-4z"/>
+    <path fill="#EF7D57" d="M6 2h1v1h-1zM6 3h1v1h-1zM6 4h1v1h-1zM5 5h2v1h-2zM2 6h4v1h-4z"/>
+    <path fill="#FFCD75" d="M2 1h4v1h-4zM1 2h1v1h-1zM3 2h3v1h-3zM1 3h1v1h-1zM3 3h3v1h-3zM1 4h5v1h-5zM1 5h4v1h-4z"/>
+    <path fill="#F4F4F4" d="M2 2h1v1h-1zM2 3h1v1h-1z"/>
+  </symbol>
+  <!-- AI customer, walk frame A -->
+  <symbol id="px-customer-a" viewBox="0 0 24 24" shape-rendering="crispEdges">
+    <path fill="#1A1C2C" d="M8 2h8v1h-8zM7 3h1v1h-1zM16 3h1v1h-1zM6 4h1v1h-1zM17 4h1v1h-1zM6 5h1v1h-1zM17 5h1v1h-1zM6 6h1v1h-1zM10 6h1v1h-1zM14 6h1v1h-1zM16 6h1v1h-1zM7 7h1v1h-1zM10 7h1v1h-1zM14 7h1v1h-1zM16 7h1v1h-1zM7 8h1v1h-1zM16 8h1v1h-1zM7 9h1v1h-1zM16 9h1v1h-1zM7 10h1v1h-1zM16 10h1v1h-1zM5 11h2v1h-2zM17 11h4v1h-4zM4 12h1v1h-1zM21 12h1v1h-1zM4 13h1v1h-1zM21 13h1v1h-1zM4 14h1v1h-1zM17 14h4v1h-4zM4 15h1v1h-1zM17 15h1v1h-1zM4 16h1v1h-1zM17 16h1v1h-1zM5 17h2v1h-2zM17 17h1v1h-1zM7 18h1v1h-1zM11 18h2v1h-2zM16 18h1v1h-1zM7 19h1v1h-1zM11 19h2v1h-2zM16 19h1v1h-1zM7 20h1v1h-1zM11 20h2v1h-2zM16 20h1v1h-1zM7 21h1v1h-1zM11 21h2v1h-2zM16 21h1v1h-1zM8 22h3v1h-3zM13 22h3v1h-3z"/>
+    <path fill="#5D275D" d="M8 3h8v1h-8zM7 4h10v1h-10zM7 5h1v1h-1zM16 5h1v1h-1zM7 6h1v1h-1z"/>
+    <path fill="#EF7D57" d="M11 9h2v1h-2z"/>
+    <path fill="#FFCD75" d="M19 1h1v1h-1zM8 5h8v1h-8zM8 6h2v1h-2zM11 6h3v1h-3zM15 6h1v1h-1zM8 7h2v1h-2zM11 7h3v1h-3zM15 7h1v1h-1zM8 8h8v1h-8zM8 9h3v1h-3zM13 9h3v1h-3zM8 10h8v1h-8zM20 12h1v1h-1zM20 13h1v1h-1zM5 16h2v1h-2z"/>
+    <path fill="#29366F" d="M8 18h3v1h-3zM13 18h3v1h-3zM8 19h3v1h-3zM13 19h3v1h-3zM8 20h3v1h-3zM13 20h3v1h-3z"/>
+    <path fill="#3B5DC9" d="M5 12h15v1h-15zM5 13h15v1h-15zM5 14h12v1h-12zM5 15h12v1h-12zM7 16h10v1h-10zM7 17h10v1h-10z"/>
+    <path fill="#41A6F6" d="M7 11h10v1h-10z"/>
+    <path fill="#F4F4F4" d="M19 0h1v1h-1zM18 1h1v1h-1zM20 1h1v1h-1zM19 2h1v1h-1z"/>
+    <path fill="#333C57" d="M8 21h3v1h-3zM13 21h3v1h-3z"/>
+  </symbol>
+  <!-- AI customer, walk frame B -->
+  <symbol id="px-customer-b" viewBox="0 0 24 24" shape-rendering="crispEdges">
+    <path fill="#1A1C2C" d="M8 2h8v1h-8zM7 3h1v1h-1zM16 3h1v1h-1zM6 4h1v1h-1zM17 4h1v1h-1zM6 5h1v1h-1zM17 5h1v1h-1zM6 6h1v1h-1zM10 6h1v1h-1zM14 6h1v1h-1zM16 6h1v1h-1zM7 7h1v1h-1zM10 7h1v1h-1zM14 7h1v1h-1zM16 7h1v1h-1zM7 8h1v1h-1zM16 8h1v1h-1zM7 9h1v1h-1zM16 9h1v1h-1zM7 10h1v1h-1zM16 10h1v1h-1zM5 11h2v1h-2zM17 11h4v1h-4zM4 12h1v1h-1zM21 12h1v1h-1zM4 13h1v1h-1zM21 13h1v1h-1zM4 14h1v1h-1zM17 14h4v1h-4zM4 15h1v1h-1zM17 15h1v1h-1zM4 16h1v1h-1zM17 16h1v1h-1zM5 17h2v1h-2zM17 17h1v1h-1zM6 18h1v1h-1zM10 18h4v1h-4zM17 18h1v1h-1zM6 19h1v1h-1zM10 19h1v1h-1zM13 19h1v1h-1zM17 19h1v1h-1zM5 20h1v1h-1zM10 20h1v1h-1zM13 20h1v1h-1zM17 20h1v1h-1zM6 21h4v1h-4zM13 21h1v1h-1zM17 21h1v1h-1zM14 22h3v1h-3z"/>
+    <path fill="#5D275D" d="M8 3h8v1h-8zM7 4h10v1h-10zM7 5h1v1h-1zM16 5h1v1h-1zM7 6h1v1h-1z"/>
+    <path fill="#EF7D57" d="M11 9h2v1h-2z"/>
+    <path fill="#FFCD75" d="M19 1h1v1h-1zM8 5h8v1h-8zM8 6h2v1h-2zM11 6h3v1h-3zM15 6h1v1h-1zM8 7h2v1h-2zM11 7h3v1h-3zM15 7h1v1h-1zM8 8h8v1h-8zM8 9h3v1h-3zM13 9h3v1h-3zM8 10h8v1h-8zM20 12h1v1h-1zM20 13h1v1h-1zM5 16h2v1h-2z"/>
+    <path fill="#29366F" d="M7 18h3v1h-3zM14 18h3v1h-3zM7 19h3v1h-3zM14 19h3v1h-3zM9 20h1v1h-1zM14 20h3v1h-3z"/>
+    <path fill="#3B5DC9" d="M5 12h15v1h-15zM5 13h15v1h-15zM5 14h12v1h-12zM5 15h12v1h-12zM7 16h10v1h-10zM7 17h10v1h-10z"/>
+    <path fill="#41A6F6" d="M7 11h10v1h-10z"/>
+    <path fill="#F4F4F4" d="M19 0h1v1h-1zM18 1h1v1h-1zM20 1h1v1h-1zM19 2h1v1h-1z"/>
+    <path fill="#333C57" d="M6 20h3v1h-3zM14 21h3v1h-3z"/>
+  </symbol>
+  <!-- Ledger icon: confirmed -->
+  <symbol id="px-check" viewBox="0 0 9 9" shape-rendering="crispEdges">
+    <path fill="#1A1C2C" d="M7 0h1v1h-1zM6 1h1v1h-1zM8 1h1v1h-1zM1 2h1v1h-1zM5 2h1v1h-1zM8 2h1v1h-1zM0 3h1v1h-1zM2 3h1v1h-1zM4 3h1v1h-1zM7 3h1v1h-1zM0 4h1v1h-1zM3 4h1v1h-1zM6 4h1v1h-1zM1 5h1v1h-1zM5 5h1v1h-1zM2 6h1v1h-1zM4 6h1v1h-1zM3 7h1v1h-1z"/>
+    <path fill="#A7F070" d="M7 2h1v1h-1zM6 3h1v1h-1zM1 4h1v1h-1zM5 4h1v1h-1zM2 5h1v1h-1zM4 5h1v1h-1zM3 6h1v1h-1z"/>
+    <path fill="#38B764" d="M7 1h1v1h-1zM6 2h1v1h-1zM1 3h1v1h-1zM5 3h1v1h-1zM2 4h1v1h-1zM4 4h1v1h-1zM3 5h1v1h-1z"/>
+  </symbol>
+  <!-- Ledger icon: pending -->
+  <symbol id="px-hourglass" viewBox="0 0 9 9" shape-rendering="crispEdges">
+    <path fill="#1A1C2C" d="M0 0h1v1h-1zM8 0h1v1h-1zM1 1h2v1h-2zM6 1h2v1h-2zM3 2h1v1h-1zM5 2h1v1h-1zM4 3h1v1h-1zM3 4h3v1h-3zM2 5h1v1h-1zM6 5h1v1h-1zM1 6h1v1h-1zM7 6h1v1h-1zM0 7h1v1h-1zM8 7h1v1h-1zM1 8h7v1h-7z"/>
+    <path fill="#EF7D57" d="M3 5h1v1h-1zM5 5h1v1h-1zM2 6h1v1h-1zM6 6h1v1h-1z"/>
+    <path fill="#FFCD75" d="M3 1h3v1h-3zM4 2h1v1h-1zM4 5h1v1h-1zM3 6h3v1h-3z"/>
+    <path fill="#F4F4F4" d="M1 0h7v1h-7zM1 7h7v1h-7z"/>
+  </symbol>
+
+
+  <!-- B node card clip (header stripe follows the rounded corners) -->
+  <clipPath id="b-node-clip"><rect x=".5" y=".5" width="183" height="75" rx="12"/></clipPath>
+  <!-- shared filters -->
+  <filter id="b-glow" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <filter id="b-soft" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+</svg>
+
+<nav class="nav" aria-label="Directions">
+  <span class="brand">WORLDWORKS<small>CP1 · pick a look</small></span>
+  <a href="#toy-works"><b>A</b>Toy Works ★</a>
+  <a href="#night-shift"><b>B</b>Night Shift</a>
+  <a href="#pixel-works"><b>C</b>Pixel Works</a>
+</nav>
+
+<div class="wrap">
+  <div class="intro">
+    <div>
+      <h1>One broken machine, three skins.</h1>
+      <p>Each tile is the game's first ten seconds: a Coin Slot pays straight into a cross-chain Portal and a creator Payout, nothing goes to a reserve, and the machine is losing money. Same layout, same parts, same numbers. Only the look changes. All three run on the same stack, so the choice can still change late.</p>
+    </div>
+    <div class="cmp">
+      <a href="#toy-works"><div class="k">A</div><div class="n">Toy Works</div><div class="r">Warm tabletop, chunky blocks with faces, fat pipes.</div><span class="rec">Recommended</span></a>
+      <a href="#night-shift"><div class="k">B</div><div class="n">Night Shift</div><div class="r">Dark control room, coins as points of light.</div><span class="risk">Lowest build risk</span></a>
+      <a href="#pixel-works"><div class="k">C</div><div class="n">Pixel Works</div><div class="r">16-bit factory floor, conveyor belts, arcade cabinet.</div><span class="risk">Highest art risk</span></a>
+    </div>
+  </div>
+
+<!-- =====================================================================
+     A · TOY WORKS
+     ===================================================================== -->
+<section class="dir" id="toy-works">
+  <div class="dir-head">
+    <div class="dir-letter">A</div>
+    <div class="dir-title">
+      <h2>Toy Works <span class="badge">★ Recommended</span></h2>
+      <p>A sunny tabletop. Money machines are built from chunky toy blocks with faces, joined by fat round pipes like Mini Motorways roads. Coins roll at an even pace. Premium from restraint: one ground colour, flat fills, one hard shadow direction.</p>
+    </div>
+  </div>
+
+  <div class="frame"><div class="stage a" data-machine="a">
+    <svg class="board" viewBox="0 0 1280 720" width="1280" height="720" aria-label="Toy Works workshop scene">
+      <!-- pipe shadows -->
+      <g fill="none" stroke="#E2D6C3" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 6)">
+        <path d="M420 404 H600 M600 404 V282 Q600 250 632 250 H760 M600 404 V540 Q600 572 632 572 H760 M820 572 H880"/>
+      </g>
+      <!-- pipes -->
+      <g fill="none" stroke="#36314D" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">
+        <path data-path="main" d="M432 404 H600"/>
+        <path data-path="up" d="M600 404 V282 Q600 250 632 250 H780"/>
+        <path data-path="down" d="M600 404 V540 Q600 572 632 572 H732"/>
+        <path data-path="out" d="M826 572 H876"/>
+      </g>
+      <g fill="none" stroke="#4A4466" stroke-width="3" stroke-dasharray="2 12" stroke-linecap="round">
+        <path d="M450 404 H588 M600 392 V282 Q600 250 632 250 H720 M600 416 V540 Q600 572 632 572 H720"/>
+      </g>
+      <!-- invisible toss path: customer's hand into the slot -->
+      <path data-path="in" d="M266 420 C 290 316 362 300 380 372" fill="none" stroke="none"/>
+
+      <!-- junction: Mini Motorways roundabout -->
+      <g data-part="junction" transform="translate(600 404)"><g class="squash"><circle r="17" fill="#36314D"/><circle r="7" fill="none" stroke="#F4EEE3" stroke-width="3"/></g></g>
+
+      <!-- ghost socket where a Splitter would go -->
+      <g transform="translate(516 404)">
+        <circle r="30" fill="#F4EEE3" fill-opacity=".86" stroke="#6B6680" stroke-width="3" stroke-dasharray="7 7"/>
+        <path d="M-8 0 H8 M0 -8 V8" stroke="#6B6680" stroke-width="3.5" stroke-linecap="round"/>
+      </g>
+      <!-- hand-drawn hint arrow -->
+      <path d="M470 326 C 458 344 468 362 492 374" fill="none" stroke="#24203A" stroke-width="3" stroke-linecap="round"/>
+      <path d="M481 375 L493 375 L489 364" fill="none" stroke="#24203A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+      <!-- Portal → Sepolia -->
+      <path d="M842 250 H872" stroke="#9797FF" stroke-width="4" stroke-dasharray="2 8" stroke-linecap="round"/>
+      <g transform="translate(878 230)">
+        <rect width="174" height="40" rx="20" fill="#fff"/>
+        <rect width="174" height="40" rx="20" fill="none" stroke="#9797FF" stroke-width="2.5"/>
+        <circle cx="20" cy="20" r="8" fill="#9797FF"/><path d="M14 20 h12 M20 12 c-4 5 -4 11 0 16 M20 12 c4 5 4 11 0 16" stroke="#fff" stroke-width="1.6" fill="none"/>
+        <text x="36" y="18" font-family="Nunito" font-weight="900" font-size="13" fill="#24203A">Sepolia</text>
+        <text x="36" y="31" font-family="JetBrains Mono" font-weight="500" font-size="10.5" fill="#6B6680">0x7a3…e91c</text>
+        <text x="160" y="25" text-anchor="end" font-family="JetBrains Mono" font-weight="700" font-size="11" fill="#5E5EDB">ETH</text>
+      </g>
+
+      <!-- parts on the board -->
+      <g data-part="slot" transform="translate(380 404)">
+        <rect class="glow" x="-24" y="-38" width="48" height="16" rx="8" fill="#FFE08A" filter="url(#b-soft)"/>
+        <g class="squash"><use href="#a-coin-slot" x="-60" y="-62" width="120" height="120"/></g>
+      </g>
+      <g data-part="portal" transform="translate(780 246)">
+        <circle class="ring-pulse" cx="0" cy="-4" r="40" fill="none" stroke="#9797FF" stroke-width="6"/>
+        <g class="squash"><use href="#a-portal" x="-60" y="-62" width="120" height="120"/></g>
+      </g>
+      <circle class="a-orbit" cx="780" cy="205" r="6" fill="#FFC53D" stroke="#E39A17" stroke-width="2"/>
+      <g data-part="payout" transform="translate(780 572)">
+        <g class="squash"><use href="#a-payout" x="-60" y="-62" width="120" height="120"/></g>
+      </g>
+      <g data-part="recipient" transform="translate(902 572)">
+        <g class="squash">
+          <circle cy="5" r="25" fill="#DED2BE"/><circle r="25" fill="#fff"/><circle r="25" fill="none" stroke="#24203A" stroke-width="3"/>
+          <text y="5" text-anchor="middle" font-family="Nunito" font-weight="900" font-size="14" fill="#24203A">you</text>
+        </g>
+      </g>
+
+      <!-- part labels -->
+      <g font-family="Nunito" font-weight="900" font-size="14" fill="#24203A" text-anchor="middle">
+        <text x="380" y="480">Coin Slot</text>
+        <text x="780" y="322">Portal</text>
+        <text x="780" y="648">Payout</text>
+      </g>
+      <g font-family="JetBrains Mono" font-weight="500" font-size="11" text-anchor="middle">
+        <rect x="320" y="488" width="120" height="22" rx="11" fill="#fff"/><text x="380" y="503" fill="#24203A">1.00 NEAR / cup</text>
+        <rect x="700" y="330" width="160" height="22" rx="11" fill="#fff"/><text x="780" y="345" fill="#5E5EDB">→ Sepolia · max 0.001</text>
+        <rect x="712" y="656" width="136" height="22" rx="11" fill="#fff"/><text x="780" y="671" fill="#24203A">to you.testnet</text>
+      </g>
+
+      <!-- AI customer -->
+      <g transform="translate(226 470)">
+        <g class="walker"><g class="bob"><g class="breathe">
+          <use href="#a-customer" x="-45" y="-108" width="90" height="110"/>
+        </g>
+        <g class="hand-coin" transform="translate(40 -56)"><use href="#a-coin" x="-11" y="-11" width="22" height="22"/></g>
+        </g></g>
+      </g>
+
+      <g data-coins></g>
+    </svg>
+
+    <!-- chrome -->
+    <div class="ov a-top">
+      <div class="logo"><svg viewBox="0 0 30 30"><rect x="1" y="4" width="28" height="25" rx="8" fill="#24203A"/><rect x="1" y="1" width="28" height="25" rx="8" fill="#FFC53D"/><circle cx="11" cy="13" r="2.4" fill="#24203A"/><circle cx="19" cy="13" r="2.4" fill="#24203A"/><path d="M11 19 q4 3 8 0" stroke="#24203A" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>worldworks</div>
+      <div class="mname">Lemonade Machine <em>· yours</em></div>
+      <div class="stamp-broke">BROKE</div>
+      <div class="sp"></div>
+      <div class="pill"><i></i>testnet money</div>
+      <div class="round"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#24203A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#24203A"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></div>
+      <button class="open-app">Open as app <span><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#24203A" stroke-width="2.2" stroke-linecap="round"><path d="M4 2h6v6M10 2 3 9"/></svg></span></button>
+    </div>
+
+    <aside class="ov a-rail">
+      <h5>Parts</h5>
+      <div class="chip"><svg viewBox="0 0 120 120"><use href="#a-coin-slot"/></svg><b>Coin Slot</b><span class="dots"><i></i></span></div>
+      <div class="chip try"><svg viewBox="0 0 120 120"><use href="#a-splitter"/></svg><b>Splitter</b><span class="dots"><i></i><i></i><i></i></span></div>
+      <div class="chip"><svg viewBox="0 0 120 120"><use href="#a-vault"/></svg><b>Vault</b><span class="dots"><i></i><i></i></span></div>
+      <div class="chip"><svg viewBox="0 0 120 120"><use href="#a-gate"/></svg><b>Gate</b><span class="dots"><i></i><i></i></span></div>
+      <div class="chip"><svg viewBox="0 0 120 120"><use href="#a-worker"/></svg><b>Worker</b><span class="dots"><i></i></span></div>
+      <div class="chip"><svg viewBox="0 0 120 120"><use href="#a-payout"/></svg><b>Payout</b><span class="dots"><i></i><i></i></span></div>
+      <div class="chip"><svg viewBox="0 0 120 120"><use href="#a-portal"/></svg><b>Portal</b><span class="dots"><i></i></span></div>
+    </aside>
+
+    <div class="ov a-head">
+      <h1>Your machine is <span>losing money.<svg viewBox="0 0 300 12" preserveAspectRatio="none"><path d="M2 8 Q 20 1 38 7 T 76 7 T 114 7 T 152 7 T 190 7 T 228 7 T 266 7 T 298 6" fill="none" stroke="#FF7966" stroke-width="3.5" stroke-linecap="round"/></svg></span></h1>
+      <p>Every coin goes straight out. <b>Nothing refills the reserve.</b></p>
+    </div>
+
+    <div class="ov bubble">One lemonade, please.<small>AI customer · seeded</small></div>
+    <div class="ov hint">drop a Splitter here<small>to keep some for a reserve</small></div>
+
+    <div class="ov reserve">
+      <div class="ring">
+        <svg viewBox="0 0 78 78" width="78" height="78"><circle cx="39" cy="39" r="32" fill="none" stroke="#EFE7DA" stroke-width="9"/><circle cx="39" cy="39" r="32" fill="none" stroke="#FF7966" stroke-width="9" stroke-linecap="round" stroke-dasharray="0.1 201" transform="rotate(-90 39 39)"/></svg>
+        <div><span>0.00<small>/ 10</small></span></div>
+      </div>
+      <div>
+        <h6>Reserve</h6>
+        <div class="empty"><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="7" fill="#FF7966"/><path d="M7 3.5v4.2" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="7" cy="10.3" r="1.1" fill="#fff"/></svg>empty · nothing refills it</div>
+        <div class="stats">sales <b data-stat="sales">11</b> · kept <b>0.00</b> NEAR</div>
+      </div>
+    </div>
+
+    <div class="ov ledger">
+      <div class="grab"></div>
+      <header><b>Ledger</b><span class="tn">testnet</span><span class="all">see all ›</span></header>
+      <div class="row ok" data-ledger-ok>
+        <div class="ic"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#24203A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5l3.2 3.2L14 5.5"/></svg></div>
+        <div><div class="t">Payout → you.testnet</div><div class="s"><a>8Fq2…kZ1 ↗</a> · <span data-ago>4s ago</span></div></div>
+        <div class="amt">0.70 NEAR<small>CONFIRMED</small></div>
+      </div>
+      <div class="row pend">
+        <div class="ic"><svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="4" fill="#9797FF"/></svg></div>
+        <div><div class="t">Portal → Sepolia</div><div class="s">Chain Signatures…</div></div>
+        <div class="amt">0.0001 ETH<small>PENDING</small></div>
+      </div>
+    </div>
+  </div></div>
+
+  <div class="spec">
+    <div><h4>Palette</h4>
+      <div class="sw">
+        <i style="background:#F4EEE3" data-h="#F4EEE3"></i><i style="background:#24203A" data-h="#24203A"></i><i style="background:#36314D" data-h="#36314D"></i><i style="background:#FFC53D" data-h="#FFC53D"></i><i style="background:#FFB547" data-h="#FFB547"></i><i style="background:#17D9D4" data-h="#17D9D4"></i><i style="background:#7C83A6" data-h="#7C83A6"></i><i style="background:#FFE02A" data-h="#FFE02A"></i><i style="background:#00EC97" data-h="#00EC97"></i><i style="background:#9797FF" data-h="#9797FF"></i><i style="background:#FF7966" data-h="#FF7966"></i>
+      </div>
+    </div>
+    <div class="type-sample"><h4>Type</h4>
+      <span style="font:800 22px 'Bricolage Grotesque'">Bricolage Grotesque</span>
+      <span style="font:800 15px 'Nunito'">Nunito for UI and part labels</span>
+      <span style="font:500 13px 'JetBrains Mono'">JetBrains Mono 0.70 NEAR</span>
+    </div>
+    <div><h4>Motion & 2-day risk</h4><p>Coins roll at a constant 160 px/s; parts squash on each coin; nothing idles except the customer and the pending Portal orbit. <b>Risk: medium</b>: the cost is the seven blocks, and they are drawn below.</p></div>
+  </div>
+  <div class="sheet a-sheet">
+    <div class="cell"><svg viewBox="0 0 120 120"><use href="#a-coin-slot"/></svg><div class="nm">Coin Slot</div><div class="ds">takes the money.</div></div>
+    <div class="cell"><svg viewBox="0 0 120 120"><use href="#a-splitter"/></svg><div class="nm">Splitter</div><div class="ds">some here, some there.</div></div>
+    <div class="cell"><svg viewBox="0 0 120 120"><use href="#a-vault"/></svg><div class="nm">Vault</div><div class="ds">keeps a reserve. worried when empty.</div></div>
+    <div class="cell"><svg viewBox="0 0 120 120"><use href="#a-gate"/></svg><div class="nm">Gate</div><div class="ds">only if the rule holds.</div></div>
+    <div class="cell"><svg viewBox="0 0 120 120"><use href="#a-worker"/></svg><div class="nm">Worker</div><div class="ds">holds one key. does one job.</div></div>
+    <div class="cell"><svg viewBox="0 0 120 120"><use href="#a-payout"/></svg><div class="nm">Payout</div><div class="ds">pays a name.</div></div>
+    <div class="cell"><svg viewBox="0 0 120 120"><use href="#a-portal"/></svg><div class="nm">Portal</div><div class="ds">pays on another chain.</div></div>
+  </div>
+  <p class="sheet-cap">Lift as <code>&lt;symbol id="a-coin-slot"&gt;</code> … <code>a-portal</code>, plus <code>a-coin</code> and <code>a-customer</code>. The Vault's worried face is a group you switch off with <code>--worried:0</code>.</p>
+  <div class="refine"><b>If chosen, I'd refine:</b> a second expression for every part (happy, worried, surprised) swapped by state; the Splitter's flap actually flipping per coin; a softer paper texture; and tuning the pipe-corner radius so coins never look like they jump at bends.</div>
+</section>
+
+<!-- =====================================================================
+     B · NIGHT SHIFT
+     ===================================================================== -->
+<section class="dir" id="night-shift">
+  <div class="dir-head">
+    <div class="dir-letter">B</div>
+    <div class="dir-title">
+      <h2>Night Shift <span class="badge grey">Safety net</span></h2>
+      <p>A precise control room at night. Graphite canvas, crisp nodes with hairline borders, and wires that light up as money passes. Coins are points of warm light with short trails. The most "investor-grade" look, and the closest to a dashboard, so the glowing flow has to carry it.</p>
+    </div>
+  </div>
+
+  <div class="frame"><div class="stage b" data-machine="b">
+    <svg class="board" viewBox="0 0 1280 720" width="1280" height="720" aria-label="Night Shift workshop scene">
+      <!-- wires -->
+      <g>
+        <path class="wire" data-path="in" d="M250 404 H288"/>
+        <path class="wire" data-path="main" d="M472 404 H600"/>
+        <path class="wire" data-path="up" d="M600 404 C 652 404 636 250 688 250"/>
+        <path class="wire" data-path="down" d="M600 404 C 652 404 636 572 688 572"/>
+        <path class="wire" data-path="out" d="M872 572 H890"/>
+        <path class="wire-glow" data-glow="in" d="M250 404 H288"/>
+        <path class="wire-glow" data-glow="main" d="M472 404 H600"/>
+        <path class="wire-glow up" data-glow="up" d="M600 404 C 652 404 636 250 688 250"/>
+        <path class="wire-glow" data-glow="down" d="M600 404 C 652 404 636 572 688 572"/>
+        <path class="wire-glow" data-glow="out" d="M872 572 H890"/>
+        <path d="M872 250 H906" stroke="#9797FF" stroke-width="1.5" stroke-dasharray="3 4" opacity=".7"/>
+      </g>
+      <!-- junction -->
+      <g data-part="junction" transform="translate(600 404)"><g class="squash"><rect x="-5" y="-5" width="10" height="10" rx="2" transform="rotate(45)" fill="#14161C" stroke="#8B90A0" stroke-width="1.5"/></g></g>
+      <!-- ghost socket -->
+      <g transform="translate(536 404)"><circle r="17" fill="#0B0C10" stroke="#FFD24A" stroke-opacity=".55" stroke-width="1.2" stroke-dasharray="3 3"/><path d="M-5 0 H5 M0 -5 V5" stroke="#FFD24A" stroke-opacity=".8" stroke-width="1.5" stroke-linecap="round"/></g>
+
+      <!-- nodes -->
+      <g data-part="slot" transform="translate(288 366)">
+        <rect class="halo" x="-2" y="-2" width="188" height="80" rx="14" stroke="#FFD24A"/>
+        <g class="squash">
+          <rect class="node-card" x=".5" y=".5" width="183" height="75" rx="12"/>
+          <rect width="184" height="3" fill="#FFB547" clip-path="url(#b-node-clip)"/>
+          <rect x="14" y="16" width="44" height="44" rx="10" fill="#FFB547" fill-opacity=".1" stroke="#FFB547" stroke-opacity=".25"/>
+          <use href="#b-coin-slot" x="20" y="22" width="32" height="32" color="#FFB547"/>
+          <text class="ntitle" x="70" y="34">Coin Slot</text>
+          <text class="nread" x="70" y="54">1.00 NEAR / cup</text>
+          <circle cx="0" cy="38" r="4.5" fill="#FFD24A" stroke="#0B0C10" stroke-width="2"/>
+          <circle cx="184" cy="38" r="4.5" fill="#FFD24A" stroke="#0B0C10" stroke-width="2"/>
+        </g>
+      </g>
+      <g data-part="portal" transform="translate(688 212)">
+        <rect class="halo" x="-2" y="-2" width="188" height="80" rx="14" stroke="#9797FF"/>
+        <g class="squash">
+          <rect class="node-card" x=".5" y=".5" width="183" height="75" rx="12"/>
+          <rect width="184" height="3" fill="#9797FF" clip-path="url(#b-node-clip)"/>
+          <rect x="14" y="16" width="44" height="44" rx="10" fill="#9797FF" fill-opacity=".1" stroke="#9797FF" stroke-opacity=".25"/>
+          <g class="b-ring"><use href="#b-portal" x="20" y="22" width="32" height="32" color="#9797FF"/></g>
+          <text class="ntitle" x="70" y="34">Portal</text>
+          <text class="nread" x="70" y="54">→ Sepolia · ≤ 0.001</text>
+          <circle cx="0" cy="38" r="4.5" fill="#FFD24A" stroke="#0B0C10" stroke-width="2"/>
+        </g>
+      </g>
+      <g data-part="payout" transform="translate(688 534)">
+        <rect class="halo" x="-2" y="-2" width="188" height="80" rx="14" stroke="#00EC97"/>
+        <g class="squash">
+          <rect class="node-card" x=".5" y=".5" width="183" height="75" rx="12"/>
+          <rect width="184" height="3" fill="#00EC97" clip-path="url(#b-node-clip)"/>
+          <rect x="14" y="16" width="44" height="44" rx="10" fill="#00EC97" fill-opacity=".1" stroke="#00EC97" stroke-opacity=".25"/>
+          <use href="#b-payout" x="20" y="22" width="32" height="32" color="#00EC97"/>
+          <text class="ntitle" x="70" y="34">Payout</text>
+          <text class="nread" x="70" y="54">to you.testnet</text>
+          <circle cx="0" cy="38" r="4.5" fill="#FFD24A" stroke="#0B0C10" stroke-width="2"/>
+          <circle cx="184" cy="38" r="4.5" fill="#FFD24A" stroke="#0B0C10" stroke-width="2"/>
+        </g>
+      </g>
+      <!-- Sepolia destination -->
+      <g transform="translate(910 234)">
+        <rect width="176" height="32" rx="8" fill="#12131A" stroke="#9797FF" stroke-opacity=".4"/>
+        <circle cx="16" cy="16" r="4" fill="#9797FF"/>
+        <text x="28" y="20" font-family="Geist" font-weight="500" font-size="12" fill="#C9C9FF">Sepolia</text>
+        <text x="164" y="20" text-anchor="end" font-family="Geist Mono" font-size="11" fill="#8B90A0">0x7a3…e91c</text>
+      </g>
+      <!-- recipient -->
+      <g data-part="recipient" transform="translate(908 572)">
+        <circle class="halo" r="22" stroke="#00EC97"/>
+        <g class="squash"><circle r="18" fill="#14161C" stroke="#2E3340"/><text y="4.5" text-anchor="middle" font-family="Geist" font-weight="600" font-size="12" fill="#EDEEF0">you</text></g>
+      </g>
+
+      <!-- AI customer avatar -->
+      <g transform="translate(222 404)">
+        <g class="walker">
+          <circle r="30" fill="none" stroke="#2A2F3B"/>
+          <circle r="25" fill="url(#b-av)"/>
+          <g fill="#0B0C10"><ellipse cx="-7" cy="-2" rx="2.6" ry="3.4"/><ellipse cx="7" cy="-2" rx="2.6" ry="3.4"/></g>
+          <path d="M-6 8 Q0 12 6 8" stroke="#0B0C10" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+          <path d="M18 -26 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z" fill="#FFD24A"/>
+          <g class="hand-coin"><circle cx="30" cy="0" r="4.5" fill="#FFD24A" filter="url(#b-glow)"/></g>
+        </g>
+      </g>
+      <defs><linearGradient id="b-av" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFD9A8"/><stop offset="1" stop-color="#FF9F7A"/></linearGradient></defs>
+
+      <g data-coins></g>
+    </svg>
+
+    <div class="ov b-top">
+      <div class="logo"><svg width="22" height="22" viewBox="0 0 22 22"><rect x=".5" y=".5" width="21" height="21" rx="6" fill="#14161C" stroke="#2A2F3B"/><circle cx="11" cy="11" r="4.5" fill="#FFD24A"/></svg>Worldworks</div>
+      <span class="crumb">/</span><span class="mname">Lemonade Machine</span>
+      <span class="status"><i></i>Losing money</span>
+      <div class="tick">NEAR moved by your machine today <b data-stat="moved">11.0000</b></div>
+      <span class="tn"><i></i>Testnet</span>
+      <span class="icbtn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8B90A0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg></span>
+      <button class="open-app">Open as app <kbd>⌘O</kbd></button>
+    </div>
+
+    <aside class="ov b-rail">
+      <h5>Parts <kbd>1–7</kbd></h5>
+      <div class="item" style="--c:#FFB547"><kbd>1</kbd><span class="tile"><svg viewBox="0 0 40 40"><use href="#b-coin-slot"/></svg></span><b>Coin Slot</b></div>
+      <div class="item try" style="--c:#17D9D4"><kbd>2</kbd><span class="tile"><svg viewBox="0 0 40 40"><use href="#b-splitter"/></svg></span><b>Splitter</b></div>
+      <div class="item" style="--c:#A3A8C3"><kbd>3</kbd><span class="tile"><svg viewBox="0 0 40 40"><use href="#b-vault"/></svg></span><b>Vault</b></div>
+      <div class="item" style="--c:#17D9D4"><kbd>4</kbd><span class="tile"><svg viewBox="0 0 40 40"><use href="#b-gate"/></svg></span><b>Gate</b></div>
+      <div class="item" style="--c:#FFE02A"><kbd>5</kbd><span class="tile"><svg viewBox="0 0 40 40"><use href="#b-worker"/></svg></span><b>Worker</b></div>
+      <div class="item" style="--c:#00EC97"><kbd>6</kbd><span class="tile"><svg viewBox="0 0 40 40"><use href="#b-payout"/></svg></span><b>Payout</b></div>
+      <div class="item" style="--c:#9797FF"><kbd>7</kbd><span class="tile"><svg viewBox="0 0 40 40"><use href="#b-portal"/></svg></span><b>Portal</b></div>
+    </aside>
+
+    <div class="ov b-head">
+      <h1>Your machine is <span>losing money.</span></h1>
+      <p>Every coin goes straight out. <b>Nothing refills the reserve.</b></p>
+    </div>
+    <div class="ov say">“One lemonade, please.”</div>
+    <div class="ov cust-tag"><b>Ada</b><span>AI customer · seeded</span></div>
+    <div class="ov tip">Drop a Splitter to keep a share <kbd>2</kbd></div>
+
+    <div class="ov reserve">
+      <div class="g"><svg viewBox="0 0 72 72" width="72" height="72"><circle cx="36" cy="36" r="30" fill="none" stroke="#1C1F27" stroke-width="4"/><circle cx="36" cy="36" r="30" fill="none" stroke="#FF5D5D" stroke-width="4" stroke-linecap="round" stroke-dasharray="0.1 200" transform="rotate(-90 36 36)"/><g stroke="#2A2F3B" stroke-width="1.5"><path d="M36 2v5M70 36h-5M36 70v-5M2 36h5"/></g></svg><span>0%</span></div>
+      <div>
+        <div class="lbl">Reserve</div>
+        <div class="num">0.<span>0000</span><small>/ 10 NEAR</small></div>
+        <div class="note">Empty · nothing refills it</div>
+      </div>
+      <div class="stats">Sales<b data-stat="sales">11</b><br>Kept<b>0.00</b><br>Out<b data-stat="out">11.00</b></div>
+    </div>
+
+    <div class="ov ledger">
+      <header>Ledger <span class="live"><i></i>live</span><span class="all">View all</span></header>
+      <div class="row ok" data-ledger-ok>
+        <div class="ic"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#00EC97" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5l2.6 2.6L11 4.5"/></svg></div>
+        <div><div class="t">Payout <em>→</em> you.testnet</div><div class="s"><span class="chain n">NEAR</span>8Fq2…kZ1 ↗ · <span data-ago>4s ago</span></div></div>
+        <div class="amt">0.70 NEAR<br><span class="pill">Confirmed</span></div>
+      </div>
+      <div class="row pend">
+        <div class="ic"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#FFB020" stroke-width="2" stroke-linecap="round"><path d="M7 1.5a5.5 5.5 0 1 1 -5.5 5.5"/></svg></div>
+        <div><div class="t">Portal <em>→</em> 0x7a3…e91c</div><div class="s"><span class="chain">Sepolia</span>signing…</div></div>
+        <div class="amt">0.0001 ETH<br><span class="pill">Pending</span></div>
+      </div>
+    </div>
+  </div></div>
+
+  <div class="spec">
+    <div><h4>Palette</h4>
+      <div class="sw">
+        <i style="background:#0B0C10" data-h="#0B0C10"></i><i style="background:#14161C" data-h="#14161C"></i><i style="background:#262A35" data-h="#262A35"></i><i style="background:#EDEEF0" data-h="#EDEEF0"></i><i style="background:#8B90A0" data-h="#8B90A0"></i><i style="background:#FFD24A" data-h="#FFD24A"></i><i style="background:#FF9F1C" data-h="#FF9F1C"></i><i style="background:#00EC97" data-h="#00EC97"></i><i style="background:#9797FF" data-h="#9797FF"></i><i style="background:#FFB020" data-h="#FFB020"></i><i style="background:#FF5D5D" data-h="#FF5D5D"></i>
+      </div>
+    </div>
+    <div class="type-sample"><h4>Type</h4>
+      <span style="font:italic 400 26px 'Instrument Serif'">Instrument Serif, italic</span>
+      <span style="font:500 15px 'Geist'">Geist for interface</span>
+      <span style="font:400 13px 'Geist Mono'">Geist Mono 0.7000 NEAR</span>
+    </div>
+    <div><h4>Motion & 2-day risk</h4><p>Wires brighten as coins pass and fade over about a second; nodes give a ring pulse instead of bouncing. <b>Risk: low to build, high to look generic</b>: it sits closest to React Flow defaults and to the dashboard look we want to avoid.</p></div>
+  </div>
+  <div class="sheet b-sheet">
+    <div class="card" style="--c:#FFB547"><div class="tile"><svg viewBox="0 0 40 40"><use href="#b-coin-slot"/></svg></div><div class="nm">Coin Slot</div><div class="ds">1.00 NEAR / buy</div></div>
+    <div class="card" style="--c:#17D9D4"><div class="tile"><svg viewBox="0 0 40 40"><use href="#b-splitter"/></svg></div><div class="nm">Splitter</div><div class="ds">70 / 30</div></div>
+    <div class="card" style="--c:#A3A8C3"><div class="tile"><svg viewBox="0 0 40 40"><use href="#b-vault"/></svg></div><div class="nm">Vault</div><div class="ds">0.00 / 10</div></div>
+    <div class="card" style="--c:#17D9D4"><div class="tile"><svg viewBox="0 0 40 40"><use href="#b-gate"/></svg></div><div class="nm">Gate</div><div class="ds">min 1 NEAR</div></div>
+    <div class="card" style="--c:#FFE02A"><div class="tile"><svg viewBox="0 0 40 40"><use href="#b-worker"/></svg></div><div class="nm">Worker</div><div class="ds">can: approve</div></div>
+    <div class="card" style="--c:#00EC97"><div class="tile"><svg viewBox="0 0 40 40"><use href="#b-payout"/></svg></div><div class="nm">Payout</div><div class="ds">you.testnet</div></div>
+    <div class="card" style="--c:#9797FF"><div class="tile"><svg viewBox="0 0 40 40"><use href="#b-portal"/></svg></div><div class="nm">Portal</div><div class="ds">→ Sepolia</div></div>
+  </div>
+  <p class="sheet-cap">Lift as <code>&lt;symbol id="b-coin-slot"&gt;</code> … <code>b-portal</code>. Glyphs draw in <code>currentColor</code>, so one CSS colour per part family re-tints them.</p>
+  <div class="refine"><b>If chosen, I'd refine:</b> a real bloom pass on the coins (a canvas layer with additive blending, not an SVG filter); odometer-style digit rolls on every balance; and one warm, characterful moment, such as Ada's avatar reacting, so it stops reading as a dev tool.</div>
+</section>
+
+<!-- =====================================================================
+     C · PIXEL WORKS
+     ===================================================================== -->
+<section class="dir" id="pixel-works">
+  <div class="dir-head">
+    <div class="dir-letter">C</div>
+    <div class="dir-title">
+      <h2>Pixel Works <span class="badge grey">Art risk</span></h2>
+      <p>A 16-bit factory floor seen from above. Conveyor belts with stepping stripes, chunky coins hopping tile to tile, and an arcade coin-op cabinet as the Coin Slot. Profit is kept like an arcade high score. The strongest "this is a game" signal; the weakest "this is real money".</p>
+    </div>
+  </div>
+
+  <div class="frame"><div class="stage c" data-machine="c">
+    <svg class="board" viewBox="0 0 1280 720" width="1280" height="720" aria-label="Pixel Works workshop scene" shape-rendering="crispEdges">
+      <!-- belts -->
+      <path class="belt-edge" d="M412 404 H600 M600 404 V250 H744 M600 404 V572 H744 M816 572 H862"/>
+      <path class="belt" d="M412 404 H600 M600 404 V250 H744 M600 404 V572 H744 M816 572 H862"/>
+      <path class="belt-run" d="M412 404 H600"/>
+      <path class="belt-run" d="M600 404 V250 H744"/>
+      <path class="belt-run" d="M600 404 V572 H744"/>
+      <path class="belt-run" d="M816 572 H862"/>
+      <path data-path="in" d="M246 438 H384" fill="none" stroke="none"/>
+      <path data-path="main" d="M412 404 H600" fill="none" stroke="none"/>
+      <path data-path="up" d="M600 404 V250 H780" fill="none" stroke="none"/>
+      <path data-path="down" d="M600 404 V572 H738" fill="none" stroke="none"/>
+      <path data-path="out" d="M822 572 H862" fill="none" stroke="none"/>
+      <!-- splitter-less junction tile -->
+      <g data-part="junction" transform="translate(600 404)"><g class="squash"><rect x="-24" y="-24" width="48" height="48" fill="#1A1C2C"/><rect x="-18" y="-18" width="36" height="36" fill="#333C57"/><rect x="-6" y="-12" width="12" height="6" fill="#FFCD75"/><rect x="-6" y="6" width="12" height="6" fill="#FFCD75"/><rect x="-12" y="-3" width="24" height="6" fill="#94B0C2"/></g></g>
+      <!-- ghost socket -->
+      <g transform="translate(508 404)"><rect x="-27" y="-27" width="54" height="54" fill="none" stroke="#FFCD75" stroke-width="3" stroke-dasharray="9 6"/><rect x="-3" y="-12" width="6" height="24" fill="#FFCD75"/><rect x="-12" y="-3" width="24" height="6" fill="#FFCD75"/></g>
+      <!-- Portal → Sepolia -->
+      <g fill="#41A6F6"><rect x="836" y="247" width="6" height="6"/><rect x="848" y="247" width="6" height="6"/><rect x="860" y="247" width="6" height="6"/></g>
+      <g transform="translate(874 232)">
+        <rect width="168" height="36" fill="#1A1C2C"/><rect x="3" y="3" width="162" height="30" fill="#29366F"/>
+        <rect x="12" y="13" width="10" height="10" fill="#41A6F6"/><rect x="14" y="15" width="6" height="6" fill="#73EFF7"/>
+        <text x="30" y="23" font-family="Silkscreen" font-size="11" fill="#73EFF7">SEPOLIA</text>
+        <text x="156" y="23" text-anchor="end" font-family="VT323" font-size="17" fill="#F4F4F4">0x7a3…e91c</text>
+      </g>
+
+      <!-- parts -->
+      <g data-part="slot" transform="translate(380 404)">
+        <rect class="glow" x="-10" y="26" width="20" height="16" fill="#FFCD75" opacity=".0"/>
+        <g class="squash"><use href="#px-coin-slot" x="-48" y="-48" width="96" height="96"/></g>
+      </g>
+      <g data-part="portal" transform="translate(780 250)">
+        <g class="spark" fill="#73EFF7"><rect x="-56" y="-4" width="8" height="8"/><rect x="48" y="-4" width="8" height="8"/><rect x="-4" y="-56" width="8" height="8"/><rect x="-4" y="48" width="8" height="8"/></g>
+        <g class="squash"><use href="#px-portal" x="-48" y="-48" width="96" height="96"/></g>
+      </g>
+      <g class="px-orbit"><rect x="774" y="194" width="12" height="12" fill="#FFCD75"/><rect x="777" y="197" width="6" height="6" fill="#EF7D57"/></g>
+      <g data-part="payout" transform="translate(780 572)">
+        <g class="squash"><use href="#px-payout" x="-48" y="-48" width="96" height="96"/></g>
+      </g>
+      <g data-part="recipient" transform="translate(890 572)">
+        <g class="squash">
+          <rect x="-26" y="-24" width="52" height="48" fill="#1A1C2C"/><rect x="-22" y="-20" width="44" height="40" fill="#38B764"/><rect x="-22" y="-20" width="44" height="6" fill="#A7F070"/>
+          <text y="7" text-anchor="middle" font-family="Silkscreen" font-size="12" fill="#1A1C2C">YOU</text>
+        </g>
+      </g>
+      <!-- labels -->
+      <g>
+        <rect class="lbl-plate" x="322" y="460" width="116" height="40"/><text class="lbl-t" x="380" y="476" text-anchor="middle">COIN SLOT</text><text class="lbl-r" x="380" y="494" text-anchor="middle">1.00 NEAR/CUP</text>
+        <rect class="lbl-plate" x="714" y="306" width="132" height="40"/><text class="lbl-t" x="780" y="322" text-anchor="middle">PORTAL</text><text class="lbl-r" x="780" y="340" text-anchor="middle" style="fill:#73EFF7">TO SEPOLIA ≤0.001</text>
+        <rect class="lbl-plate" x="722" y="628" width="116" height="40"/><text class="lbl-t" x="780" y="644" text-anchor="middle">PAYOUT</text><text class="lbl-r" x="780" y="662" text-anchor="middle">YOU.TESTNET</text>
+      </g>
+
+      <!-- AI customer -->
+      <g transform="translate(220 404)">
+        <g class="walker">
+          <use class="frameA" href="#px-customer-a" x="-48" y="-36" width="96" height="96"/>
+          <use class="frameB" href="#px-customer-b" x="-48" y="-36" width="96" height="96"/>
+          <use class="hand-coin" href="#px-coin" x="28" y="10" width="24" height="24"/>
+        </g>
+      </g>
+
+      <g data-coins></g>
+    </svg>
+
+    <div class="ov c-top">
+      <div class="logo">WORLDWORKS</div>
+      <div class="mname">LEMONADE MACHINE</div>
+      <div class="broke">BROKE!</div>
+      <div class="sp"></div>
+      <div class="score"><div><em>SALES</em><b data-stat="sales3">011</b></div><div><em>KEPT</em><b class="neg">0.00</b></div><div><em>TESTNET</em>ON</div></div>
+      <div class="mute"><svg width="18" height="18" viewBox="0 0 9 9" shape-rendering="crispEdges"><path fill="#94B0C2" d="M1 3h2v3H1zM3 2h1v5H3zM4 1h1v7H4zM6 3h1v3H6zM7 2h1v1H7zM7 6h1v1H7z"/></svg></div>
+      <button class="open-app">OPEN AS APP <svg width="12" height="12" viewBox="0 0 6 6" shape-rendering="crispEdges"><path fill="#1A1C2C" d="M2 0h4v4H5V2H4v1H3v1H2v1H1v1H0V5h1V4h1V3h1V2h1V1H2z"/></svg></button>
+    </div>
+
+    <aside class="ov c-rail px-box">
+      <h5>PARTS</h5>
+      <div class="slot"><svg viewBox="0 0 24 24"><use href="#px-coin-slot"/></svg><b>COIN SLOT</b><span class="pips"><i></i></span></div>
+      <div class="slot try"><svg viewBox="0 0 24 24"><use href="#px-splitter"/></svg><b>SPLITTER</b><span class="pips"><i></i><i></i><i></i></span></div>
+      <div class="slot"><svg viewBox="0 0 24 24"><use href="#px-vault"/></svg><b>VAULT</b><span class="pips"><i></i><i></i></span></div>
+      <div class="slot"><svg viewBox="0 0 24 24"><use href="#px-gate"/></svg><b>GATE</b><span class="pips"><i></i><i></i></span></div>
+      <div class="slot"><svg viewBox="0 0 24 24"><use href="#px-worker"/></svg><b>WORKER</b><span class="pips"><i></i></span></div>
+      <div class="slot"><svg viewBox="0 0 24 24"><use href="#px-payout"/></svg><b>PAYOUT</b><span class="pips"><i></i><i></i></span></div>
+      <div class="slot"><svg viewBox="0 0 24 24"><use href="#px-portal"/></svg><b>PORTAL</b><span class="pips"><i></i></span></div>
+    </aside>
+
+    <div class="ov c-head">
+      <h1>Your machine is losing money!</h1>
+      <p>Every coin goes straight out. <b>Nothing refills the reserve.</b></p>
+    </div>
+    <div class="ov say">1 LEMONADE PLS<small>AI CUSTOMER · SEEDED</small></div>
+    <div class="ov put">PUT A SPLITTER HERE</div>
+
+    <div class="ov reserve px-box">
+      <div>
+        <div class="lbl">RESERVE</div>
+        <div class="bar"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+      <div><div class="val">0.00<small>/10 NEAR</small></div><div class="emp">EMPTY!</div></div>
+      <div class="stats">SALES <b data-stat="sales">11</b><br>KEPT <b>0.00</b></div>
+    </div>
+
+    <div class="ov ledger px-box">
+      <header>LEDGER <span>TESTNET</span></header>
+      <div class="row ok" data-ledger-ok>
+        <svg viewBox="0 0 9 9"><use href="#px-check"/></svg>
+        <div><div class="t">PAYOUT → you.testnet</div><div class="s">NEAR · 8Fq2…kZ1 ↗</div></div>
+        <div class="amt">0.70 NEAR<small>CONFIRMED</small></div>
+      </div>
+      <div class="row pend">
+        <svg viewBox="0 0 9 9"><use href="#px-hourglass"/></svg>
+        <div><div class="t">PORTAL → Sepolia</div><div class="s">Chain Signatures · signing</div></div>
+        <div class="amt">0.0001 ETH<small>PENDING</small></div>
+      </div>
+    </div>
+  </div></div>
+
+  <div class="spec">
+    <div><h4>Palette · Sweetie 16 by GrafxKid</h4>
+      <div class="sw">
+        <i style="background:#1A1C2C" data-h="#1A1C2C"></i><i style="background:#5D275D" data-h="#5D275D"></i><i style="background:#B13E53" data-h="#B13E53"></i><i style="background:#EF7D57" data-h="#EF7D57"></i><i style="background:#FFCD75" data-h="#FFCD75"></i><i style="background:#A7F070" data-h="#A7F070"></i><i style="background:#38B764" data-h="#38B764"></i><i style="background:#257179" data-h="#257179"></i><i style="background:#29366F" data-h="#29366F"></i><i style="background:#3B5DC9" data-h="#3B5DC9"></i><i style="background:#41A6F6" data-h="#41A6F6"></i><i style="background:#73EFF7" data-h="#73EFF7"></i><i style="background:#F4F4F4" data-h="#F4F4F4"></i><i style="background:#94B0C2" data-h="#94B0C2"></i><i style="background:#566C86" data-h="#566C86"></i><i style="background:#333C57" data-h="#333C57"></i>
+      </div>
+    </div>
+    <div class="type-sample"><h4>Type</h4>
+      <span style="font:700 24px 'Pixelify Sans'">Pixelify Sans</span>
+      <span style="font:400 13px 'Silkscreen'">SILKSCREEN LABELS</span>
+      <span style="font:400 13px 'Space Mono'">Space Mono · <span style="font:400 18px VT323;display:inline">VT323 011</span></span>
+    </div>
+    <div><h4>Motion & 2-day risk</h4><p>Sprites step at 8–12 fps; coins hop on a fixed tick; panels stay smooth. <b>Risk: high</b>: these sprites are code-drawn on a 24×24 grid; a real pixel artist would be needed for belts in every direction and for animation frames.</p></div>
+  </div>
+  <div class="sheet c-sheet">
+    <div class="cell"><svg viewBox="0 0 24 24"><use href="#px-coin-slot"/></svg><div class="nm">COIN SLOT</div><div class="ds">arcade coin-op</div></div>
+    <div class="cell"><svg viewBox="0 0 24 24"><use href="#px-splitter"/></svg><div class="nm">SPLITTER</div><div class="ds">70/30 dial</div></div>
+    <div class="cell"><svg viewBox="0 0 24 24"><use href="#px-vault"/></svg><div class="nm">VAULT</div><div class="ds">empty, worried</div></div>
+    <div class="cell"><svg viewBox="0 0 24 24"><use href="#px-gate"/></svg><div class="nm">GATE</div><div class="ds">boom barrier</div></div>
+    <div class="cell"><svg viewBox="0 0 24 24"><use href="#px-worker"/></svg><div class="nm">WORKER</div><div class="ds">holds a key</div></div>
+    <div class="cell"><svg viewBox="0 0 24 24"><use href="#px-payout"/></svg><div class="nm">PAYOUT</div><div class="ds">coin chute</div></div>
+    <div class="cell"><svg viewBox="0 0 24 24"><use href="#px-portal"/></svg><div class="nm">PORTAL</div><div class="ds">to Sepolia</div></div>
+  </div>
+  <p class="sheet-cap">Lift as <code>&lt;symbol id="px-coin-slot"&gt;</code> … <code>px-portal</code>, plus <code>px-coin</code>, <code>px-customer-a/b</code>, <code>px-check</code> and <code>px-hourglass</code>. Draw at whole-number scales (×2, ×4).</p>
+  <div class="refine"><b>If chosen, I'd refine:</b> commission or hand-polish the sprites (shading, two- to four-frame idle loops); build a proper belt tile set (straight, corner, T-junction) so coins ride real tiles; and add chiptune blips. I'd also put the real-money proof (explorer links, the Sepolia receipt) in a clean non-pixel panel so it still reads as serious.</div>
+</section>
+
+<footer>Fonts from Google Fonts; all art is inline SVG made for this file. Sweetie 16 palette by GrafxKid (lospec.com). Coins, customer and numbers are illustrative; in the product, every amount comes from testnet and links to an explorer.</footer>
+</div>
+
+<script>
+(() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const NS = 'http://www.w3.org/2000/svg';
+
+  /* ---------- fit each 1280x720 stage to its frame ---------- */
+  const frames = [...document.querySelectorAll('.frame')];
+  const fit = () => frames.forEach(f => { f.firstElementChild.style.transform = `scale(${f.clientWidth / 1280})`; });
+  fit(); addEventListener('resize', fit);
+  if ('ResizeObserver' in window) { const ro = new ResizeObserver(fit); frames.forEach(f => ro.observe(f)); }
+
+  /* ---------- nav highlight ---------- */
+  const links = [...document.querySelectorAll('.nav a')];
+  const secIO = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting) links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id));
+  }), { rootMargin: '-45% 0px -50% 0px' });
+  document.querySelectorAll('section.dir').forEach(s => secIO.observe(s));
+
+  /* ---------- per-direction coin renderers ---------- */
+  const mk = (tag, attrs) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+  const CFG = {
+    a: { speed: 160, every: 2.6, first: 2.2,
+      make() { const g = mk('g', {}); const r = mk('g', {}); r.appendChild(mk('use', { href: '#a-coin', x: -11, y: -11, width: 22, height: 22 })); g.appendChild(r); return g; },
+      render(c, x, y) {
+        let s = c.s;
+        if (c.kind === 'up') { const left = c.p.len - c.d; if (left < 60) s *= Math.max(0, left / 60); }
+        c.el.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${s.toFixed(3)})`);
+        c.el.firstChild.setAttribute('transform', `rotate(${(c.d / 11 * 57.3 * (c.kind === 'up' && c.p.len - c.d < 60 ? 2.5 : 1)).toFixed(1)})`);
+      },
+      float: { x: 872, y: 534, text: '+0.70 NEAR' } },
+    b: { speed: 230, every: 2.2, first: 1.6,
+      make() { const g = mk('g', {}); for (let i = 0; i < 6; i++) g.appendChild(mk('circle', { r: 0, fill: '#FF9F1C' })); g.appendChild(mk('circle', { r: 4.5, fill: '#FFD24A', filter: 'url(#b-glow)' })); return g; },
+      render(c, x, y) {
+        c.hist.unshift([x, y]); if (c.hist.length > 14) c.hist.pop();
+        const kids = c.el.childNodes; let s = c.s;
+        if (c.kind === 'up') { const left = c.p.len - c.d; if (left < 24) s *= Math.max(0, left / 24); }
+        for (let i = 0; i < 6; i++) {
+          const h = c.hist[Math.min(c.hist.length - 1, (i + 1) * 2)];
+          kids[i].setAttribute('cx', h[0].toFixed(1)); kids[i].setAttribute('cy', h[1].toFixed(1));
+          kids[i].setAttribute('r', (3.4 * s * (1 - i / 7)).toFixed(2)); kids[i].setAttribute('opacity', (0.5 * (1 - i / 6)).toFixed(2));
+        }
+        const core = kids[6]; core.setAttribute('cx', x.toFixed(1)); core.setAttribute('cy', y.toFixed(1)); core.setAttribute('r', (4.6 * s).toFixed(2));
+        if (c.kind === 'up') core.setAttribute('fill', c.d / c.p.len > .6 ? '#E2E2FF' : '#FFD24A');
+      },
+      float: { x: 890, y: 534, text: '+0.70 NEAR' } },
+    c: { speed: 132, every: 2.8, first: 2.8, quant: 12,
+      make() { return mk('use', { href: '#px-coin', width: 24, height: 24 }); },
+      render(c, x, y) {
+        const ph = (c.d % 24) / 24; const hop = -Math.round(Math.sin(ph * Math.PI) * 3) * 3;
+        let sz = 24 * (c.s < 1 ? 0.75 : 1);
+        if (c.kind === 'up' && c.p.len - c.d < 36) sz = 12;
+        const X = Math.round((x - sz / 2) / 3) * 3, Y = Math.round((y - sz / 2 + hop) / 3) * 3;
+        c.el.setAttribute('x', X); c.el.setAttribute('y', Y); c.el.setAttribute('width', sz); c.el.setAttribute('height', sz);
+      },
+      float: { x: 880, y: 530, text: '+0.70' } }
+  };
+
+  /* ---------- the machine: one loop drives coins along the wires ---------- */
+  class Machine {
+    constructor(stage) {
+      this.stage = stage; this.key = stage.dataset.machine; this.cfg = CFG[this.key];
+      this.layer = stage.querySelector('[data-coins]');
+      this.paths = {}; stage.querySelectorAll('[data-path]').forEach(p => this.paths[p.dataset.path] = { el: p, len: p.getTotalLength() });
+      this.glows = {}; stage.querySelectorAll('[data-glow]').forEach(p => this.glows[p.dataset.glow] = { el: p, e: 0 });
+      this.coins = []; this.next = this.cfg.first; this.on = false; this.sales = 11; this.moved = 11; this.shown = 11;
+      this.handCoin = stage.querySelector('.hand-coin'); this.ok = stage.querySelector('[data-ledger-ok]');
+      this.agoEl = stage.querySelector('[data-ago]'); this.lastPay = -4;  this.t = 0;
+    }
+    spawn(kind, s = 1) {
+      const p = this.paths[kind]; if (!p) return;
+      const el = this.cfg.make(); this.layer.appendChild(el);
+      const c = { el, kind, p, d: 0, s, hist: [] }; this.coins.push(c); this.place(c);
+    }
+    place(c) {
+      const q = this.cfg.quant ? Math.floor(c.d / this.cfg.quant) * this.cfg.quant : c.d;
+      const pt = c.p.el.getPointAtLength(Math.min(q, c.p.len)); this.cfg.render(c, pt.x, pt.y);
+    }
+    bump(name) {
+      const el = this.stage.querySelector(`[data-part="${name}"]`); if (!el) return;
+      el.classList.remove('bump'); void el.getBoundingClientRect(); el.classList.add('bump');
+    }
+    toss() {
+      if (this.handCoin) { this.handCoin.classList.add('gone'); setTimeout(() => this.handCoin.classList.remove('gone'), 1100); }
+      const slot = this.stage.querySelector('[data-part="slot"]'); slot && slot.classList.add('expect');
+      setTimeout(() => slot && slot.classList.remove('expect'), 900);
+      this.spawn('in');
+    }
+    arrive(c) {
+      c.el.remove(); this.coins.splice(this.coins.indexOf(c), 1);
+      switch (c.kind) {
+        case 'in': this.bump('slot'); this.sales++; this.moved += 1; this.stats(); this.spawn('main'); break;
+        case 'main': this.bump('junction'); this.spawn('up', .8); this.spawn('down', .8); break;
+        case 'up': this.bump('portal'); break;
+        case 'down': this.bump('payout'); this.spawn('out', .8); break;
+        case 'out': this.bump('recipient'); this.pay(); break;
+      }
+    }
+    stats() {
+      this.stage.querySelectorAll('[data-stat="sales"]').forEach(e => e.textContent = this.sales);
+      this.stage.querySelectorAll('[data-stat="sales3"]').forEach(e => e.textContent = String(this.sales).padStart(3, '0'));
+      this.stage.querySelectorAll('[data-stat="out"]').forEach(e => e.textContent = this.sales.toFixed(2));
+    }
+    pay() {
+      const f = this.cfg.float, d = document.createElement('div');
+      d.className = 'float'; d.style.left = f.x + 'px'; d.style.top = f.y + 'px'; d.textContent = f.text;
+      this.stage.appendChild(d); d.addEventListener('animationend', () => d.remove());
+      if (this.ok) {
+        const ic = this.ok.querySelector('.ic');
+        if (this.key === 'a' && ic) { ic.classList.remove('stamp'); void ic.offsetWidth; ic.classList.add('stamp'); }
+        else { this.ok.classList.remove('flash'); void this.ok.offsetWidth; this.ok.classList.add('flash'); }
+      }
+      this.lastPay = this.t;
+    }
+    step(dt) {
+      this.t += dt;
+      if ((this.next -= dt) <= 0) { this.next = this.cfg.every; this.toss(); }
+      for (const c of this.coins.slice()) {
+        c.d += this.cfg.speed * dt;
+        if (c.d >= c.p.len) { this.arrive(c); continue; }
+        this.place(c);
+        if (this.glows[c.kind]) this.glows[c.kind].e = 1;
+      }
+      for (const k in this.glows) { const g = this.glows[k]; g.e *= Math.exp(-dt / 0.55); g.el.style.opacity = (0.12 + 0.88 * g.e).toFixed(3); }
+      const m = this.stage.querySelector('[data-stat="moved"]');
+      if (m) { this.shown += (this.moved - this.shown) * Math.min(1, dt * 1.6); m.innerHTML = this.shown.toFixed(4).replace(/(\.\d{2})(\d{2})$/, '$1<span>$2</span>'); }
+      if (this.agoEl) { const s = Math.max(1, Math.round(this.t - this.lastPay)); this.agoEl.textContent = s < 2 ? 'just now' : s + 's ago'; }
+    }
+    staticFrame() {
+      [['main', .55, 1], ['up', .45, .8], ['down', .6, .8]].forEach(([k, f, s]) => {
+        const p = this.paths[k]; if (!p) return; const el = this.cfg.make(); this.layer.appendChild(el);
+        const c = { el, kind: k, p, d: p.len * f, s, hist: [] }; for (let i = 0; i < 14; i++) { const pt = p.el.getPointAtLength(Math.max(0, c.d - i * 4)); c.hist.push([pt.x, pt.y]); }
+        this.place(c);
+      });
+    }
+  }
+
+  const machines = [...document.querySelectorAll('.stage[data-machine]')].map(s => new Machine(s));
+  if (reduce) { machines.forEach(m => { m.stage.classList.add('live', 'idle'); m.staticFrame(); }); return; }
+
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    const m = machines.find(m => m.stage === e.target.querySelector('.stage'));
+    if (!m) return;
+    m.on = e.isIntersecting;
+    if (m.on && !m.stage.classList.contains('live')) {
+      m.stage.classList.add('live');
+      if (m.key === 'c') setTimeout(() => m.stage.classList.add('idle'), 2400);
+    }
+  }), { threshold: 0.15 });
+  frames.forEach(f => io.observe(f));
+
+  let last = performance.now();
+  const loop = now => {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    for (const m of machines) if (m.on) m.step(dt);
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
