@@ -1,0 +1,26 @@
+├  Unsigned transaction:
+│    signer_id:    ww-portal-261112.testnet
+│    receiver_id:  ww-portal-261112.testnet
+│    actions:
+│       -- deploy code <YFKbyWKcTaL8PzTQVHNwH5v98mazmXrWHuAf9txjqx9> to a account <ww-portal-261112.testnet>
+│     [0m
+├  Your transaction was signed successfully.
+│    Public key: ed25519:7veGHXKESDkzRC6xWKLcYvrqvMENntHVetR6Yu43egEV
+│    Signature:  ed25519:rvYetDbMe8aaAf5tupxDQ4a4ajztkyjbV2v2sDLp9Wq1YzaDfzEonUvzW4WsS81Vxw7TLdGjRJqzEvW6X3bnuZP
+│     [0m
+├  Transaction Execution Info:
+│    Gas used: 29.0 Tgas
+│    Transaction fee: 0.0028767464463483 NEAR
+│    Transaction ID: C6WVX2FaaZ2TSmkhhJkSD5zvUpA6Z8kAC6Ggzru39Hi3
+│    To see the transaction in the transaction explorer, please open this url in your browser:
+│    https://explorer.testnet.near.org/transactions/C6WVX2FaaZ2TSmkhhJkSD5zvUpA6Z8kAC6Ggzru39Hi3
+│     [0m
+
+Contract code has been successfully deployed.
+
+
+
+
+Here is your console command if you need to script it or re-run:
+    [33mnear contract deploy ww-portal-261112.testnet use-file /opt/ww-target/near/worldworks_contract.wasm without-init-call network-config testnet sign-with-legacy-keychain send[39m
+

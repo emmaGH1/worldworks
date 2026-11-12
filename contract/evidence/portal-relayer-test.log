@@ -1,0 +1,76 @@
+TAP version 13
+# Subtest: live signature recovers contract-derived address and fixes transaction fields
+ok 1 - live signature recovers contract-derived address and fixes transaction fields
+  ---
+  duration_ms: 25.693248
+  type: 'test'
+  ...
+# Subtest: relayer rejects altered recipient
+ok 2 - relayer rejects altered recipient
+  ---
+  duration_ms: 0.30245
+  type: 'test'
+  ...
+# Subtest: relayer rejects altered wei
+ok 3 - relayer rejects altered wei
+  ---
+  duration_ms: 0.10638
+  type: 'test'
+  ...
+# Subtest: relayer rejects altered nonce
+ok 4 - relayer rejects altered nonce
+  ---
+  duration_ms: 0.08979
+  type: 'test'
+  ...
+# Subtest: relayer rejects altered chain_id
+ok 5 - relayer rejects altered chain_id
+  ---
+  duration_ms: 0.10624
+  type: 'test'
+  ...
+# Subtest: relayer rejects altered max_fee_per_gas
+ok 6 - relayer rejects altered max_fee_per_gas
+  ---
+  duration_ms: 0.39328
+  type: 'test'
+  ...
+# Subtest: relayer rejects altered gas_limit
+ok 7 - relayer rejects altered gas_limit
+  ---
+  duration_ms: 0.05819
+  type: 'test'
+  ...
+# Subtest: relayer rejects unsigned payout
+ok 8 - relayer rejects unsigned payout
+  ---
+  duration_ms: 0.07208
+  type: 'test'
+  ...
+# Subtest: broadcast returns deterministic hash and known-transaction rebroadcast is idempotent
+ok 9 - broadcast returns deterministic hash and known-transaction rebroadcast is idempotent
+  ---
+  duration_ms: 1.52662
+  type: 'test'
+  ...
+# Subtest: unaccepted broadcast preserves RPC failure
+ok 10 - unaccepted broadcast preserves RPC failure
+  ---
+  duration_ms: 1.05663
+  type: 'test'
+  ...
+# Subtest: wrong RPC chain cannot broadcast
+ok 11 - wrong RPC chain cannot broadcast
+  ---
+  duration_ms: 0.43241
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 533.920808

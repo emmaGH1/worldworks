@@ -1,0 +1,43 @@
+├  Unsigned transaction:
+│    signer_id:    ww-portal-261112.testnet
+│    receiver_id:  ww-portal-261112.testnet
+│    actions:
+│       -- function call:      
+│                       method name:  publish_machine
+│                       args:         {
+│                                       "expiry_blocks": "100",
+│                                       "machine_id": "vending",
+│                                       "machine_json": "{\n  \"portal_cap_wei\": \"2000000000000000\",\n  \"nodes\": {\n    \"slot\": {\n      \"type\": \"CoinSlot\",\n      \"price\": \"1000000000000000000000000\",\n      \"output\": \"fees\"\n    },\n    \"fees\": {\n      \"type\": \"Splitter\",\n      \"outputs\": [\n        {\n          \"bps\": 7000,\n          \"target\": \"reserve_fee\"\n        },\n        {\n          \"bps\": 3000,\n          \"target\": \"creator\"\n        }\n      ]\n    },\n    \"reserve_fee\": {\n      \"type\": \"Splitter\",\n      \"outputs\": [\n        {\n          \"bps\": 9000,\n          \"target\": \"reserve\"\n        },\n        {\n          \"bps\": 1000,\n          \"target\": \"delivery\"\n        }\n      ]\n    },\n    \"reserve\": {\n      \"type\": \"Vault\",\n      \"name\": \"reserve\"\n    },\n    \"creator\": {\n      \"type\": \"Payout\",\n      \"account\": \"creator.testnet\"\n    },\n    \"portal\": {\n      \"type\": \"Portal\",\n      \"chain\": \"sepolia\",\n      \"wei\": \"1000000000000000\"\n    },\n    \"delivery\": {\n      \"type\": \"Gate\",\n      \"condition\": {\n        \"type\": \"MinAmount\",\n        \"amount\": \"0\"\n      },\n      \"pass\": \"portal\",\n      \"fail\": \"portal\"\n    }\n  }\n}\n",
+│                                       "workers": {}
+│                                     }
+│                       gas:          300.0 Tgas
+│                       deposit:      0 NEAR
+│     [0m
+├  Your transaction was signed successfully.
+│    Public key: ed25519:7veGHXKESDkzRC6xWKLcYvrqvMENntHVetR6Yu43egEV
+│    Signature:  ed25519:63RQJz2emBjzwh6MergVwDGrM87s9pbQcc75Pk6H7Zh6Fe68W5CZ3McFeEqx6m4jXR6y8S9z3Ln6CkZyfBUAgY8L
+│     [0m
+├  Transaction Execution Info:
+│    Gas used: 2.9 Tgas
+│    Transaction fee: 0.0002658649630558 NEAR
+│    Transaction ID: 6uueugq1ritQTscJjT1SmgTF8wLPmbey9audsxZfawX9
+│    To see the transaction in the transaction explorer, please open this url in your browser:
+│    https://explorer.testnet.near.org/transactions/6uueugq1ritQTscJjT1SmgTF8wLPmbey9audsxZfawX9
+│     [0m
+├  Function execution logs:
+│    [36mLogs [ww-portal-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-portal-261112.testnet]:[39m   [2mNo logs[0m
+│     [0m
+├  Function execution return value:
+│    Empty return value
+│     [0m
+
+
+The "publish_machine" call to <ww-portal-261112.testnet> on behalf of <ww-portal-261112.testnet> succeeded.
+
+
+
+
+Here is your console command if you need to script it or re-run:
+    [33mnear contract call-function as-transaction ww-portal-261112.testnet publish_machine json-args '{"machine_id": "vending", "machine_json": "{\n  \"portal_cap_wei\": \"2000000000000000\",\n  \"nodes\": {\n    \"slot\": {\n      \"type\": \"CoinSlot\",\n      \"price\": \"1000000000000000000000000\",\n      \"output\": \"fees\"\n    },\n    \"fees\": {\n      \"type\": \"Splitter\",\n      \"outputs\": [\n        {\n          \"bps\": 7000,\n          \"target\": \"reserve_fee\"\n        },\n        {\n          \"bps\": 3000,\n          \"target\": \"creator\"\n        }\n      ]\n    },\n    \"reserve_fee\": {\n      \"type\": \"Splitter\",\n      \"outputs\": [\n        {\n          \"bps\": 9000,\n          \"target\": \"reserve\"\n        },\n        {\n          \"bps\": 1000,\n          \"target\": \"delivery\"\n        }\n      ]\n    },\n    \"reserve\": {\n      \"type\": \"Vault\",\n      \"name\": \"reserve\"\n    },\n    \"creator\": {\n      \"type\": \"Payout\",\n      \"account\": \"creator.testnet\"\n    },\n    \"portal\": {\n      \"type\": \"Portal\",\n      \"chain\": \"sepolia\",\n      \"wei\": \"1000000000000000\"\n    },\n    \"delivery\": {\n      \"type\": \"Gate\",\n      \"condition\": {\n        \"type\": \"MinAmount\",\n        \"amount\": \"0\"\n      },\n      \"pass\": \"portal\",\n      \"fail\": \"portal\"\n    }\n  }\n}\n", "workers": {}, "expiry_blocks": "100"}' prepaid-gas '300.0 Tgas' attached-deposit '0 NEAR' sign-as ww-portal-261112.testnet network-config testnet sign-with-legacy-keychain send[39m
+

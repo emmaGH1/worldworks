@@ -1,0 +1,21 @@
+├  Your transaction:
+│    signer_id:    testnet
+│    actions:
+│       -- create account:      ww-portal-261112.testnet
+│       -- add access key:     
+│                       public key:   ed25519:7veGHXKESDkzRC6xWKLcYvrqvMENntHVetR6Yu43egEV
+│                       permission:   FullAccess
+│     [0m
+├  Transaction Execution Info:
+│    Transaction ID: C1vcY95srkGZf5ixabVK5PBw6jwEew8TR5riv1M5a4Re
+│    To see the transaction in the transaction explorer, please open this url in your browser:
+│    https://explorer.testnet.near.org/transactions/C1vcY95srkGZf5ixabVK5PBw6jwEew8TR5riv1M5a4Re
+[0m
+New account <ww-portal-261112.testnet> created successfully.
+The data for the access key is saved in a file /data/home/.near-credentials/testnet/ww-portal-261112.testnet/ed25519_7veGHXKESDkzRC6xWKLcYvrqvMENntHVetR6Yu43egEV.json
+The data for the access key is saved in a file /data/home/.near-credentials/testnet/ww-portal-261112.testnet.json
+
+
+Here is your console command if you need to script it or re-run:
+    [33mnear account create-account sponsor-by-faucet-service ww-portal-261112.testnet autogenerate-new-keypair --signature-scheme ed25519 save-to-legacy-keychain network-config testnet create[39m
+

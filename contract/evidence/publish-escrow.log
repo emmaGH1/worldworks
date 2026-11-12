@@ -1,0 +1,45 @@
+├  Unsigned transaction:
+│    signer_id:    ww-portal-261112.testnet
+│    receiver_id:  ww-portal-261112.testnet
+│    actions:
+│       -- function call:      
+│                       method name:  publish_machine
+│                       args:         {
+│                                       "expiry_blocks": "100",
+│                                       "machine_id": "escrow",
+│                                       "machine_json": "{\n  \"portal_cap_wei\":\"0\",\n  \"nodes\": {\n    \"slot\":{\"type\":\"CoinSlot\",\"price\":\"1000000000000000000000000\",\"output\":\"review\"},\n    \"review\":{\"type\":\"Gate\",\"condition\":{\"type\":\"NeedsApproval\",\"worker\":\"inspector\"},\"pass\":\"seller\",\"fail\":\"refund\"},\n    \"inspector\":{\"type\":\"Worker\",\"gates\":[\"review\"]},\n    \"seller\":{\"type\":\"Payout\",\"account\":\"seller.testnet\"},\n    \"refund\":{\"type\":\"Payout\",\"account\":\"$payer\"}\n  }\n}\n",
+│                                       "workers": {
+│                                         "inspector": "ww-portal-261112.testnet"
+│                                       }
+│                                     }
+│                       gas:          300.0 Tgas
+│                       deposit:      0 NEAR
+│     [0m
+├  Your transaction was signed successfully.
+│    Public key: ed25519:7veGHXKESDkzRC6xWKLcYvrqvMENntHVetR6Yu43egEV
+│    Signature:  ed25519:5tM99rVkQaC4R6a5PRcEU8eTDwJ2oDbvn7EyY8Cd4hQx2TXqH8nzdPS7NuNvJ9Y9Hto4ej75sYdciNf8xLnBVdjH
+│     [0m
+├  Transaction Execution Info:
+│    Gas used: 2.7 Tgas
+│    Transaction fee: 0.000241980947051 NEAR
+│    Transaction ID: 8aeXXZqMFSYK6mjcFD4xoGfHDopdEfWMdeZTBf1SyoG7
+│    To see the transaction in the transaction explorer, please open this url in your browser:
+│    https://explorer.testnet.near.org/transactions/8aeXXZqMFSYK6mjcFD4xoGfHDopdEfWMdeZTBf1SyoG7
+│     [0m
+├  Function execution logs:
+│    [36mLogs [ww-portal-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-portal-261112.testnet]:[39m   [2mNo logs[0m
+│     [0m
+├  Function execution return value:
+│    Empty return value
+│     [0m
+
+
+The "publish_machine" call to <ww-portal-261112.testnet> on behalf of <ww-portal-261112.testnet> succeeded.
+
+
+
+
+Here is your console command if you need to script it or re-run:
+    [33mnear contract call-function as-transaction ww-portal-261112.testnet publish_machine json-args '{"machine_id": "escrow", "machine_json": "{\n  \"portal_cap_wei\":\"0\",\n  \"nodes\": {\n    \"slot\":{\"type\":\"CoinSlot\",\"price\":\"1000000000000000000000000\",\"output\":\"review\"},\n    \"review\":{\"type\":\"Gate\",\"condition\":{\"type\":\"NeedsApproval\",\"worker\":\"inspector\"},\"pass\":\"seller\",\"fail\":\"refund\"},\n    \"inspector\":{\"type\":\"Worker\",\"gates\":[\"review\"]},\n    \"seller\":{\"type\":\"Payout\",\"account\":\"seller.testnet\"},\n    \"refund\":{\"type\":\"Payout\",\"account\":\"$payer\"}\n  }\n}\n", "workers": {"inspector": "ww-portal-261112.testnet"}, "expiry_blocks": "100"}' prepaid-gas '300.0 Tgas' attached-deposit '0 NEAR' sign-as ww-portal-261112.testnet network-config testnet sign-with-legacy-keychain send[39m
+

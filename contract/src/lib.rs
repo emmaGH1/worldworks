@@ -1,6 +1,8 @@
 use near_sdk::collections::LookupMap;
 use near_sdk::json_types::{U128, U64};
 use near_sdk::{env, near, AccountId, NearToken, PanicOnDefault, Promise};
+mod portal;
+use portal::PortalConfig;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use worldworks_engine::{self as engine, Effect, Machine, Outcome, Part, State};
@@ -16,6 +18,7 @@ pub struct PublishedMachine {
 }
 #[derive(Serialize, Deserialize, Clone, near_sdk::NearSchema)]
 pub struct ExternalPayout {
+    pub payout_id: String,
     pub machine_id: String,
     pub order_id: String,
     pub recipient: String,
@@ -36,6 +39,8 @@ pub struct Order {
 #[near(contract_state)]
 #[derive(PanicOnDefault)]
 pub struct Contract {
+    portal: PortalConfig,
+    payouts: LookupMap<String, String>,
     machines: LookupMap<String, String>,
     orders: LookupMap<(String, String), String>,
 }
@@ -45,11 +50,15 @@ fn must<T, E: std::fmt::Debug>(result: Result<T, E>) -> T {
 #[near]
 impl Contract {
     #[init]
-    pub fn new() -> Self {
-        Self {
+    pub fn new(portal_config: Option<PortalConfig>) -> Self {
+        let contract = Self {
+            portal: portal_config.unwrap_or_default().validate(),
+            payouts: LookupMap::new(b"p"),
             machines: LookupMap::new(b"m"),
             orders: LookupMap::new(b"o"),
-        }
+        };
+        contract.refresh_portal_address().detach();
+        contract
     }
 
     pub fn publish_machine(
@@ -254,6 +263,21 @@ impl Contract {
         order: &mut Order,
         outcome: Outcome,
     ) {
+        let prior = machine
+            .external_payouts
+            .iter()
+            .filter(|p| p.order_id == order_id)
+            .try_fold(0u128, |sum, p| sum.checked_add(p.wei.0))
+            .expect("portal cap overflow");
+        let total = outcome
+            .effects
+            .iter()
+            .try_fold(prior, |sum, e| match e {
+                Effect::ExternalPayout { wei, .. } => sum.checked_add(*wei),
+                _ => Some(sum),
+            })
+            .expect("portal cap overflow");
+        assert!(total <= self.portal.cap_wei.0, "portal cap exceeded");
         order.pending = outcome.pending;
         order.trace.extend(outcome.trace);
         for effect in outcome.effects {
@@ -272,7 +296,10 @@ impl Contract {
                     wei,
                     fee,
                 } => {
+                    let payout_id =
+                        self.create_portal_payout(machine_id, order_id, &recipient, wei, fee);
                     machine.external_payouts.push(ExternalPayout {
+                        payout_id,
                         machine_id: machine_id.into(),
                         order_id: order_id.into(),
                         recipient,
@@ -288,12 +315,5 @@ impl Contract {
             &must(serde_json::to_string(order)),
         );
         self.save_machine(machine_id, machine);
-    }
-
-    #[allow(dead_code)]
-    fn request_external_signature(&self, _payout: &ExternalPayout) {
-        // TODO(G2b): construct a constrained transaction and call Chain Signatures.
-        // Deliberately unreachable from all exported methods; no signature is produced.
-        env::panic_str("Chain Signatures is not implemented (G2b)");
     }
 }

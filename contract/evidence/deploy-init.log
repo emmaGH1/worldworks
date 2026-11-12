@@ -1,0 +1,39 @@
+├  Unsigned transaction:
+│    signer_id:    ww-portal-261112.testnet
+│    receiver_id:  ww-portal-261112.testnet
+│    actions:
+│       -- deploy code <6N4yba7kQNGiSNfvipL5uwVbeSu7NGZP8T7sNQbUaETM> to a account <ww-portal-261112.testnet>
+│       -- function call:      
+│                       method name:  new
+│                       args:         {}
+│                       gas:          50.0 Tgas
+│                       deposit:      0 NEAR
+│     [0m
+├  Your transaction was signed successfully.
+│    Public key: ed25519:7veGHXKESDkzRC6xWKLcYvrqvMENntHVetR6Yu43egEV
+│    Signature:  ed25519:3EbM7p9bccHLeKyE5udrK6n7DivpUVkTuatTZebfgbPorLRd5KypNwLEeq3gwuEC74ordBipdP5zh1anZn76q6sx
+│     [0m
+├  Transaction Execution Info:
+│    Gas used: 30.2 Tgas
+│    Transaction fee: 0.0029957120860902 NEAR
+│    Transaction ID: AGvzQTwrbTnGqPjnty7D8S8nBinKdwYtMxreegdNSNxs
+│    To see the transaction in the transaction explorer, please open this url in your browser:
+│    https://explorer.testnet.near.org/transactions/AGvzQTwrbTnGqPjnty7D8S8nBinKdwYtMxreegdNSNxs
+│     [0m
+├  Function execution logs:
+│    [36mLogs [ww-portal-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-portal-261112.testnet]:[39m   [2mNo logs[0m
+│     [0m
+├  Function execution return value:
+│    Empty return value
+│     [0m
+
+Contract code has been successfully deployed.
+The "new" call to <ww-portal-261112.testnet> on behalf of <ww-portal-261112.testnet> succeeded.
+
+
+
+
+Here is your console command if you need to script it or re-run:
+    [33mnear contract deploy ww-portal-261112.testnet use-file /opt/ww-target/near/worldworks_contract.wasm with-init-call new json-args {} prepaid-gas '50.0 Tgas' attached-deposit '0 NEAR' network-config testnet sign-with-legacy-keychain send[39m
+

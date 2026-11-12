@@ -1,0 +1,30 @@
+• Collecting cargo project metadata...
+• done
+
+• Checking rustc version...
+INFO: contract's near-sdk targets protocol version 84; rustc 1.99.0 accepted (bulk-memory opcodes supported by nearcore VM)
+• done
+
+• Checking the host environment...
+• done
+
+• Building contract
+ │    Compiling portal-mock-signer v0.1.0 (/data/home/.t3/projects/near-hackathon/contract/tests/mock-signer)
+ │     Finished `release` profile [optimized] target(s) in 0.87s
+
+Modification timestamps of:
+ |    "/opt/ww-target/wasm32-unknown-unknown/release/portal_mock_signer.wasm" = SystemTime { tv_sec: 1794521172, tv_nsec: 807362494 }
+ |    "/opt/ww-target/portal-mock/portal_mock_signer.wasm" = SystemTime { tv_sec: 1794521143, tv_nsec: 537306149 }
+
+• Running an optimize for size post-step with wasm-opt --enable-nontrapping-float-to-int --enable-bulk-memory...
+    Finished wasm-opt -O in 91ms
+• done
+
+✓ Contract successfully built! (in CARGO_NEAR_BUILD_ENVIRONMENT=host)
+     -                Binary: /opt/ww-target/portal-mock/portal_mock_signer.wasm
+     -                  Size: 88.9 KB (88902 bytes)
+     - SHA-256 checksum hex : 4f819b6d178ce05eb2c4aedc041d930fe1d9b31fa2e1ee5990b56305eac7730a
+     - SHA-256 checksum bs58: 6MMqLKUJ371qcnnp4LCrezj1QJFNVhmBgDcZ3b33Dx7s
+    Finished cargo near build in 1s
+Here is the console command if you ever need to re-run it again:
+cargo near build non-reproducible-wasm --no-abi --out-dir /opt/ww-target/portal-mock --manifest-path contract/tests/mock-signer/Cargo.toml
