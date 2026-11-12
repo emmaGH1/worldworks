@@ -1,0 +1,14 @@
+:root {
+  --color-ground: #F4EEE3; --color-grid: #E4DACA;
+  --color-ink: #24203A; --color-ink-secondary: #6B6680;
+  --color-pipe: #36314D; --color-pipe-stripe: #4A4466;
+  --color-coin: #FFC53D; --color-coin-rim: #E39A17;
+  --color-input: #FFB547; --color-logic: #17D9D4; --color-storage: #7C83A6;
+  --color-crew: #FFE02A; --color-output: #00EC97; --color-portal: #9797FF;
+  --color-confirmed: #00EC97; --color-pending: #FFB547; --color-failed: #FF7966;
+  --font-display: 'Bricolage Grotesque', sans-serif; --font-ui: 'Nunito', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --radius-part: 22px; --radius-pill: 999px;
+  --shadow-part-offset: 0 6px; --shadow-part: 0 6px 0 var(--color-ink);
+  --duration-squash: 180ms; --duration-drop: 300ms; --duration-fill: 400ms;
+}

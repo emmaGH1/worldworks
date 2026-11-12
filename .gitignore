@@ -12,3 +12,4 @@ node_modules/
 .vercel/
 # third-party reference images: local only, not ours to publish
 docs/design/refs/
+dist/
