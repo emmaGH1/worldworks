@@ -12,6 +12,8 @@ A task is DONE only after the builder's evidence, a Claude review and an Astra r
 | T1 app scaffold | Terra | typecheck + build pass, SPA fallback works, 210 MB node_modules | orchestrator re-ran typecheck + build: pass | n/a (scaffold) | DONE, committed |
 | G3 Portal in main contract + relayer | Sol | deployed ww-portal-261112.testnet; live MPC signature for a vending order; sandbox + 11 relayer tests pass | — | Astra security audit: 2 critical (treasury drain by 1-yocto Portal machine; FullAccess key on contract account), 5 high, 2 medium -> G5 | BUILT, committed; Sepolia broadcast BLOCKED on user funding 0x694Ad57416073B1E1f3BC6E13B26BDE28015A8b7 |
 | T2 engine in browser (wasm) | Terra | wasm 411 KB; app typecheck/build pass; node test: wasm == native | orchestrator re-ran node test: pass | n/a | DONE, committed (validate returns no flow count; engine API does not expose it; acceptable) |
-| UI-1 workshop, app page, verify page | Opus | — | — | — | RUNNING |
+| UI-1 workshop, app page, verify page | Opus | first run hit Claude rate limit; partial work kept | — | — | RUNNING (resumed; Direction A final) |
 | G4 live adapter, wallet-free onboarding, scoped Worker key, seeded customer | Sol | e2e on testnet passes: session, publish, approve-only key verified by RPC (other method rejected), seeded order, payout signed; 14 tests | — | — | BUILT, committed; needs follow-up for G5 interface changes; completeness check after that |
-| G5 contract hardening (audit fixes) | Sol | — | — | Astra re-audit after | RUNNING (keeps portal address 0x694A...A8b7) |
+| G5 contract hardening (audit fixes) | Sol | all audit items implemented; 40 engine + sandbox tests pass; redeployed, portal address unchanged | — | Astra re-audit after G4b | BUILT, committed |
+| GATE 2: real cross-chain payout | Sol + orchestrator | 5 payouts confirmed on Sepolia from the NEAR-derived treasury (receipts on 2 RPCs) | — | — | DONE (docs/EVIDENCE-sepolia.md) |
+| G4b app adopts G5, fee right-sizing, 2-RPC confirmation | Sol | — | — | — | RUNNING |
