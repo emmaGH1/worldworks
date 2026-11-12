@@ -4,24 +4,24 @@ This crate is a local deterministic interpreter. Effects are intentions, not rea
 transactions. It uses no network, NEAR SDK, clock, randomness, or floating point.
 
 A machine is `{ "portal_cap_wei": "1000", "nodes": { "id": { ...part } } }`.
-All monetary values are unsigned decimal **strings** fitting u128 (yoctoNEAR
+All monetary values are canonical unsigned ASCII decimal **strings** fitting u128 (yoctoNEAR
 unless named `wei`). Basis points are JSON u16 integers; 10000 means 100%.
 Node IDs are keys in a BTreeMap. Parts and conditions use a `type` discriminator.
-Unknown fields are rejected. Examples are in `examples/`.
+Unknown fields and duplicate node keys are rejected. Signs, whitespace, non-ASCII digits and leading zeros (except the string "0") are rejected. Examples are in `examples/`.
 
 | Part type | Fields | Behavior |
 |---|---|---|
-| CoinSlot | price, output | Exactly one source; payment must equal price |
-| Splitter | outputs: [{bps, target}, ...] | 2–4 ports, total 10000 bps |
-| Vault | name | Adds inflow to State.vaults[name] |
+| CoinSlot | price, output | Exactly one source; positive price; payment must equal price |
+| Splitter | outputs: [{bps, target}, ...] | 2–4 ports, each bps positive, total 10000 bps |
+| Vault | name | Name is 1–32 Unicode characters; adds inflow to State.vaults[name] |
 | Gate | condition, pass, fail | Routes the whole inflow on one port |
 | Worker | gates: [gate_id, ...] | Node ID is role name; may approve only listed gates |
-| Payout | account | Records a NEAR payout; `$payer` resolves to the order payer |
-| Portal | chain, wei | chain must be `sepolia`; records fixed wei payout to order recipient |
+| Payout | account | Valid NEAR account ID (2–64 ASCII bytes, lowercase letters/digits with single internal `.`, `-`, `_` separators), or exactly `$payer` resolving to the payer |
+| Portal | chain, wei | chain must be `sepolia`; records fixed wei payout to order recipient only for positive fee inflow |
 
 Gate conditions: `{"type":"MinAmount","amount":"100"}` passes if the
 current inflow is at least amount; `{"type":"NeedsApproval","worker":"inspector"}`
-holds this inflow. Both pass/fail ports must be connected, even if a condition
+holds this inflow. Approval Gates must have distinct pass and fail targets. Both pass/fail ports must be connected, even if a condition
 will always pass. Empty output/target strings mean unconnected ports; nonempty
 strings must name existing nodes. Edges cannot deliver money to Workers or CoinSlots.
 
@@ -40,20 +40,37 @@ The vending example routes 70% to the reserve branch and 30% to creator. The
 reserve branch routes 90% to Vault and 10% as the Portal fee: net 63% Vault,
 30% creator, 7% fee. A MinAmount(0) delivery Gate passes that fee to the
 Portal (both ports initially lead there); rewiring just its pass port to the
-reserve Vault redirects the fee while preserving graph reachability. The Portal's wei is a separate unit, bounded per Portal by
-portal_cap_wei. The cap is not an aggregate per-order or lifetime cap.
+reserve Vault redirects the fee while preserving graph reachability. The Portal's wei is a separate unit. The machine-level cap conservatively bounds
+sum(path_count × wei) over all Portals, rejecting arithmetic overflow. Both
+Gate ports count as structural paths even though only one executes; vending
+therefore has a 2000000000000000 wei cap and a 1000000000000000 wei payout.
+This is a per-order bound, not a lifetime cap.
+
+Machines have at most MAX_NODES = 32 nodes, including Workers. Kahn's iterative
+topological traversal rejects cycles and computes saturating source-to-node path
+counts. Their sum over all nodes (source included) must be <= MAX_FLOWS = 64.
+Parallel ports count separately; both Gate alternatives count. These deliberately
+conservative limits bound traversal and held flows even in graphs with merges.
 
 ## Calling the engine
 
-`validate(&Machine)` returns named structured errors. Runtime entry points also
-validate. `submit_order(&mut State, &Machine, String, String, u128, Option<String>)`
+`validate(&Machine)` returns a `ValidatedMachine` or named structured errors.
+Runtime entry points accept either a raw Machine (validated per call) or a
+ValidatedMachine (borrowed without revalidation). Publish once and persist the
+validated token in trusted host storage. Its serde representation includes the
+machine, canonical JSON SHA-256 hash, source, decimal-string price, and Portal
+flag; never accept a serialized token from an untrusted caller. The contract
+stores this token at publish and uses it for all order calls. `submit_order(&mut State, &Machine, String, String, u128, Option<String>)`
 reserves a unique order ID permanently, routes money, and returns Outcome.
 `approve(&mut State, &Machine, String, &str)` releases all currently held flows
 for that Worker through their pass ports. Other Workers' flows stay pending.
 `expire(&mut State, &Machine, String)` releases all currently held flows through
 fail ports. New downstream approval Gates may hold again. There is no expiry
-clock: the host must authorize when expiry is permitted. Keep each State bound
-to one immutable validated Machine; machine publishing/versioning is host work.
+clock: the host must authorize when expiry is permitted. Each Order stores the SHA-256 of canonical machine JSON (sorted node keys,
+fixed serde field order, canonical decimal strings). Approve/expire reject a
+different machine with MachineMismatch, including valid rewiring. Held records
+persist pass and fail targets at hold time. Machine publishing/versioning is
+host work.
 
 Outcome includes `effects`, human-readable `trace`, and `pending`. Effects are
 VaultCredit{name, amount}, Payout{account, amount}, and
@@ -63,11 +80,18 @@ its payment; while pending, the difference is held in State. Vault credits are
 also persisted in State; payouts and Portal requests are only effects. Hosts
 must persist state and effects atomically and execute effects exactly once.
 
-Recipient is required only if a Portal executes. Address validation, payment
-sender authentication, worker authentication, chain execution, fee sufficiency,
+If any Portal is structurally reachable, submission requires a nonempty `0x`
+plus 40 ASCII hex-digit recipient before holding or routing any funds. This
+applies even when the current path will not execute a Portal. Payment sender
+authentication, worker authentication, chain execution, fee sufficiency,
 and expiry scheduling belong to the host. Passing a worker name alone does not
 authenticate an on-chain caller. All errors leave State unchanged, including
-partial traversal overflow or missing recipients. Duplicate IDs, wrong prices,
+partial traversal overflow or missing recipients. Calls stage only the active
+order and touched vault balances; they never clone the entire State. All u128
+values in State, Held, effects and outcomes serialize as decimal strings.
+Outcome, Effect, EngineError and ValidationError implement Serialize. Repeating
+approval for a role already released returns NotPending even while another
+role's flows remain pending; a role never pending returns WrongWorker. Duplicate IDs, wrong prices,
 wrong workers, absent/completed pending orders, and repeated approval are errors.
 
 ## Local checks

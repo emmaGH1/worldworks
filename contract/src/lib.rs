@@ -7,7 +7,7 @@ use worldworks_engine::{self as engine, Effect, Machine, Outcome, Part, State};
 
 #[derive(Serialize, Deserialize)]
 pub struct PublishedMachine {
-    pub machine: Machine,
+    pub machine: engine::ValidatedMachine,
     pub owner: AccountId,
     pub workers: BTreeMap<String, AccountId>,
     pub expiry_blocks: U64,
@@ -66,7 +66,7 @@ impl Contract {
         );
         assert!(expiry_blocks.0 > 0, "expiry_blocks must be positive");
         let machine: Machine = must(serde_json::from_str(&machine_json));
-        must(engine::validate(&machine));
+        let validated = must(engine::validate(&machine));
         let roles: Vec<_> = machine
             .nodes
             .iter()
@@ -84,7 +84,7 @@ impl Contract {
             }
         }
         let published = PublishedMachine {
-            machine,
+            machine: validated,
             owner: env::predecessor_account_id(),
             workers,
             expiry_blocks,
@@ -155,6 +155,7 @@ impl Contract {
         // An account may hold several roles. Release one currently pending role
         // per call; the engine decides whether that role has a held flow.
         let mut outcome = None;
+        let mut not_pending = false;
         for worker in workers {
             match engine::approve(
                 &mut order.engine_state,
@@ -167,10 +168,20 @@ impl Contract {
                     break;
                 }
                 Err(engine::EngineError::WrongWorker) => continue,
+                Err(engine::EngineError::NotPending) => {
+                    not_pending = true;
+                    continue;
+                }
                 Err(error) => env::panic_str(&format!("{error:?}")),
             }
         }
-        let outcome = outcome.unwrap_or_else(|| env::panic_str("WrongWorker"));
+        let outcome = outcome.unwrap_or_else(|| {
+            env::panic_str(if not_pending {
+                "NotPending"
+            } else {
+                "WrongWorker"
+            })
+        });
         self.apply(&machine_id, &order_id, &mut machine, &mut order, outcome);
     }
 
@@ -191,9 +202,11 @@ impl Contract {
     }
 
     pub fn get_machine(&self, machine_id: String) -> Option<serde_json::Value> {
-        self.machines
-            .get(&machine_id)
-            .map(|s| must(serde_json::from_str(&s)))
+        self.machines.get(&machine_id).map(|s| {
+            let mut value: serde_json::Value = must(serde_json::from_str(&s));
+            value["machine"] = value["machine"]["machine"].take();
+            value
+        })
     }
     pub fn get_order(&self, machine_id: String, order_id: String) -> Option<serde_json::Value> {
         self.orders.get(&(machine_id, order_id)).map(|s| {

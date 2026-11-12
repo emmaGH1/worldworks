@@ -223,6 +223,7 @@ async fn acceptance_sandbox() -> Result<()> {
     rejected(&buyer, &c, "submit_order", second, PRICE, "DuplicateOrder").await?;
     rejected(&owner, &c, "publish_machine", json!({"machine_id":"invalid","machine_json":"{\"portal_cap_wei\":\"0\",\"nodes\":{}}","workers":{},"expiry_blocks":"100"}), 0, "CoinSlotCount").await?;
     let original = view(&c, "get_machine", json!({"machine_id":"vending"})).await?;
+    assert_eq!(original["machine"], vending);
     let mut changed = v_args;
     changed["machine_json"] = json!(escrow.to_string());
     rejected(
@@ -245,5 +246,22 @@ async fn acceptance_sandbox() -> Result<()> {
         .iter()
         .any(|s| s.as_str().unwrap().contains("approved")));
     println!("PASS d: wrong deposit, duplicate IDs (completed and expired), invalid graph, owner overwrite rejected; views and engine trace verified");
+    // Same account in two roles: a repeated first role must not block the second.
+    let mut multi = escrow.clone();
+    multi["nodes"]["slot"]["output"] = json!("split");
+    multi["nodes"]["split"] = json!({"type":"Splitter","outputs":[{"bps":5000,"target":"review"},{"bps":5000,"target":"other"}]});
+    multi["nodes"]["other"] = json!({"type":"Gate","condition":{"type":"NeedsApproval","worker":"second"},"pass":"seller","fail":"refund"});
+    multi["nodes"]["second"] = json!({"type":"Worker","gates":["other"]});
+    call(&owner, &c, "publish_machine", json!({"machine_id":"multi","machine_json":multi.to_string(),"workers":{"inspector":inspector.id(),"second":inspector.id()},"expiry_blocks":"100"}), 0).await?;
+    let args = json!({"machine_id":"multi","order_id":"one"});
+    call(&buyer, &c, "submit_order", args.clone(), PRICE).await?;
+    call(&inspector, &c, "approve", args.clone(), 0).await?;
+    assert_eq!(view(&c, "get_order", args.clone()).await?["pending"], true);
+    call(&inspector, &c, "approve", args.clone(), 0).await?;
+    assert_eq!(view(&c, "get_order", args.clone()).await?["pending"], false);
+    rejected(&inspector, &c, "approve", args, 0, "NotPending").await?;
+    println!(
+        "PASS e: raw graph view preserved; same account can release two roles on separate calls"
+    );
     Ok(())
 }

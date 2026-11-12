@@ -71,9 +71,15 @@ traces and graph size. See REPORT.md for the measured run.
 
 Each order persists a serialized engine State containing just that order;
 the contract accumulates VaultCredit effects per machine, checking overflow.
-The only engine change adds serde serialization/deserialization to State and
-its private Order/Held types so pending state survives calls. Rules and all
-existing tests are unchanged.
+G1 hardening stores a ValidatedMachine at publish time (trusted persistence,
+not caller input), and borrows it for order calls without repeated graph
+validation. Orders persist their canonical machine hash and held routing targets;
+all engine amounts use decimal strings. See engine/MACHINE_FORMAT.md for the
+32-node/64-flow bounds, conservative aggregate Portal cap, strict parsing,
+positive price/shares and upfront Portal recipient requirement. `get_machine`
+continues to expose the original raw graph under its `machine` field.
+This changes persisted storage format; existing deployments would require a
+migration or fresh deployment. Local tests always deploy fresh contracts.
 
 This v1 stores each machine's external list together and returns unpaginated
 views. Storage and gas grow with use, and there is no pruning. Prefunding is

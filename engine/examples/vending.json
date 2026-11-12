@@ -1,5 +1,5 @@
 {
-  "portal_cap_wei": "1000000000000000",
+  "portal_cap_wei": "2000000000000000",
   "nodes": {
     "slot": {
       "type": "CoinSlot",
