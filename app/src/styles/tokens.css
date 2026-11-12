@@ -1,14 +1,30 @@
+/* Direction A "Toy Works". Every colour, font, radius and shadow lives here so Direction B can be a token swap. */
 :root {
-  --color-ground: #F4EEE3; --color-grid: #E4DACA;
-  --color-ink: #24203A; --color-ink-secondary: #6B6680;
-  --color-pipe: #36314D; --color-pipe-stripe: #4A4466;
-  --color-coin: #FFC53D; --color-coin-rim: #E39A17;
-  --color-input: #FFB547; --color-logic: #17D9D4; --color-storage: #7C83A6;
-  --color-crew: #FFE02A; --color-output: #00EC97; --color-portal: #9797FF;
-  --color-confirmed: #00EC97; --color-pending: #FFB547; --color-failed: #FF7966;
-  --font-display: 'Bricolage Grotesque', sans-serif; --font-ui: 'Nunito', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
-  --radius-part: 22px; --radius-pill: 999px;
+  --color-ground: #F4EEE3; --color-grid: #E4DACA; --color-card: #FFFFFF; --color-card-shadow: #DED2BE; --color-card-hover: #F7F2E9;
+  --color-ink: #24203A; --color-ink-secondary: #6B6680; --color-ink-deep: #0D0B18; --color-line: #EAE2D4;
+  --color-pipe: #36314D; --color-pipe-stripe: #4A4466; --color-pipe-shadow: #E2D6C3;
+  --color-coin: #FFC53D; --color-coin-rim: #E39A17; --color-coin-light: #FFE08A; --color-coin-wash: #FFF3D6;
+  --color-input: #FFB547; --color-input-shade: #D98E22; --color-input-light: #FFD48A;
+  --color-logic: #17D9D4; --color-logic-shade: #0FA7A3;
+  --color-storage: #7C83A6; --color-storage-shade: #5A6082; --color-storage-deep: #3F4463; --color-storage-light: #9BA1C2; --color-vault-window: #3A3557;
+  --color-crew: #FFE02A; --color-crew-shade: #D4B60E;
+  --color-output: #00EC97; --color-output-shade: #00B373;
+  --color-portal: #9797FF; --color-portal-shade: #6E6EE0; --color-portal-light: #C3C3FF; --color-portal-ink: #5E5EDB; --color-portal-wash: #F0F0FF;
+  --color-confirmed: #00EC97; --color-confirmed-ink: #00A86B; --color-confirmed-wash: #E3FBF1;
+  --color-pending: #FFB547; --color-pending-ink: #B8730F; --color-pending-wash: #FFF8EC;
+  --color-failed: #FF7966; --color-failed-ink: #D9452F; --color-failed-wash: #FFF0ED;
+  --color-mock: #FF7966; --color-mock-stripe: #FFE3DD;
+  --color-customer: #7FB5FF; --color-customer-shade: #5A8FE0; --color-cheek: #FF7E4F; --color-cheek-customer: #FF8AA8; --color-sweat: #9FDCFF;
+
+  --font-display: 'Bricolage Grotesque', 'Nunito', system-ui, sans-serif;
+  --font-ui: 'Nunito', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --radius-part: 22px; --radius-card: 24px; --radius-small: 14px; --radius-pill: 999px;
+  --shadow-card: 0 6px 0 var(--color-card-shadow); --shadow-chip: 0 4px 0 var(--color-card-shadow);
+  --shadow-button: 0 5px 0 var(--color-ink-deep);
   --shadow-part-offset: 0 6px; --shadow-part: 0 6px 0 var(--color-ink);
+
+  --pipe-width: 16px; --coin-speed: 180; /* px per second, constant, never eased */
   --duration-squash: 180ms; --duration-drop: 300ms; --duration-fill: 400ms;
 }
