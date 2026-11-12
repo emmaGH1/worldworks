@@ -1,0 +1,53 @@
+├  Unsigned transaction:
+│    signer_id:    ww-chainsig-261112.testnet
+│    receiver_id:  ww-portal-261112.testnet
+│    actions:
+│       -- function call:      
+│                       method name:  submit_order
+│                       args:         {
+│                                       "external_recipient": "0x000000000000000000000000000000000000dEaD",
+│                                       "machine_id": "vending-g5",
+│                                       "order_id": "g5-live-1"
+│                                     }
+│                       gas:          300.0 Tgas
+│                       deposit:      2 NEAR
+│     [0m
+├  Your transaction was signed successfully.
+│    Public key: ed25519:BrGDitH2mh1VGDezr5NZV2FDG7dtwW6Xpua8CKT5BLMX
+│    Signature:  ed25519:sqjFu4kViYNNKWVW4GsDGNr6DfHGUBrbvRq1kRCgb4GfmZtWykrrocb3Lr91MMPyMg1DhuBfEnb927ittrJ8ufQ
+│     [0m
+├  Transaction Execution Info:
+│    Gas used: 18.4 Tgas
+│    Transaction fee: 0.0017060901233677 NEAR
+│    Transaction ID: EinsGGeGAnaMEYhdGLodeNU7fv8jkWptTQbA64PvVhBn
+│    To see the transaction in the transaction explorer, please open this url in your browser:
+│    https://explorer.testnet.near.org/transactions/EinsGGeGAnaMEYhdGLodeNU7fv8jkWptTQbA64PvVhBn
+│     [0m
+├  Function execution logs:
+│    [36mLogs [ww-portal-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [v1.signer-prod.testnet]:[39m
+│      sign: predecessor=AccountId("ww-portal-261112.testnet"), request=SignRequestArgs { path: "worldworks/portal/sepolia/v1", payload: Ecdsa(BoundedVec { inner: [212, 230, 205, 82, 126, 114, 15, 239, 123, 205, 82, 85, 1, 184, 11, 37, 55, 135, 160, 14, 185, 160, 199, 79, 50, 221, 160, 64, 162, 164, 94, 245], witness: NonEmpty(()) }), domain_id: DomainId(0) }
+│    [36mLogs [v1.signer-prod.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-chainsig-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-chainsig-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-portal-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-chainsig-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [creator.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-chainsig-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-portal-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-chainsig-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-chainsig-261112.testnet]:[39m   [2mNo logs[0m
+│     [0m
+├  Function execution return value:
+│    Empty return value
+│     [0m
+
+
+The "submit_order" call to <ww-portal-261112.testnet> on behalf of <ww-chainsig-261112.testnet> succeeded.
+
+
+
+
+Here is your console command if you need to script it or re-run:
+    [33mnear contract call-function as-transaction ww-portal-261112.testnet submit_order json-args '{"machine_id": "vending-g5", "order_id": "g5-live-1", "external_recipient": "0x000000000000000000000000000000000000dEaD"}' prepaid-gas '300.0 Tgas' attached-deposit '2 NEAR' sign-as ww-chainsig-261112.testnet network-config testnet sign-with-legacy-keychain send[39m
+

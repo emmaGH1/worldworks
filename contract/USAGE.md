@@ -1,116 +1,135 @@
 # WORLDWORKS contract and Sepolia Portal
 
-NEAR testnet only. Machine rules use `../engine/MACHINE_FORMAT.md`. The shared
-Portal treasury is one Chain Signatures EVM address per contract, using path
-`worldworks/portal/sepolia/v1`, domain 0, signer `v1.signer-prod.testnet`.
-No EVM private key exists in the contract or relayer.
+NEAR testnet and Ethereum Sepolia only (chain 11155111). Shared treasury:
+`0x694Ad57416073B1E1f3BC6E13B26BDE28015A8b7`, contract
+`ww-portal-261112.testnet`, signer `v1.signer-prod.testnet`, domain 0,
+path `worldworks/portal/sepolia/v1`. No EVM private key exists in the relayer.
+
+## Interface changes for the app
+
+- `new(owner_id, min_fee_yocto_per_wei, epoch_blocks, epoch_budget_wei,
+  max_wei_per_payout, signature_timeout_blocks, portal_config?)` replaces G3 init.
+  Owner MUST differ from the contract. All limits are positive decimal strings.
+  Only owner power is `set_portal_fees(max_fee_per_gas, max_priority_fee_per_gas)`;
+  it affects future payouts only, within immutable init bounds (hard max 100 gwei).
+  Default max fee is now **100 gwei**, priority 1 gwei. Explicit PortalConfig retains
+  G3 fields including `cap_wei`; `max_wei_per_payout` overrides that cap. Initial
+  `next_nonce` can be set explicitly for address continuity; never reuse a previously
+  reserved nonce, even if not yet mined. There is no runtime nonce-reset method.
+- `publish_machine(machine_id, machine_json, workers, expiry_blocks)` is now
+  **payable**: attach at least measured storage growth times NEAR storage byte cost.
+  Excess is returned asynchronously with transfer recovery. 0.1 NEAR comfortably
+  covers the supplied examples. Machine IDs: 1–32 bytes; node IDs: 1–32 bytes;
+  order IDs: 1–64 bytes; accounts must satisfy NEAR rules. Existing IDs are immutable.
+  Machine cap cannot exceed contract max; zero-wei Portal, multiple Portal nodes,
+  more than four transfer effects or one Portal effect per resolution are rejected.
+  Split branches add; gate alternatives take the maximum, including parallel paths.
+- `submit_order(machine_id, order_id, external_recipient?)` must attach exactly
+  **CoinSlot price + ORDER_STORAGE_FEE**, where fee is
+  `1000000000000000000000000` yoctoNEAR (**1 test NEAR**). This fee is retained,
+  including on expiry; only the price goes through the graph. Example price 1 NEAR
+  therefore requires **2 NEAR**. Read `get_limits().order_storage_fee` in the app.
+  Storage fee covers 100,000 bytes at 10^19 yoctoNEAR/byte; measured signed vending
+  growth is about 2,200 bytes, publish about 1,025 bytes (exact run in evidence).
+  Conservative fixed fee reserves space for future traces, signature, vaults and
+  recovery credits; it is deliberately large for this bounded testnet build.
+- Portal admission requires NEAR inflow to the Portal >= `wei *
+  min_fee_yocto_per_wei`; overflow, per-payout cap and current epoch exhaustion panic
+  atomically. Receipt deposits return on failure; gas is still charged. For held
+  orders the check runs on release: a failed approval/expiry leaves escrow intact
+  for retry. Epoch uses floor(block_height / epoch_blocks), contract-wide.
+- `expire(machine_id, order_id)` is callable by anyone **only at/after expires_at**;
+  publisher no longer has early expiry. `approve` retains worker authorization.
+- `withdraw_vault(machine_id, vault_name, amount)` is machine-owner only;
+  a Vault is the machine owner's retained balance. Positive decimal-string amount
+  is deducted before transfer; failure credits the owner's unclaimed balance.
+- `get_unclaimed(account)` returns a decimal amount; `withdraw_unclaimed()` pulls
+  the caller's credit once, clearing it before transfer. A failed withdrawal credits
+  it back through the same callback. No caller can withdraw another account's credit.
+- `get_limits()` exposes owner, rate, epoch size, budget, remaining budget,
+  max payout, signature timeout and order fee. `get_liabilities()` exposes decimal
+  `escrow`, `vaults`, `unclaimed`, `in_flight`, and total account `balance`.
+  Account balance also backs storage and gas; it is not freely withdrawable surplus.
+- `get_payout(payout_id)` retains G3 fields and adds decimal `attempt_id` and
+  `requested_at` block height. Payouts have their own records; machines contain no
+  payout history. `get_machine()` no longer includes `external_payouts`.
+  Use `get_pending_external_payouts(machine_id)` for historical records with current
+  statuses, recipient, machine_id, order_id, payout_id, wei and fee. It scans all
+  payouts and is intended for bounded demo use, not large histories.
+- `retry_signature(payout_id)` accepts `signature_failed`, or `awaiting_signature`
+  older than `signature_timeout_blocks`. It updates attempt/time only: stored
+  payload, unsigned bytes, nonce, recipient, wei and fee snapshot never change.
+  Callback `on_signature(payout_id, attempt_id)` is private; stale attempts are
+  ignored. App must never call callbacks (`on_transfer`, `on_portal_address` either).
+- `get_portal_queue(evm_next_nonce?)` returns `next_nonce` and
+  `oldest_unbroadcast_payout`. Supply Sepolia `eth_getTransactionCount(address,
+  "latest")` converted to a decimal string to locate the oldest not-mined record;
+  pending count can exclude broadcasts already in a mempool. Omitted nonce starts
+  at zero. NEAR cannot observe EVM broadcasts: `broadcast_status` explicitly says
+  unknown; this view alone is NOT proof that a record remains unbroadcast.
+- `get_portal_address`, `get_portal_derivation`, `refresh_portal_address`,
+  `get_portal_nonce`, `get_order`, `get_vaults`, `explain_order` retain G3 behavior.
+  Recipient is a 20-byte `0x` EVM address. Signature JSON plus unsigned bytes suffice
+  for the existing keyless relayer; recover the sender before broadcasting.
+
+## Deployment and immutability
+
+`migrate_g3(...)` is a one-time, private initializer for the exact G3 root layout.
+It takes the new limit/owner params plus `machine_ids` and `[machine_id,order_id]`
+`order_keys` enumerated from a **complete final view_state snapshot**. Deploy and
+migrate atomically. It preserves nonce, signatures, machines, orders and address;
+rebuilds escrow/vault liabilities and removes machine history vectors. Previously
+reserved payouts conservatively consume the first epoch budget. Legacy orders
+were paid under G3 pricing and keep their state. It preserves old signer and fee
+bounds, setting future maximum fees to their upper bound. The snapshot must be
+complete; validate liabilities against the snapshot before removing access keys.
+Migration is guarded by a persistent marker, private authentication and exact G3
+Borsh decoding. It cannot initialize or reset an already hardened root.
+
+**Immutability is only true after `scripts/lock-contract.sh` runs successfully**
+and `view_access_key_list` returns `keys: []`. The script deletes EVERY contract
+access key in one transaction, then prints and checks the RPC list. It is provided
+for manual final deployment only and has NOT been run. Until then a FullAccess
+key can redeploy arbitrary code. Separate fee owner retains only bounded fee
+updates after locking. Publishers still control their own Vault withdrawals.
+Legacy machines published by the contract account itself lose that ability when
+its keys are deleted: resolve their escrow and withdraw their vaults before lock,
+or intentionally leave those testnet balances retained. Fresh G5 examples are
+published by the separate owner account.
+
+## Liveness and limits
+
+Each Portal builds a native Sepolia transfer: gas 21000, empty data/access list,
+fixed recipient/value, EIP-1559 fee snapshot. 300 Tgas is recommended on order,
+approve/expire and retry. Each transfer has a 5 Tgas recovery callback. A successful
+NEAR order or `signed` record does not prove EVM broadcast or payment.
+
+High snapshot fees improve inclusion but cannot guarantee it. There is no EVM fee
+replacement or cancellation, no per-machine EVM treasury and no on-chain proof
+of broadcast. Insufficient ETH, recipient execution failure, RPC downtime,
+underpricing, or a missing early nonce can stall every later payout. Relayer must
+broadcast/retry oldest nonces in order and verify receipts on Sepolia. Treasury
+admission prices/rate-limits value; it does not replenish ETH automatically or
+include gas in the wei budget. Fund the shared treasury separately. Low configured
+rates and high budgets are still risky policy choices; immutable admission params
+must be chosen before locking.
+
+Storage/history is not pruned. Recovery depends on its callback executing; a
+callback infrastructure failure can strand in-flight liabilities. Lost signature
+callbacks are recoverable by timeout retry. Fixed storage fee is conservative,
+not a per-order refund scheme. 21000 gas supports ordinary EVM accounts, not
+arbitrary EVM contracts. This is a bounded testnet hackathon deployment.
 
 ```sh
 export PATH="$HOME/.cargo/bin:$PATH"
 export CARGO_HOME=/opt/ww-cargo-home CARGO_TARGET_DIR=/opt/ww-target
 cargo near build non-reproducible-wasm --manifest-path contract/Cargo.toml
 cargo near build non-reproducible-wasm --manifest-path contract/tests/mock-signer/Cargo.toml --no-abi --out-dir /opt/ww-target/portal-mock
-cd contract
-cargo test -- --nocapture
-cd ../engine
-cargo test
-cd ../app
-npm run typecheck && npm run build
-npx tsc -p api/tsconfig.json
-npm exec --cache /opt/ww-npm-cache --package=tsx -- tsx --test scripts/relay.test.ts
+(cd engine && cargo test)
+(cd contract && cargo test -- --nocapture)
 ```
 
-The sandbox test uses these Wasm paths (override the main artifact with
-`WORLDWORKS_WASM`). Build both before testing. Tests never use the live signer.
-
-Initialize with `new({})`, or `new({portal_config: {...}})` for explicit settings.
-Default cap is 2000000000000000 wei **per order across all releases**, in addition
-to the engine's immutable per-machine per-order cap. Default max fee is 20 gwei,
-priority fee 1 gwei. Init fixes `fee_upper_bound` (at most 100 gwei),
-`priority_upper_bound` (at most the max fee bound), `cap_wei`, and `signer`.
-Explicit config requires all these fields plus `max_fee_per_gas` and
-`max_priority_fee_per_gas`; `next_nonce` may be omitted and must initially be zero.
-`set_portal_fees(max_fee_per_gas, max_priority_fee_per_gas)` is self-account only;
-it checks both init bounds, positive max fee and priority <= max fee. It changes
-future payouts only. No exported method changes machines, recipients, values,
-reserved nonces, transaction bytes or fund balances administratively.
-
-Init asynchronously queries the signer's `derived_public_key` with predecessor =
-this contract, path above, domain_id = 0. It stores the last 20 bytes of keccak256
-of the 64-byte base58-decoded secp256k1 public key (without SEC1 prefix).
-`get_portal_address()` returns that hex address or null before the callback.
-Anyone may call `refresh_portal_address()` to repeat the trusted public query;
-the private callback refuses to replace a previously derived address.
-`get_portal_derivation()` exposes the exact derivation query.
-
-`publish_machine(machine_id, machine_json, workers, expiry_blocks)` stores an
-immutable validated engine graph, publisher as owner, exact Worker-node/account
-bindings and a positive block expiry. `machine_json` is a JSON string.
-No storage deposit is charged; prefund the contract for growing storage.
-
-`submit_order(machine_id, order_id, external_recipient?)` attaches exactly the
-CoinSlot price; payer is predecessor. IDs stay reserved after completion/expiry.
-Portal-reachable graphs require a 20-byte `0x` hex recipient up front.
-`approve(machine_id, order_id)` authenticates Worker by predecessor, releasing
-one currently pending role per call. `expire(machine_id, order_id)` is available
-to the publisher immediately, anyone at the original expiry block. Both can
-release Portal effects through their respective branches. Expiry is manual.
-
-Every positive-fee ExternalPayout immediately reserves a decimal global
-`payout_id` equal to its nonce (starting at `"0"`), stores exact unsigned EIP-1559
-bytes and payload hash, and calls the signer in the same customer transaction.
-The contract fixes chain 11155111, recipient, wei, gas 21000, empty data/access
-list and fees at creation. Callback sets `signed` with public MPC signature JSON,
-or `signature_failed` on signer failure/malformed response. A successful NEAR
-order does not mean an EVM transaction was broadcast or paid.
-
-`retry_signature(payout_id)` is public only for `signature_failed`. It signs the
-stored payload again, with identical nonce and bytes even after fee changes.
-Pending/signed retries and external callback calls are rejected. A failed
-signature consumes its nonce, so retry it before relaying later nonces. There is
-no fee replacement or cancellation; an underpriced signed transaction must wait
-for suitable Sepolia fees. Multiple payouts reserve 35 Tgas per signer and 15
-Tgas per callback; caller must supply enough gas (300 Tgas recommended). If a
-release exceeds available gas, NEAR rolls back the entire receipt including all
-scheduled effects. Graph flow limits alone do not guarantee sufficient host gas.
-
-Views: `get_payout(payout_id)` exposes status, all tx fields, unsigned bytes,
-keccak payload and `signature_json` (`big_r.affine_point`, `s.scalar`,
-`recovery_id`). These suffice to reconstruct raw signed bytes; the relayer does
-so and verifies both bytes/hash and recovered sender. `get_portal_nonce()` is a
-decimal-string next nonce. `get_machine`, `get_order`, `get_vaults`,
-`get_pending_external_payouts` (historical records too, with current signature
-status), and `explain_order` retain their existing interfaces; external records
-now also include `payout_id`. Amounts/block heights are decimal strings.
-
-## Keyless relayer
-
-`app/api/relay.ts` is a Vercel Node serverless handler: POST `{ "payout_id":"0" }`
-returns `{ "evm_tx_hash":"0x..." }` after broadcast. A known exact transaction
-returns the same deterministic hash on rebroadcast. RPC failures without proof
-of acceptance remain errors. It independently derives the signer address,
-checks the stored address, recovers the sender, and checks RPC chain 11155111.
-Configuration: `PORTAL_CONTRACT` (default `ww-portal-261112.testnet`),
-`SEPOLIA_RPC_URL` (default `https://rpc.sepolia.ethpandaops.io`). NEAR views always
-use `https://rpc.testnet.near.org`. No credentials are read.
-
-```sh
-cd app
-npm exec --cache /opt/ww-npm-cache --package=tsx -- tsx scripts/inspect-portal.ts 0
-npm exec --cache /opt/ww-npm-cache --package=tsx -- tsx scripts/relay.ts 0
-```
-
-Fund the derived address on **Sepolia** first; relay nonces in order. An RPC
-acceptance/hash is not confirmation: inspect the Sepolia receipt separately.
-The Node API/scripts have their own `api/tsconfig.json` because the existing app
-`npm run typecheck` checks `src` only; always run the extra API check above.
-
-## Limits
-
-Fresh deployment required: persisted state differs from G2a. Machines/orders and
-external records grow without pruning/pagination; prefunding and bounded demo
-usage are required. NEAR transfers are asynchronous without recovery callbacks.
-Full-access account keys can redeploy code; this is testnet demo custody, not an
-immutable production vault. 21000 gas targets ordinary EVM accounts, not general
-contract execution. No serverless hosting deployment or EVM confirmation is
-claimed by source installation. See `../docs/EVIDENCE-portal.md` for live proof.
+Sandbox tests patch 200 historical payout records and a lost callback directly
+using sandbox state patching; production exports no testing hooks. Migration test
+uses the saved public G3 snapshot and checks nonce, signatures and liabilities.
+See `../docs/EVIDENCE-hardening.md` for complete outputs and testnet links.

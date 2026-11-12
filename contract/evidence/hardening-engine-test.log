@@ -1,0 +1,65 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.04s
+     Running unittests src/lib.rs (/opt/ww-target/debug/deps/worldworks_engine-f097ce4e51783f1c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/cost.rs (/opt/ww-target/debug/deps/cost-9ca12ce46267e931)
+
+running 1 test
+test runtime_allocations_do_not_scale_with_state_history ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/engine.rs (/opt/ww-target/debug/deps/engine-a94f7189b893ab13)
+
+running 39 tests
+test expiry_refunds_payer_and_rejects_later_approval ... ok
+test binds_machine_and_persists_held_targets ... ok
+test iterative_chain_accepts_32_rejects_33_nodes ... ok
+test all_amounts_serialize_as_strings_and_state_roundtrips ... ok
+test json_roundtrip_full_u128 ... ok
+test minimum_amount_fail_branch ... ok
+test missing_recipient_and_overflow_are_atomic ... ok
+test max_amount_and_first_output_remainder ... ok
+test rejects_cycle ... ok
+test rejects_double_approval ... ok
+test recipient_checked_before_hold_and_identical_approval_targets_rejected ... ok
+test rejects_invalid_worker_scope ... ok
+test near_accounts_and_vault_names_validated ... ok
+test rejects_missing_worker ... ok
+test rejects_duplicate_order ... ok
+test rejects_multiple_coin_slots ... ok
+test rejects_missing_edge_target ... ok
+test rejects_no_coin_slot ... ok
+test rejects_non_pending_approval ... ok
+test rejects_portal_above_cap ... ok
+test rejects_splitter_output_count ... ok
+test rejects_path_explosion_and_counts_parallel_ports ... ok
+test rejects_splitter_sum ... ok
+test rejects_unconnected_output ... ok
+test rejects_unreachable_node ... ok
+test rejects_unsupported_chain ... ok
+test rejects_worker_as_flow_target ... ok
+test rejects_wrong_amount ... ok
+test rejects_wrong_worker ... ok
+test rejects_zero_price_zero_share_and_aggregate_portal_cap ... ok
+test rewire_changes_outcome ... ok
+test strict_amounts_and_duplicate_node_keys ... ok
+test repeated_worker_with_other_pending_role_returns_not_pending ... ok
+test two_machines_different_outcomes ... ok
+test validated_machine_persistence_and_staged_resolution_failure ... ok
+test zero_fee_never_emits_external_payout ... ok
+test vending_exact_amended_allocation ... ok
+test splitter_gates_portals_conserve ... ok
+test splitter_tree_conserves_every_yocto ... ok
+
+test result: ok. 39 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+   Doc-tests worldworks_engine
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

@@ -1,0 +1,10 @@
+{
+  "derived_address": "0x694Ad57416073B1E1f3BC6E13B26BDE28015A8b7",
+  "recovered_signature_address": "0x694Ad57416073B1E1f3BC6E13B26BDE28015A8b7",
+  "payout_id": "4",
+  "status": "signed",
+  "machine_id": "vending-g5",
+  "order_id": "g5-live-1",
+  "recipient": "0x000000000000000000000000000000000000dEaD",
+  "nonce": 4
+}

@@ -1,0 +1,85 @@
+├  Unsigned transaction:
+│    signer_id:    ww-portal-261112.testnet
+│    receiver_id:  ww-portal-261112.testnet
+│    actions:
+│       -- deploy code <BLCKJgUKF1aawUcWVW2DjFVgAZzQZpkdr3i6xxZ9RDua> to a account <ww-portal-261112.testnet>
+│       -- function call:      
+│                       method name:  migrate_g3
+│                       args:         {
+│                                       "epoch_blocks": "1000",
+│                                       "epoch_budget_wei": "10000000000000000",
+│                                       "machine_ids": [
+│                                         "escrow",
+│                                         "vending",
+│                                         "g4-escrow-mwe405yi",
+│                                         "g4-escrow-mwe439jt",
+│                                         "g4-vending-mwe3z7oy",
+│                                         "g4-vending-mwe405yi",
+│                                         "g4-vending-mwe439jt"
+│                                       ],
+│                                       "max_wei_per_payout": "2000000000000000",
+│                                       "min_fee_yocto_per_wei": "1000000",
+│                                       "order_keys": [
+│                                         [
+│                                           "vending",
+│                                           "portal-live-1"
+│                                         ],
+│                                         [
+│                                           "g4-escrow-mwe405yi",
+│                                           "4cc78832-1108-40fb-92c6-2346352f61b8"
+│                                         ],
+│                                         [
+│                                           "g4-escrow-mwe439jt",
+│                                           "fb020c26-45f3-441b-b875-d66ff66d1fb7"
+│                                         ],
+│                                         [
+│                                           "g4-vending-mwe405yi",
+│                                           "2d1cb4d4-2c97-44db-801b-bd085ccf91b0"
+│                                         ],
+│                                         [
+│                                           "g4-vending-mwe439jt",
+│                                           "2e692aba-6804-49d5-8deb-3778b53dffac"
+│                                         ],
+│                                         [
+│                                           "g4-vending-mwe439jt",
+│                                           "939fb9b8-c8a6-43a5-90fc-7fb0cb48878b"
+│                                         ]
+│                                       ],
+│                                       "owner_id": "ww-chainsig-261112.testnet",
+│                                       "signature_timeout_blocks": "200"
+│                                     }
+│                       gas:          300.0 Tgas
+│                       deposit:      0 NEAR
+│     [0m
+├  Your transaction was signed successfully.
+│    Public key: ed25519:7veGHXKESDkzRC6xWKLcYvrqvMENntHVetR6Yu43egEV
+│    Signature:  ed25519:2nbX4GSoar9Lx3drAGbyZQhneqE8i9PCdfFtsgankd5BBjVW4stYmDhxf2VYqRifRU2Rmq6wVL28EGzTZBfLAeJT
+│     [0m
+├  Transaction Execution Info:
+│    Gas used: 48.8 Tgas
+│    Transaction fee: 0.0048038676180177 NEAR
+│    Transaction ID: 2A3aCVdCejYXiwyV4BHB1c9UkGKnFiMyEB63G5s6WKL1
+│    To see the transaction in the transaction explorer, please open this url in your browser:
+│    https://explorer.testnet.near.org/transactions/2A3aCVdCejYXiwyV4BHB1c9UkGKnFiMyEB63G5s6WKL1
+│     [0m
+├  Function execution logs:
+│    [36mLogs [ww-portal-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [v1.signer-prod.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-portal-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-portal-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-portal-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-portal-261112.testnet]:[39m   [2mNo logs[0m
+│     [0m
+├  Function execution return value:
+│    Empty return value
+│     [0m
+
+Contract code has been successfully deployed.
+The "migrate_g3" call to <ww-portal-261112.testnet> on behalf of <ww-portal-261112.testnet> succeeded.
+
+
+
+
+Here is your console command if you need to script it or re-run:
+    [33mnear contract deploy ww-portal-261112.testnet use-file /opt/ww-target/near/worldworks_contract.wasm with-init-call migrate_g3 json-args '{"owner_id": "ww-chainsig-261112.testnet", "min_fee_yocto_per_wei": "1000000", "epoch_blocks": "1000", "epoch_budget_wei": "10000000000000000", "max_wei_per_payout": "2000000000000000", "signature_timeout_blocks": "200", "machine_ids": ["escrow", "vending", "g4-escrow-mwe405yi", "g4-escrow-mwe439jt", "g4-vending-mwe3z7oy", "g4-vending-mwe405yi", "g4-vending-mwe439jt"], "order_keys": [["vending", "portal-live-1"], ["g4-escrow-mwe405yi", "4cc78832-1108-40fb-92c6-2346352f61b8"], ["g4-escrow-mwe439jt", "fb020c26-45f3-441b-b875-d66ff66d1fb7"], ["g4-vending-mwe405yi", "2d1cb4d4-2c97-44db-801b-bd085ccf91b0"], ["g4-vending-mwe439jt", "2e692aba-6804-49d5-8deb-3778b53dffac"], ["g4-vending-mwe439jt", "939fb9b8-c8a6-43a5-90fc-7fb0cb48878b"]]}' prepaid-gas '300.0 Tgas' attached-deposit '0 NEAR' network-config testnet sign-with-legacy-keychain send[39m
+

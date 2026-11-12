@@ -13,5 +13,5 @@ A task is DONE only after the builder's evidence, a Claude review and an Astra r
 | G3 Portal in main contract + relayer | Sol | deployed ww-portal-261112.testnet; live MPC signature for a vending order; sandbox + 11 relayer tests pass | — | Astra security audit: 2 critical (treasury drain by 1-yocto Portal machine; FullAccess key on contract account), 5 high, 2 medium -> G5 | BUILT, committed; Sepolia broadcast BLOCKED on user funding 0x694Ad57416073B1E1f3BC6E13B26BDE28015A8b7 |
 | T2 engine in browser (wasm) | Terra | wasm 411 KB; app typecheck/build pass; node test: wasm == native | orchestrator re-ran node test: pass | n/a | DONE, committed (validate returns no flow count; engine API does not expose it; acceptable) |
 | UI-1 workshop, app page, verify page | Opus | — | — | — | RUNNING |
-| G4 live adapter, wallet-free onboarding, scoped Worker key, seeded customer | Sol | — | — | — | RUNNING |
+| G4 live adapter, wallet-free onboarding, scoped Worker key, seeded customer | Sol | e2e on testnet passes: session, publish, approve-only key verified by RPC (other method rejected), seeded order, payout signed; 14 tests | — | — | BUILT, committed; needs follow-up for G5 interface changes; completeness check after that |
 | G5 contract hardening (audit fixes) | Sol | — | — | Astra re-audit after | RUNNING (keeps portal address 0x694A...A8b7) |

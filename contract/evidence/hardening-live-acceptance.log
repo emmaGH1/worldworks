@@ -1,0 +1,474 @@
+PRE-DEPLOY ADDRESS: 0x694Ad57416073B1E1f3BC6E13B26BDE28015A8b7
+deploy-migrate 0 ├  Unsigned transaction:
+│    signer_id:    ww-portal-261112.testnet
+│    receiver_id:  ww-portal-261112.testnet
+│    actions:
+│       -- deploy code <BLCKJgUKF1aawUcWVW2DjFVgAZzQZpkdr3i6xxZ9RDua> to a account <ww-portal-261112.testnet>
+│       -- function call:      
+│                       method name:  migrate_g3
+│                       args:         {
+│                                       "epoch_blocks": "1000",
+│                                       "epoch_budget_wei": "10000000000000000",
+│                                       "machine_ids": [
+│                                         "escrow",
+│                                         "vending",
+│                                         "g4-escrow-mwe405yi",
+│                                         "g4-escrow-mwe439jt",
+│                                         "g4-vending-mwe3z7oy",
+│                                         "g4-vending-mwe405yi",
+│                                         "g4-vending-mwe439jt"
+│                                       ],
+│                                       "max_wei_per_payout": "2000000000000000",
+│                                       "min_fee_yocto_per_wei": "1000000",
+│                                       "order_keys": [
+│                                         [
+│                                           "vending",
+│                                           "portal-live-1"
+│                                         ],
+│                                         [
+│                                           "g4-escrow-mwe405yi",
+│                                           "4cc78832-1108-40fb-92c6-2346352f61b8"
+│                                         ],
+│                                         [
+│                                           "g4-escrow-mwe439jt",
+│                                           "fb020c26-45f3-441b-b875-d66ff66d1fb7"
+│                                         ],
+│                                         [
+│                                           "g4-vending-mwe405yi",
+│                                           "2d1cb4d4-2c97-44db-801b-bd085ccf91b0"
+│                                         ],
+│                                         [
+│                                           "g4-vending-mwe439jt",
+│                                           "2e692aba-6804-49d5-8deb-3778b53dffac"
+│                                         ],
+│                                         [
+│                                           "g4-vending-mwe439jt",
+│                                           "939fb9b8-c8a6-43a5-90fc-7fb0cb48878b"
+│                                         ]
+│                                       ],
+│                                       "owner_id": "ww-chainsig-261112.testnet",
+│                                       "signature_timeout_blocks": "200"
+│                                     }
+│                       gas:          300.0 Tgas
+│                       deposit:      0 NEAR
+│     [0m
+├  Your transaction was signed successfully.
+│    Public key: ed25519:7veGHXKESDkzRC6xWKLcYvrqvMENntHVetR6Yu43egEV
+│    Signature:  ed25519:2nbX4GSoar9Lx3drAGbyZQhneqE8i9PCdfFtsgankd5BBjVW4stYmDhxf2VYqRifRU2Rmq6wVL28EGzTZBfLAeJT
+│     [0m
+├  Transaction Execution Info:
+│    Gas used: 48.8 Tgas
+│    Transaction fee: 0.0048038676180177 NEAR
+│    Transaction ID: 2A3aCVdCejYXiwyV4BHB1c9UkGKnFiMyEB63G5s6WKL1
+│    To see the transaction in the transaction explorer, please open this url in your browser:
+│    https://explorer.testnet.near.org/transactions/2A3aCVdCejYXiwyV4BHB1c9UkGKnFiMyEB63G5s6WKL1
+│     [0m
+├  Function execution logs:
+│    [36mLogs [ww-portal-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [v1.signer-prod.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-portal-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-portal-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-portal-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-portal-261112.testnet]:[39m   [2mNo logs[0m
+│     [0m
+├  Function execution return value:
+│    Empty return value
+│     [0m
+
+Contract code has been successfully deployed.
+The "migrate_g3" call to <ww-portal-261112.testnet> on behalf of <ww-portal-261112.testnet> succeeded.
+
+
+
+
+Here is your console command if you need to script it or re-run:
+    [33mnear contract deploy ww-portal-261112.testnet use-file /opt/ww-target/near/worldworks_contract.wasm with-init-call migrate_g3 json-args '{"owner_id": "ww-chainsig-261112.testnet", "min_fee_yocto_per_wei": "1000000", "epoch_blocks": "1000", "epoch_budget_wei": "10000000000000000", "max_wei_per_payout": "2000000000000000", "signature_timeout_blocks": "200", "machine_ids": ["escrow", "vending", "g4-escrow-mwe405yi", "g4-escrow-mwe439jt", "g4-vending-mwe3z7oy", "g4-vending-mwe405yi", "g4-vending-mwe439jt"], "order_keys": [["vending", "portal-live-1"], ["g4-escrow-mwe405yi", "4cc78832-1108-40fb-92c6-2346352f61b8"], ["g4-escrow-mwe439jt", "fb020c26-45f3-441b-b875-d66ff66d1fb7"], ["g4-vending-mwe405yi", "2d1cb4d4-2c97-44db-801b-bd085ccf91b0"], ["g4-vending-mwe439jt", "2e692aba-6804-49d5-8deb-3778b53dffac"], ["g4-vending-mwe439jt", "939fb9b8-c8a6-43a5-90fc-7fb0cb48878b"]]}' prepaid-gas '300.0 Tgas' attached-deposit '0 NEAR' network-config testnet sign-with-legacy-keychain send[39m
+
+
+POST-MIGRATION ADDRESS: 0x694Ad57416073B1E1f3BC6E13B26BDE28015A8b7
+publish-vending 0 ├  Unsigned transaction:
+│    signer_id:    ww-chainsig-261112.testnet
+│    receiver_id:  ww-portal-261112.testnet
+│    actions:
+│       -- function call:      
+│                       method name:  publish_machine
+│                       args:         {
+│                                       "expiry_blocks": "100",
+│                                       "machine_id": "vending-g5",
+│                                       "machine_json": "{\n  \"portal_cap_wei\": \"2000000000000000\",\n  \"nodes\": {\n    \"slot\": {\n      \"type\": \"CoinSlot\",\n      \"price\": \"1000000000000000000000000\",\n      \"output\": \"fees\"\n    },\n    \"fees\": {\n      \"type\": \"Splitter\",\n      \"outputs\": [\n        {\n          \"bps\": 7000,\n          \"target\": \"reserve_fee\"\n        },\n        {\n          \"bps\": 3000,\n          \"target\": \"creator\"\n        }\n      ]\n    },\n    \"reserve_fee\": {\n      \"type\": \"Splitter\",\n      \"outputs\": [\n        {\n          \"bps\": 9000,\n          \"target\": \"reserve\"\n        },\n        {\n          \"bps\": 1000,\n          \"target\": \"delivery\"\n        }\n      ]\n    },\n    \"reserve\": {\n      \"type\": \"Vault\",\n      \"name\": \"reserve\"\n    },\n    \"creator\": {\n      \"type\": \"Payout\",\n      \"account\": \"creator.testnet\"\n    },\n    \"portal\": {\n      \"type\": \"Portal\",\n      \"chain\": \"sepolia\",\n      \"wei\": \"1000000000000000\"\n    },\n    \"delivery\": {\n      \"type\": \"Gate\",\n      \"condition\": {\n        \"type\": \"MinAmount\",\n        \"amount\": \"0\"\n      },\n      \"pass\": \"portal\",\n      \"fail\": \"portal\"\n    }\n  }\n}\n",
+│                                       "workers": {}
+│                                     }
+│                       gas:          300.0 Tgas
+│                       deposit:      0.1 NEAR
+│     [0m
+├  Your transaction was signed successfully.
+│    Public key: ed25519:BrGDitH2mh1VGDezr5NZV2FDG7dtwW6Xpua8CKT5BLMX
+│    Signature:  ed25519:4rrz7k59CizsJg4o6cBRb9Lb3mKgiZSzQT7amhMJ2Y8KVzbeLBKgN8KadPWC7XH9NyfaozZH2pkvGzbC3xJZ3mmo
+│     [0m
+├  Transaction Execution Info:
+│    Gas used: 6.0 Tgas
+│    Transaction fee: 0.0005311430859312 NEAR
+│    Transaction ID: 6VXbwjjJDY5VSkrmHZWkGdw4ngEAHuFYn1XxZjxWqrz7
+│    To see the transaction in the transaction explorer, please open this url in your browser:
+│    https://explorer.testnet.near.org/transactions/6VXbwjjJDY5VSkrmHZWkGdw4ngEAHuFYn1XxZjxWqrz7
+│     [0m
+├  Function execution logs:
+│    [36mLogs [ww-portal-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-chainsig-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-chainsig-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-portal-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-chainsig-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-chainsig-261112.testnet]:[39m   [2mNo logs[0m
+│     [0m
+├  Function execution return value:
+│    Empty return value
+│     [0m
+
+
+The "publish_machine" call to <ww-portal-261112.testnet> on behalf of <ww-chainsig-261112.testnet> succeeded.
+
+
+
+
+Here is your console command if you need to script it or re-run:
+    [33mnear contract call-function as-transaction ww-portal-261112.testnet publish_machine json-args '{"machine_id": "vending-g5", "machine_json": "{\n  \"portal_cap_wei\": \"2000000000000000\",\n  \"nodes\": {\n    \"slot\": {\n      \"type\": \"CoinSlot\",\n      \"price\": \"1000000000000000000000000\",\n      \"output\": \"fees\"\n    },\n    \"fees\": {\n      \"type\": \"Splitter\",\n      \"outputs\": [\n        {\n          \"bps\": 7000,\n          \"target\": \"reserve_fee\"\n        },\n        {\n          \"bps\": 3000,\n          \"target\": \"creator\"\n        }\n      ]\n    },\n    \"reserve_fee\": {\n      \"type\": \"Splitter\",\n      \"outputs\": [\n        {\n          \"bps\": 9000,\n          \"target\": \"reserve\"\n        },\n        {\n          \"bps\": 1000,\n          \"target\": \"delivery\"\n        }\n      ]\n    },\n    \"reserve\": {\n      \"type\": \"Vault\",\n      \"name\": \"reserve\"\n    },\n    \"creator\": {\n      \"type\": \"Payout\",\n      \"account\": \"creator.testnet\"\n    },\n    \"portal\": {\n      \"type\": \"Portal\",\n      \"chain\": \"sepolia\",\n      \"wei\": \"1000000000000000\"\n    },\n    \"delivery\": {\n      \"type\": \"Gate\",\n      \"condition\": {\n        \"type\": \"MinAmount\",\n        \"amount\": \"0\"\n      },\n      \"pass\": \"portal\",\n      \"fail\": \"portal\"\n    }\n  }\n}\n", "workers": {}, "expiry_blocks": "100"}' prepaid-gas '300.0 Tgas' attached-deposit '0.1 NEAR' sign-as ww-chainsig-261112.testnet network-config testnet sign-with-legacy-keychain send[39m
+
+
+publish-escrow 0 ├  Unsigned transaction:
+│    signer_id:    ww-chainsig-261112.testnet
+│    receiver_id:  ww-portal-261112.testnet
+│    actions:
+│       -- function call:      
+│                       method name:  publish_machine
+│                       args:         {
+│                                       "expiry_blocks": "100",
+│                                       "machine_id": "escrow-g5",
+│                                       "machine_json": "{\n  \"portal_cap_wei\":\"0\",\n  \"nodes\": {\n    \"slot\":{\"type\":\"CoinSlot\",\"price\":\"1000000000000000000000000\",\"output\":\"review\"},\n    \"review\":{\"type\":\"Gate\",\"condition\":{\"type\":\"NeedsApproval\",\"worker\":\"inspector\"},\"pass\":\"seller\",\"fail\":\"refund\"},\n    \"inspector\":{\"type\":\"Worker\",\"gates\":[\"review\"]},\n    \"seller\":{\"type\":\"Payout\",\"account\":\"seller.testnet\"},\n    \"refund\":{\"type\":\"Payout\",\"account\":\"$payer\"}\n  }\n}\n",
+│                                       "workers": {
+│                                         "inspector": "ww-chainsig-261112.testnet"
+│                                       }
+│                                     }
+│                       gas:          300.0 Tgas
+│                       deposit:      0.1 NEAR
+│     [0m
+├  Your transaction was signed successfully.
+│    Public key: ed25519:BrGDitH2mh1VGDezr5NZV2FDG7dtwW6Xpua8CKT5BLMX
+│    Signature:  ed25519:7GgM8gUouXwyFnP6wMGMCXvtDqKJbE7PiyP4od7tmMtZxB78qSRZLTHG5UBeHK9os3pBQfzAJv3YDpbmrBKCwh3
+│     [0m
+├  Transaction Execution Info:
+│    Gas used: 5.8 Tgas
+│    Transaction fee: 0.0005033744301987 NEAR
+│    Transaction ID: GXbzjAMd3uWiCPLGFwQ4vPagb2uzHARk2AisDKhgJhfp
+│    To see the transaction in the transaction explorer, please open this url in your browser:
+│    https://explorer.testnet.near.org/transactions/GXbzjAMd3uWiCPLGFwQ4vPagb2uzHARk2AisDKhgJhfp
+│     [0m
+├  Function execution logs:
+│    [36mLogs [ww-portal-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-chainsig-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-chainsig-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-portal-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-chainsig-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-chainsig-261112.testnet]:[39m   [2mNo logs[0m
+│     [0m
+├  Function execution return value:
+│    Empty return value
+│     [0m
+
+
+The "publish_machine" call to <ww-portal-261112.testnet> on behalf of <ww-chainsig-261112.testnet> succeeded.
+
+
+
+
+Here is your console command if you need to script it or re-run:
+    [33mnear contract call-function as-transaction ww-portal-261112.testnet publish_machine json-args '{"machine_id": "escrow-g5", "machine_json": "{\n  \"portal_cap_wei\":\"0\",\n  \"nodes\": {\n    \"slot\":{\"type\":\"CoinSlot\",\"price\":\"1000000000000000000000000\",\"output\":\"review\"},\n    \"review\":{\"type\":\"Gate\",\"condition\":{\"type\":\"NeedsApproval\",\"worker\":\"inspector\"},\"pass\":\"seller\",\"fail\":\"refund\"},\n    \"inspector\":{\"type\":\"Worker\",\"gates\":[\"review\"]},\n    \"seller\":{\"type\":\"Payout\",\"account\":\"seller.testnet\"},\n    \"refund\":{\"type\":\"Payout\",\"account\":\"$payer\"}\n  }\n}\n", "workers": {"inspector": "ww-chainsig-261112.testnet"}, "expiry_blocks": "100"}' prepaid-gas '300.0 Tgas' attached-deposit '0.1 NEAR' sign-as ww-chainsig-261112.testnet network-config testnet sign-with-legacy-keychain send[39m
+
+
+live-order 0 ├  Unsigned transaction:
+│    signer_id:    ww-chainsig-261112.testnet
+│    receiver_id:  ww-portal-261112.testnet
+│    actions:
+│       -- function call:      
+│                       method name:  submit_order
+│                       args:         {
+│                                       "external_recipient": "0x000000000000000000000000000000000000dEaD",
+│                                       "machine_id": "vending-g5",
+│                                       "order_id": "g5-live-1"
+│                                     }
+│                       gas:          300.0 Tgas
+│                       deposit:      2 NEAR
+│     [0m
+├  Your transaction was signed successfully.
+│    Public key: ed25519:BrGDitH2mh1VGDezr5NZV2FDG7dtwW6Xpua8CKT5BLMX
+│    Signature:  ed25519:sqjFu4kViYNNKWVW4GsDGNr6DfHGUBrbvRq1kRCgb4GfmZtWykrrocb3Lr91MMPyMg1DhuBfEnb927ittrJ8ufQ
+│     [0m
+├  Transaction Execution Info:
+│    Gas used: 18.4 Tgas
+│    Transaction fee: 0.0017060901233677 NEAR
+│    Transaction ID: EinsGGeGAnaMEYhdGLodeNU7fv8jkWptTQbA64PvVhBn
+│    To see the transaction in the transaction explorer, please open this url in your browser:
+│    https://explorer.testnet.near.org/transactions/EinsGGeGAnaMEYhdGLodeNU7fv8jkWptTQbA64PvVhBn
+│     [0m
+├  Function execution logs:
+│    [36mLogs [ww-portal-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [v1.signer-prod.testnet]:[39m
+│      sign: predecessor=AccountId("ww-portal-261112.testnet"), request=SignRequestArgs { path: "worldworks/portal/sepolia/v1", payload: Ecdsa(BoundedVec { inner: [212, 230, 205, 82, 126, 114, 15, 239, 123, 205, 82, 85, 1, 184, 11, 37, 55, 135, 160, 14, 185, 160, 199, 79, 50, 221, 160, 64, 162, 164, 94, 245], witness: NonEmpty(()) }), domain_id: DomainId(0) }
+│    [36mLogs [v1.signer-prod.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-chainsig-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-chainsig-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-portal-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-chainsig-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [creator.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-chainsig-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-portal-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-chainsig-261112.testnet]:[39m   [2mNo logs[0m
+│    [36mLogs [ww-chainsig-261112.testnet]:[39m   [2mNo logs[0m
+│     [0m
+├  Function execution return value:
+│    Empty return value
+│     [0m
+
+
+The "submit_order" call to <ww-portal-261112.testnet> on behalf of <ww-chainsig-261112.testnet> succeeded.
+
+
+
+
+Here is your console command if you need to script it or re-run:
+    [33mnear contract call-function as-transaction ww-portal-261112.testnet submit_order json-args '{"machine_id": "vending-g5", "order_id": "g5-live-1", "external_recipient": "0x000000000000000000000000000000000000dEaD"}' prepaid-gas '300.0 Tgas' attached-deposit '2 NEAR' sign-as ww-chainsig-261112.testnet network-config testnet sign-with-legacy-keychain send[39m
+
+
+{
+  "address": "0x694Ad57416073B1E1f3BC6E13B26BDE28015A8b7",
+  "payout": {
+    "attempt_id": "0",
+    "requested_at": "277424931",
+    "payout_id": "4",
+    "machine_id": "vending-g5",
+    "order_id": "g5-live-1",
+    "recipient": "0x000000000000000000000000000000000000dEaD",
+    "wei": "1000000000000000",
+    "fee": "70000000000000000000000",
+    "nonce": 4,
+    "chain_id": 11155111,
+    "max_fee_per_gas": "100000000000",
+    "max_priority_fee_per_gas": "1000000000",
+    "gas_limit": 21000,
+    "unsigned_tx": [
+      2,
+      242,
+      131,
+      170,
+      54,
+      167,
+      4,
+      132,
+      59,
+      154,
+      202,
+      0,
+      133,
+      23,
+      72,
+      118,
+      232,
+      0,
+      130,
+      82,
+      8,
+      148,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      222,
+      173,
+      135,
+      3,
+      141,
+      126,
+      164,
+      198,
+      128,
+      0,
+      128,
+      192
+    ],
+    "payload": [
+      212,
+      230,
+      205,
+      82,
+      126,
+      114,
+      15,
+      239,
+      123,
+      205,
+      82,
+      85,
+      1,
+      184,
+      11,
+      37,
+      55,
+      135,
+      160,
+      14,
+      185,
+      160,
+      199,
+      79,
+      50,
+      221,
+      160,
+      64,
+      162,
+      164,
+      94,
+      245
+    ],
+    "signature_json": "{\"scheme\":\"Secp256k1\",\"big_r\":{\"affine_point\":\"032244767a2db45b2be1c246087e74053fc6d9127cc0cfc4ce9631e60e525c286a\"},\"s\":{\"scalar\":\"3870bab5a754ff83171dea31df8570109bf3a136293a99d7a4d92f7a2b7fdb69\"},\"recovery_id\":1}",
+    "status": "signed"
+  },
+  "limits": {
+    "owner_id": "ww-chainsig-261112.testnet",
+    "min_fee_yocto_per_wei": "1000000",
+    "epoch_blocks": "1000",
+    "epoch_budget_wei": "10000000000000000",
+    "remaining_budget_wei": "5000000000000000",
+    "max_wei_per_payout": "2000000000000000",
+    "signature_timeout_blocks": "200",
+    "order_storage_fee": "1000000000000000000000000"
+  },
+  "liabilities": {
+    "escrow": "1000000000000000000000000",
+    "vaults": "3150000000000000000000000",
+    "unclaimed": "0",
+    "in_flight": "0",
+    "balance": "14500922268891165699999995"
+  },
+  "queue": {
+    "next_nonce": "5",
+    "oldest_unbroadcast_payout": {
+      "attempt_id": "0",
+      "requested_at": "0",
+      "payout_id": "0",
+      "machine_id": "vending",
+      "order_id": "portal-live-1",
+      "recipient": "0x000000000000000000000000000000000000dEaD",
+      "wei": "1000000000000000",
+      "fee": "70000000000000000000000",
+      "nonce": 0,
+      "chain_id": 11155111,
+      "max_fee_per_gas": "20000000000",
+      "max_priority_fee_per_gas": "1000000000",
+      "gas_limit": 21000,
+      "unsigned_tx": [
+        2,
+        242,
+        131,
+        170,
+        54,
+        167,
+        128,
+        132,
+        59,
+        154,
+        202,
+        0,
+        133,
+        4,
+        168,
+        23,
+        200,
+        0,
+        130,
+        82,
+        8,
+        148,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        222,
+        173,
+        135,
+        3,
+        141,
+        126,
+        164,
+        198,
+        128,
+        0,
+        128,
+        192
+      ],
+      "payload": [
+        122,
+        73,
+        45,
+        72,
+        51,
+        34,
+        76,
+        10,
+        124,
+        234,
+        139,
+        112,
+        92,
+        174,
+        207,
+        118,
+        197,
+        83,
+        52,
+        149,
+        88,
+        81,
+        254,
+        153,
+        136,
+        233,
+        176,
+        59,
+        37,
+        84,
+        242,
+        111
+      ],
+      "signature_json": "{\"scheme\":\"Secp256k1\",\"big_r\":{\"affine_point\":\"028dc180aadd5471434efa688040e3e797bf6e8d569a2d924fd07c157528bdae34\"},\"s\":{\"scalar\":\"0dbd088b07a531ac21b388f9bda8fc93d0eb223e145e9b12f45a8337025c4070\"},\"recovery_id\":1}",
+      "status": "signed"
+    },
+    "broadcast_status": "unknown_on_near; compare with Sepolia transaction count"
+  }
+}

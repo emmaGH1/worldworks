@@ -1,0 +1,43 @@
+{
+  "owner_id": "ww-chainsig-261112.testnet",
+  "min_fee_yocto_per_wei": "1000000",
+  "epoch_blocks": "1000",
+  "epoch_budget_wei": "10000000000000000",
+  "max_wei_per_payout": "2000000000000000",
+  "signature_timeout_blocks": "200",
+  "machine_ids": [
+    "escrow",
+    "vending",
+    "g4-escrow-mwe405yi",
+    "g4-escrow-mwe439jt",
+    "g4-vending-mwe3z7oy",
+    "g4-vending-mwe405yi",
+    "g4-vending-mwe439jt"
+  ],
+  "order_keys": [
+    [
+      "vending",
+      "portal-live-1"
+    ],
+    [
+      "g4-escrow-mwe405yi",
+      "4cc78832-1108-40fb-92c6-2346352f61b8"
+    ],
+    [
+      "g4-escrow-mwe439jt",
+      "fb020c26-45f3-441b-b875-d66ff66d1fb7"
+    ],
+    [
+      "g4-vending-mwe405yi",
+      "2d1cb4d4-2c97-44db-801b-bd085ccf91b0"
+    ],
+    [
+      "g4-vending-mwe439jt",
+      "2e692aba-6804-49d5-8deb-3778b53dffac"
+    ],
+    [
+      "g4-vending-mwe439jt",
+      "939fb9b8-c8a6-43a5-90fc-7fb0cb48878b"
+    ]
+  ]
+}

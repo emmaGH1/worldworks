@@ -1,0 +1,16 @@
+{
+  "wasm_bytes": 424933,
+  "sha256": "997fb3007ff358829be173486048e2d0889b6fc89dc90ca5b0f59f2b44249219",
+  "deployed_code_hash": "BLCKJgUKF1aawUcWVW2DjFVgAZzQZpkdr3i6xxZ9RDua",
+  "hash_matches": true,
+  "access_keys": [
+    {
+      "access_key": {
+        "nonce": 277422209000008,
+        "permission": "FullAccess"
+      },
+      "public_key": "ed25519:7veGHXKESDkzRC6xWKLcYvrqvMENntHVetR6Yu43egEV"
+    }
+  ],
+  "immutable": false
+}

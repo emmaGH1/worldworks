@@ -21,7 +21,7 @@ impl Default for PortalConfig {
         Self {
             signer: "v1.signer-prod.testnet".parse().unwrap(),
             cap_wei: U128(2_000_000_000_000_000),
-            max_fee_per_gas: U128(20_000_000_000),
+            max_fee_per_gas: U128(100_000_000_000),
             max_priority_fee_per_gas: U128(1_000_000_000),
             fee_upper_bound: U128(100_000_000_000),
             priority_upper_bound: U128(10_000_000_000),
@@ -31,10 +31,7 @@ impl Default for PortalConfig {
 }
 impl PortalConfig {
     pub fn validate(self) -> Self {
-        assert!(
-            self.cap_wei.0 > 0 && self.next_nonce.0 == 0,
-            "invalid portal cap/nonce"
-        );
+        assert!(self.cap_wei.0 > 0, "invalid portal cap");
         assert!(
             self.fee_upper_bound.0 <= 100_000_000_000
                 && self.priority_upper_bound.0 <= self.fee_upper_bound.0,
@@ -55,6 +52,10 @@ impl PortalConfig {
 }
 #[derive(Serialize, Deserialize, Clone, near_sdk::NearSchema)]
 pub struct PortalPayout {
+    #[serde(default)]
+    pub attempt_id: U64,
+    #[serde(default)]
+    pub requested_at: U64,
     pub payout_id: String,
     pub machine_id: String,
     pub order_id: String,
@@ -80,6 +81,10 @@ impl Contract {
         self.payouts
             .get(&payout_id)
             .map(|s| must(serde_json::from_str(&s)))
+    }
+    pub fn get_portal_queue(&self, evm_next_nonce: Option<U64>) -> Value {
+        json!({"next_nonce":self.portal.next_nonce,"oldest_unbroadcast_payout":(evm_next_nonce.unwrap_or(U64(0)).0..self.portal.next_nonce.0).find_map(|i| self.get_payout(i.to_string())),
+            "broadcast_status":"unknown_on_near; compare with Sepolia transaction count"})
     }
     pub fn get_portal_nonce(&self) -> U64 {
         self.portal.next_nonce
@@ -134,11 +139,7 @@ impl Contract {
             "chain_id":11155111})
     }
     pub fn set_portal_fees(&mut self, max_fee_per_gas: U128, max_priority_fee_per_gas: U128) {
-        assert_eq!(
-            env::predecessor_account_id(),
-            env::current_account_id(),
-            "owner only"
-        );
+        assert_eq!(env::predecessor_account_id(), self.owner_id, "owner only");
         self.portal
             .check_fees(max_fee_per_gas, max_priority_fee_per_gas);
         self.portal.max_fee_per_gas = max_fee_per_gas;
@@ -146,18 +147,25 @@ impl Contract {
     }
     pub fn retry_signature(&mut self, payout_id: String) -> Promise {
         let mut p = self.get_payout(payout_id).expect("unknown payout");
-        assert_eq!(
-            p.status, "signature_failed",
-            "only failed signatures can retry"
+        assert!(
+            p.status == "signature_failed"
+                || (p.status == "awaiting_signature"
+                    && env::block_height().saturating_sub(p.requested_at.0)
+                        >= self.signature_timeout_blocks),
+            "signature not retryable"
         );
+        p.attempt_id.0 = p.attempt_id.0.checked_add(1).expect("attempt overflow");
+        p.requested_at = U64(env::block_height());
         p.status = "awaiting_signature".into();
         self.save_payout(&p);
         self.request_external_signature(&p)
     }
     #[private]
-    pub fn on_signature(&mut self, payout_id: String) -> bool {
+    pub fn on_signature(&mut self, payout_id: String, attempt_id: U64) -> bool {
         let mut p = self.get_payout(payout_id).expect("unknown payout");
-        assert_eq!(p.status, "awaiting_signature", "already resolved");
+        if p.attempt_id != attempt_id || p.status != "awaiting_signature" {
+            return false;
+        }
         let signature = env::promise_result_checked(0, 4096)
             .ok()
             .and_then(|bytes| serde_json::from_slice::<Value>(&bytes).ok())
@@ -170,14 +178,6 @@ impl Contract {
         .into();
         p.signature_json = signature.map(|v| v.to_string());
         self.save_payout(&p);
-        let mut machine = self.load_machine(&p.machine_id);
-        let record = machine
-            .external_payouts
-            .iter_mut()
-            .find(|r| r.payout_id == p.payout_id)
-            .expect("missing record");
-        record.status = p.status.clone();
-        self.save_machine(&p.machine_id, &machine);
         p.status == "signed"
     }
 }
@@ -191,7 +191,7 @@ fn valid_signature(v: &Value) -> bool {
         && matches!(s["recovery_id"].as_u64(), Some(0 | 1))
 }
 impl Contract {
-    fn save_payout(&mut self, p: &PortalPayout) {
+    pub(super) fn save_payout(&mut self, p: &PortalPayout) {
         self.payouts
             .insert(&p.payout_id, &must(serde_json::to_string(p)));
     }
@@ -206,6 +206,22 @@ impl Contract {
         assert!(
             fee > 0 && wei > 0 && wei <= self.portal.cap_wei.0,
             "portal cap or zero fee"
+        );
+        assert!(
+            fee >= wei
+                .checked_mul(self.min_fee_yocto_per_wei.0)
+                .expect("rate overflow"),
+            "Portal rate rule"
+        );
+        let epoch = env::block_height() / self.epoch_blocks;
+        if epoch != self.epoch {
+            self.epoch = epoch;
+            self.epoch_spent = 0;
+        }
+        self.epoch_spent = self.epoch_spent.checked_add(wei).expect("budget overflow");
+        assert!(
+            self.epoch_spent <= self.epoch_budget_wei.0,
+            "epoch budget exhausted"
         );
         let nonce = self.portal.next_nonce.0;
         let id = nonce.to_string();
@@ -222,6 +238,8 @@ impl Contract {
         };
         let unsigned_tx = tx.build_for_signing();
         let p = PortalPayout {
+            attempt_id: U64(0),
+            requested_at: U64(env::block_height()),
             payout_id: id.clone(),
             machine_id: machine_id.into(),
             order_id: order_id.into(),
@@ -255,7 +273,9 @@ impl Contract {
             )
             .then(Promise::new(env::current_account_id()).function_call(
                 "on_signature",
-                must(serde_json::to_vec(&json!({"payout_id":p.payout_id}))),
+                must(serde_json::to_vec(
+                    &json!({"payout_id":p.payout_id,"attempt_id":p.attempt_id}),
+                )),
                 NearToken::from_yoctonear(0),
                 Gas::from_tgas(15),
             ))
