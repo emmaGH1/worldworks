@@ -6,9 +6,11 @@ A task is DONE only after the builder's evidence, a Claude review and an Astra r
 |---|---|---|---|---|---|
 | G1 engine + G1-fix | Sol | all 13 review/audit findings fixed, each with a test; 40 engine tests; orchestrator re-ran: pass | 3 high, 2 medium, 6 low found -> fixed | first audit NOT DONE -> fixed | Sol completeness check RUNNING (worktree, commit 40122bd) |
 | G2a contract (local) | Sol | build 291 KB; sandbox tests pass a-d; engine 26 pass; storage measured (machine ~0.008 NEAR, order ~0.013 NEAR) | — | — | Sol completeness check RUNNING; Astra security audit after G3 |
-| G2b live Chain Signatures probe | Sol | 3 live MPC signatures on testnet (~14-15 s each, ~0.00127 NEAR gas); duplicate and over-cap rejected on chain | — | — | BLOCKED on user: fund 0x3BeF4f8A2eeEB1B9FaD8ba9ED44C23497F0CF9Ce with ~0.003 Sepolia ETH, then broadcast |
+| G2b live Chain Signatures probe | Sol | 3 live MPC signatures on testnet (~14-15 s each, ~0.00127 NEAR gas); duplicate and over-cap rejected on chain | — | — | SUPERSEDED by G3 (fund the G3 portal address instead) |
 | Design references | Opus | docs/design/REFERENCES.md, 38 local images (not in git) | — | — | DONE (research) |
 | Direction style tiles (CP1 input) | Opus | docs/design/directions.html; checked at 1440/1280/390 px | screenshots reviewed by orchestrator | n/a | DONE; waiting for user pick (default A) |
 | T1 app scaffold | Terra | typecheck + build pass, SPA fallback works, 210 MB node_modules | orchestrator re-ran typecheck + build: pass | n/a (scaffold) | DONE, committed |
-| G3 Portal in main contract + relayer | Sol | — | — | Astra (big) | RUNNING |
+| G3 Portal in main contract + relayer | Sol | deployed ww-portal-261112.testnet; live MPC signature for a vending order; sandbox + 11 relayer tests pass | — | Astra security audit RUNNING | BUILT, committed; Sepolia broadcast BLOCKED on user funding 0x694Ad57416073B1E1f3BC6E13B26BDE28015A8b7 |
 | T2 engine in browser (wasm) | Terra | wasm 411 KB; app typecheck/build pass; node test: wasm == native | orchestrator re-ran node test: pass | n/a | DONE, committed (validate returns no flow count; engine API does not expose it; acceptable) |
+| UI-1 workshop, app page, verify page | Opus | — | — | — | RUNNING |
+| G4 live adapter, wallet-free onboarding, scoped Worker key, seeded customer | Sol | — | — | — | RUNNING |
