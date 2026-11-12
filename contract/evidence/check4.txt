@@ -1,0 +1,8 @@
+ M STATUS.md
+ M docs/OPERATING.md
+?? contract/
+?? docs/design/
+?? probes/
+?? specs/G1-fix.md
+?? specs/G2b-chainsig-probe.md
+?? specs/T1-app-scaffold.md

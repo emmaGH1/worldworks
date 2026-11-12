@@ -1,0 +1,31 @@
+   Compiling worldworks-contract v0.1.0 (/data/home/.t3/projects/near-hackathon/contract)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.03s
+     Running unittests src/lib.rs (/opt/ww-target/debug/deps/worldworks_contract-96bf954a080ee440)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/sandbox.rs (/opt/ww-target/debug/deps/sandbox-593f5a3e4d2b090b)
+
+running 1 test
+STORAGE deployed initialized contract: 291377 bytes, 2913770000000000000000000 yoctoNEAR
+STORAGE vending machine: 838 bytes, 8380000000000000000000 yoctoNEAR (0.00838000 NEAR)
+STORAGE escrow machine: 653 bytes, 6530000000000000000000 yoctoNEAR (0.00653000 NEAR)
+PASS a: example machines published with sandbox accounts and bound worker
+STORAGE vending order including external record and vault growth: 1275 bytes, 12750000000000000000000 yoctoNEAR (0.01275000 NEAR)
+PASS b: exact creator +0.30 NEAR, vault 0.63 NEAR, pending portal fee 0.07 NEAR
+STORAGE pending escrow order: 518 bytes, 5180000000000000000000 yoctoNEAR (0.00518000 NEAR)
+STORAGE escrow approval growth: -3 bytes, -30000000000000000000 yoctoNEAR (-0.00003000 NEAR)
+PASS c: held order, wrong/owner approvals rejected, worker paid seller exactly 1 NEAR, repeat rejected; owner and timed expiry refunded exactly 1 NEAR
+PASS d: wrong deposit, duplicate IDs (completed and expired), invalid graph, owner overwrite rejected; views and engine trace verified
+test acceptance_sandbox ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 14.83s
+
+   Doc-tests worldworks_contract
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
