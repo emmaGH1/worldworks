@@ -21,3 +21,7 @@ A task is DONE only after the builder's evidence, a Claude review and an Astra r
 | Astra fix-verification review | Astra | FIXED: callback growth, failed-transfer recovery, vault withdrawal, relay receipts, early expiry. PARTIAL: treasury spend (gas not budgeted), storage bound, trapped escrow (new counterexample), nonce replacement. OPEN: key lock (by design until final). New: per-process rate limits, history-scan after order, lockfile | — | — | merged into specs/G6-followups.md |
 | INT-1 live UI | Sol | live flow 57.7 s, 0 console errors, real NEAR + Sepolia links | — | — | DONE, committed |
 | README draft | Astra | — | — | — | RUNNING |
+| G6 follow-ups (12 items) | Sol (2 runs hit GPT quota) -> Claude fallback | all acceptance checks pass; live UI 87.6 s; payouts 13-14 confirmed 3 blocks deep on 2 RPCs; fresh npm ci works | — | Sol completeness check when GPT quota resets (~02:39 UTC) | BUILT, committed (9f2146b) |
+| Portal throughput tweak | orchestrator | owner fee cap 3 gwei; template payout 0.0001 ETH; ~20 payouts/epoch | — | — | DONE |
+| README polish | Claude | — | — | Astra audit vs product after | RUNNING |
+| Demo storyboard + X post drafts | Opus | docs/demo/ | — | — | DONE; recording after final build |
