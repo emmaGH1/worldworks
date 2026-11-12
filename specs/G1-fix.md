@@ -29,3 +29,8 @@ G1 engine passes its tests but a review found bugs that can lock funds or allow 
 
 ## Environment
 CARGO_TARGET_DIR=/opt/ww-target, CARGO_HOME=/opt/ww-cargo-home, PATH includes ~/.cargo/bin. Do not touch probes/, research/, HACKATHON.md, README.md. Do not commit or push. No network transactions.
+
+## Amendment (orchestrator, after Sol completeness check)
+- VecDeque in Kahn's algorithm is accepted: it is deterministic; the G1 "BTreeMap/Vec only" rule was about hash-order nondeterminism.
+- Finding 11 (vending allocation) and 13 (documentation) are exempt from the red-before-fix rule: 11 was already correct behaviour, 13 is documentation verified manually.
+- Follow-up folded into a later task: assert external record recipient/machine_id/order_id in the sandbox test; label contract/REPORT.md measurements as historical.
