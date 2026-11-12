@@ -1,4 +1,4 @@
-# What we may and may not claim (from Astra's security audit, 2026-11-12)
+# What we may and may not claim (Astra audit 2026-11-12; re-review 2026-11-13: findings 4, 6, 8, 9 and early expiry FIXED; 1, 3, 5, 7 PARTIAL; key lock OPEN)
 
 Re-check every line after G5 hardening lands; update when the code changes. The README, demo video and X post must follow this file.
 
