@@ -26,10 +26,10 @@ path `worldworks/portal/sepolia/v1`. No EVM private key exists in the relayer.
   Split branches add; gate alternatives take the maximum, including parallel paths.
 - `submit_order(machine_id, order_id, external_recipient?)` must attach exactly
   **CoinSlot price + ORDER_STORAGE_FEE**, where fee is
-  `770000000000000000000000` yoctoNEAR (**0.77 test NEAR**). This fee is retained,
+  `1320000000000000000000000` yoctoNEAR (**1.32 test NEAR**). This fee is retained,
   including on expiry; only the price goes through the graph. Example price 1 NEAR
-  therefore requires **1.77 NEAR**. Read `get_limits().order_storage_fee` in the app.
-  See the G4b measurement below for sizing and its remaining limitation.
+  therefore requires **2.32 NEAR**. Read `get_limits().order_storage_fee` in the app.
+  See [G6 storage sizing](../docs/STORAGE-g6.md) for the conservative lifecycle bound.
 - Portal admission requires NEAR inflow to the Portal >= `wei *
   min_fee_yocto_per_wei`; overflow, per-payout cap and current epoch exhaustion panic
   atomically. Receipt deposits return on failure; gas is still charged. For held
@@ -50,9 +50,10 @@ path `worldworks/portal/sepolia/v1`. No EVM private key exists in the relayer.
 - `get_payout(payout_id)` retains G3 fields and adds decimal `attempt_id` and
   `requested_at` block height. Payouts have their own records; machines contain no
   payout history. `get_machine()` no longer includes `external_payouts`.
-  Use `get_pending_external_payouts(machine_id)` for historical records with current
-  statuses, recipient, machine_id, order_id, payout_id, wei and fee. It scans all
-  payouts and is intended for bounded demo use, not large histories.
+  Use `get_pending_external_payouts(machine_id, from_index?, limit?)` for historical
+  records with current statuses, recipient, machine_id, order_id, payout_id, wei and
+  fee. Since G6 it scans one page of at most 200 nonces (default 100) starting at
+  `from_index`; see "G6 current rules" below.
 - `retry_signature(payout_id)` accepts `signature_failed`, or `awaiting_signature`
   older than `signature_timeout_blocks`. It updates attempt/time only: stored
   payload, unsigned bytes, nonce, recipient, wei and fee snapshot never change.
@@ -107,7 +108,8 @@ of broadcast. Insufficient ETH, recipient execution failure, RPC downtime,
 underpricing, or a missing early nonce can stall every later payout. Relayer must
 broadcast/retry oldest nonces in order and verify receipts on Sepolia. Treasury
 admission prices/rate-limits value; it does not replenish ETH automatically or
-include gas in the wei budget. Fund the shared treasury separately. Low configured
+replenish the treasury. G6 includes worst-case snapshot gas in the epoch budget.
+Fund the shared treasury separately. Low configured
 rates and high budgets are still risky policy choices; immutable admission params
 must be chosen before locking.
 
@@ -131,7 +133,12 @@ using sandbox state patching; production exports no testing hooks. Migration tes
 uses the saved public G3 snapshot and checks nonce, signatures and liabilities.
 See `../docs/EVIDENCE-hardening.md` for complete outputs and testnet links.
 
-## G4b measurement and deployment
+## G4b measurement and deployment (historical)
+
+Superseded fee sizing: G6 now uses a topology-independent 65,536-byte lifecycle
+upper bound and a **1.32 NEAR** retained order fee; see
+[STORAGE-g6.md](../docs/STORAGE-g6.md). The historical fixture and its original
+limitations below are retained for traceability, not current configuration.
 
 Sandbox `storage_envelope` measures 32 nodes, 32-byte machine/node IDs (node IDs
 contain control bytes expanding to six JSON bytes), a 64-byte order ID, four
@@ -139,7 +146,7 @@ transfer effects to a 64-character account, a Vault with a 32-character escaped
 name, and an external payout including unsigned transaction, payload and mock
 signature. Publish **19,528 bytes**, completed order **38,044 bytes**. At
 10^19 yoctoNEAR per byte, twice the observed footprints rounded upward to 0.01
-NEAR gives publish **0.40 NEAR** and order **0.77 NEAR**. The order test uses a
+NEAR gave publish **0.40 NEAR** and order **0.77 NEAR** (historical). The order test uses a
 1 NEAR price; maximum u128 decimal widths, every graph topology, all held-worker
 combinations and all possible Unicode vault names were not exhaustively measured.
 This is an adversarial measured fixture, **not a proven global worst-case bound**.
@@ -159,11 +166,58 @@ and the deployed WASM hash. `verify-g4b.ts` permits repeating verification again
 the pre-migration public snapshot, before placing new orders. Neither script
 contains keys; deployment credentials stay under `/opt/ww-secrets`.
 
-Sponsored sessions receive **7 NEAR**. Five orders of a 0.1 NEAR machine require
-5 × (0.1 + 0.77) = **4.35 NEAR**; one publish attaches **0.40 NEAR**, leaving
-**2.25 NEAR** for account storage and gas (and publish refunds increase headroom).
+New G6 sponsored sessions receive **9 NEAR**. Five orders of a 0.1 NEAR machine
+require 5 × (0.1 + 1.32) = **7.10 NEAR**; one publish attaches **0.40 NEAR**,
+leaving **1.50 NEAR** for account storage and gas (publish refunds increase headroom).
+Existing sessions are not automatically refilled.
 Relay returns broadcast only; payout confirmation checks transaction and successful
 receipt independently at two Sepolia RPC hosts, including hash, sender, recipient,
 value, nonce and matching block hash. `npm run relay -- <id>` relays earlier signed
-nonces first; an unsigned predecessor returns `waiting_for_earlier_nonce`.
-`npm run confirm -- <id>` reports both proofs only after both agree.
+nonces first; an unsigned predecessor returns `waiting_for_earlier_nonce`, and an
+unsigned requested target (after signed predecessors were advanced) returns
+`waiting_for_signature`. `npm run confirm -- <id>` reports both proofs only after
+both agree and, since G6, only once both RPCs show at least three blocks on top.
+
+
+## G6 current rules
+The retained order fee is **1.32 NEAR**, twice the 65,536-byte conservative
+worst-case lifecycle envelope rounded upward to 0.01 NEAR. Width checks and
+actual sandbox measurements are recorded in [G6 storage sizing](../docs/STORAGE-g6.md).
+New machine/node IDs are 1–32 bytes and order IDs 1–64 bytes of
+`[a-z0-9_-]`. Existing state is retained, including legacy IDs.
+Publish checks exact splitter rounding on every reachable immediate, approve
+and expiry branch. Nonzero Portal flows must meet the rate, payout cap and
+value plus worst permitted gas reservation within one epoch budget. Previously
+published graphs are not retroactively validated.
+
+Epoch spend reserves `wei + 21000 * snapshotted_max_fee_per_gas`, with a separate
+20 payouts per epoch cap. Gas reservations are conservative and never refunded.
+The existing epoch budget remains unchanged on migration; migrated current-epoch
+records are charged their value and gas reservation, possibly leaving zero
+remaining budget. The budget does not fund the treasury.
+
+`submit_order`, `approve`, and `expire` return
+`{pending,effects,trace}`; effects use kind vault/payout/external, with decimal
+amounts and external payoutId. Read the function's own receipt, not detached
+signature callback return values.
+`get_pending_external_payouts(machine_id,from_index?,limit?)` scans at most
+200 nonce records, default 100. Advance from_index by limit, even for empty
+filtered pages. Historical entries include all statuses.
+
+`migrate_g6()` is private, one-time, same-root-layout migration. It preserves
+all existing maps, treasury derivation, nonce, signatures and liabilities.
+See [G6 evidence](../docs/EVIDENCE-g6.md).
+
+Server session/customer quotas are best-effort testnet controls, in process
+memory, serialized per process. Vercel runtime forwarding headers identify
+clients; local mode uses the peer address. Aggregate sponsor cap is 35 test NEAR
+per hour and customer cap 20 test NEAR per hour, measured by account balance
+delta (including gas/storage), with a conservative reservation before sending.
+They reset on cold start and are not shared across instances; they are not a
+production abuse-prevention boundary. Session idempotencyKey equals its publicKey;
+the deterministic account is checked before quota/funding, so retries do not
+create or fund another account. Input is validated before quota is counted.
+
+Sepolia confirmed requires matching successful receipt and transaction from two
+RPC hosts and at least three additional blocks on each. UI wording is
+“included on Sepolia, seen by two RPCs”; this is not finality.

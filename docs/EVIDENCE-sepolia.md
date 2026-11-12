@@ -1,3 +1,5 @@
+> Historical evidence: fee, balance and confirmation descriptions below may be superseded. See [G6 current state and acceptance](EVIDENCE-g6.md); zero treasury balance and 1 NEAR fee observations are historical, not current configuration.
+
 # Evidence: NEAR contract paid out on Ethereum Sepolia (gate 2 passed)
 
 Date: 2026-11-12 ~23:10 UTC. Treasury: `0x694Ad57416073B1E1f3BC6E13B26BDE28015A8b7`, the Chain Signatures address derived for `ww-portal-261112.testnet` (path `worldworks/portal/sepolia/v1`). Funded by the user with 0.53 Sepolia ETH from a faucet.

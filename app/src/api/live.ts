@@ -1,5 +1,5 @@
 import type { WorldworksApi, MachineDoc, Session, OrderResult, PayoutView, TxRef } from './types.js';
-import { account, KeyPair, actions, CONTRACT, DEMO_RECIPIENT, rpc, view, send, price, placeOrder, txRef, limits, checkId } from '../../api/near.js';
+import { account, KeyPair, actions, CONTRACT, DEMO_RECIPIENT, rpc, view, send, price, placeOrder, txRef, limits, checkId, checkLegacyId, receiptResult } from '../../api/near.js';
 import { validateMachine } from '../engine/index.js';
 import { validate as wasmValidate, preview_order } from '../engine/pkg/worldworks_engine_wasm.js';
 const config = (import.meta as ImportMeta & {env?:Record<string,string>}).env ?? {};
@@ -33,7 +33,7 @@ export class LiveApi implements WorldworksApi {
       const state = await rpc('query',{request_type:'view_account',finality:'final',account_id:saved});
       return {accountId:saved,balance:state.amount,isNew:false,network:'testnet'};
     }
-    const session = await this.post('session',{publicKey:key.getPublicKey().toString()});
+    const session = await this.post('session',{publicKey:key.getPublicKey().toString(),idempotencyKey:key.getPublicKey().toString()});
     this.storage.setItem('worldworks.testnet.account',session.accountId); return session;
   }
   private async player(scoped=false) { const s = await this.session(); return account(s.accountId,this.key(scoped?'worker':'session').toString()); }
@@ -71,14 +71,14 @@ export class LiveApi implements WorldworksApi {
     if(!permission || permission.receiver_id !== CONTRACT || permission.method_names.length !== 1 || permission.method_names[0] !== 'approve') throw Error('Worker key does not have approve-only permission');
     return {publicKey,permission:data.permission,label:'This key can only approve'};
   }
-  async getMachine(machineId:string) { checkId(machineId); const m = await view('get_machine',{machine_id:machineId}); return m ? {doc:{machine:m.machine,workers:m.workers},owner:m.owner,vaults:m.vaults} : null; }
+  async getMachine(machineId:string) { checkLegacyId(machineId); const m = await view('get_machine',{machine_id:machineId}); return m ? {doc:{machine:m.machine,workers:m.workers},owner:m.owner,vaults:m.vaults} : null; }
   private remember<T extends OrderResult>(result:T):T {
     for(const effect of result.effects) if(effect.kind === 'external') this.storage.setItem(`worldworks.testnet.payout.${effect.payoutId}`,JSON.stringify(result.tx));
     return result;
   }
   async order(machineId:string,recipient?:string) { return this.remember(await placeOrder(await this.player(),machineId,recipient)); }
   async customerOrder(machineId:string) { return this.remember(await this.post('customer',{machineId})); }
-  async approve(machineId:string,orderId:string) { checkId(machineId); checkId(orderId,64); await this.workerPermission(); return (await send(await this.player(true),'approve',{machine_id:machineId,order_id:orderId})).tx; }
+  async approve(machineId:string,orderId:string) { checkLegacyId(machineId); checkLegacyId(orderId,64); await this.workerPermission(); const {result,tx}=await send(await this.player(true),'approve',{machine_id:machineId,order_id:orderId}); const outcome=receiptResult(result,'approve'); if(outcome) this.remember({tx,orderId,...outcome}); return tx; }
   async getPayout(payoutId:string):Promise<PayoutView> {
     let payout = await this.post('payout',{payout_id:payoutId});
     if(payout.status === 'signature_failed' || payout.retryEligible) {
@@ -88,10 +88,10 @@ export class LiveApi implements WorldworksApi {
     const tx = this.storage.getItem(`worldworks.testnet.payout.${payoutId}`);
     return tx ? {...payout,nearTx:JSON.parse(tx)} : payout;
   }
-  async relay(payoutId:string):Promise<PayoutView> { const result = await this.post('relay',{payout_id:payoutId}); if(result.status === 'waiting_for_earlier_nonce') return {...await this.getPayout(payoutId),status:'waiting_for_earlier_nonce',waitingPayoutId:result.waitingPayoutId}; return this.getPayout(payoutId); }
+  async relay(payoutId:string):Promise<PayoutView> { const result = await this.post('relay',{payout_id:payoutId}); if(result.status === 'waiting_for_earlier_nonce' || result.status === 'waiting_for_signature') return {...await this.getPayout(payoutId),status:result.status,waitingPayoutId:result.waitingPayoutId}; return this.getPayout(payoutId); }
   async getUnclaimed() { return view('get_unclaimed',{account:(await this.session()).accountId}); }
   limits() { return limits(); }
-  async withdrawVault(machineId:string,vaultName:string,amount:string) { checkId(machineId); return (await send(await this.player(),'withdraw_vault',{machine_id:machineId,vault_name:vaultName,amount})).tx; }
+  async withdrawVault(machineId:string,vaultName:string,amount:string) { checkLegacyId(machineId); return (await send(await this.player(),'withdraw_vault',{machine_id:machineId,vault_name:vaultName,amount})).tx; }
   async withdrawUnclaimed() { return (await send(await this.player(),'withdraw_unclaimed',{})).tx; }
   async contractInfo() { return {contractId:CONTRACT,portalAddress:await view('get_portal_address',{}),explorer:`https://testnet.nearblocks.io/address/${CONTRACT}`}; }
 }

@@ -53,3 +53,20 @@ export interface WorldworksApi {
 ```
 
 Rules: amounts are always strings; every on-chain thing shown in the UI carries its explorer link; the UI shows pending states honestly and never shows "confirmed" before `PayoutView.status === 'confirmed'`.
+
+## G6 receipt and observation contract
+The NEAR submit_order / approve / expire receipt returns
+`{pending:boolean,effects:OrderResult["effects"],trace:string[]}`.
+External effects include payoutId. Parse that function receipt, never engine
+trace text or detached callback returns. On unavailable observation after submit,
+return tx and orderId with empty effects and an explicit observation message;
+do not signal that the transaction was never submitted.
+New identifiers use [a-z0-9_-], machine/node max 32 and order max 64.
+Session POST requires idempotencyKey equal to publicKey; retries reuse its
+deterministic account. PayoutStatus also includes waiting_for_signature and
+waiting_for_earlier_nonce. Unsigned targets return the former after signed
+predecessors advance; an earlier unsigned gap returns the latter.
+Confirmed requires matching successful receipt/transaction on both independent
+Sepolia RPCs and head >= receipt.blockNumber + 3 on both.
+History view pagination uses nonce from_index and a maximum 200-record scan,
+default 100; increment from_index by scan limit, even for empty filtered pages.

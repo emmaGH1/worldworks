@@ -27,7 +27,9 @@ export async function confirm(payoutId:string) {
       // A pending transaction is no confirmation proof; poll again instead of a transport error.
       if (tx.blockHash === null) return null;
       if(receipt.transactionHash.toLowerCase() !== hash || tx.hash.toLowerCase() !== hash || receipt.status !== 'success' || receipt.from.toLowerCase() !== portalAddress.toLowerCase() || tx.from.toLowerCase() !== portalAddress.toLowerCase() || receipt.to?.toLowerCase() !== p.recipient.toLowerCase() || tx.to?.toLowerCase() !== p.recipient.toLowerCase() || tx.value !== BigInt(p.wei) || tx.nonce !== p.nonce || receipt.blockHash !== tx.blockHash) throw Error('Sepolia receipt/transaction mismatch or revert');
-      return {rpc:confirmationUrls[i],hash,blockHash:receipt.blockHash,blockNumber:receipt.blockNumber.toString(),from:receipt.from,to:receipt.to,value:tx.value.toString(),status:1};
+      const head = await rpc.getBlockNumber();
+      if(head < receipt.blockNumber + 3n) return null;
+      return {head:head.toString(),depth:(head-receipt.blockNumber).toString(),rpc:confirmationUrls[i],hash,blockHash:receipt.blockHash,blockNumber:receipt.blockNumber.toString(),from:receipt.from,to:receipt.to,value:tx.value.toString(),status:1};
     } catch(error) {
       if((error as Error).name === 'TransactionReceiptNotFoundError') return null;
       throw error;

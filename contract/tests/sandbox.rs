@@ -3,7 +3,7 @@ use near_workspaces::types::NearToken;
 use near_workspaces::{Account, Contract};
 use serde_json::{json, Value};
 const PRICE: u128 = 1_000_000_000_000_000_000_000_000;
-const FEE: u128 = 770_000_000_000_000_000_000_000;
+const FEE: u128 = worldworks_contract::ORDER_STORAGE_FEE;
 async fn call(a: &Account, c: &Contract, m: &str, v: Value, d: u128) -> Result<()> {
     let r = a
         .call(c.id(), m)
@@ -60,7 +60,7 @@ async fn hardening_sandbox() -> Result<()> {
     let owner = w.dev_create_account().await?;
     let buyer = w.dev_create_account().await?;
     call(mock.as_account(), &mock, "new", json!({}), 0).await?;
-    let init = json!({"owner_id":owner.id(),"min_fee_yocto_per_wei":"1000000","epoch_blocks":"100000","epoch_budget_wei":"2000000000000000","max_wei_per_payout":"2000000000000000","signature_timeout_blocks":"100","portal_config":{"signer":mock.id(),"cap_wei":"2000000000000000","max_fee_per_gas":"100000000000","max_priority_fee_per_gas":"1000000000","fee_upper_bound":"100000000000","priority_upper_bound":"10000000000"}});
+    let init = json!({"owner_id":owner.id(),"min_fee_yocto_per_wei":"1000000","epoch_blocks":"100000","epoch_budget_wei":"6200000000000000","max_wei_per_payout":"2000000000000000","signature_timeout_blocks":"100","portal_config":{"signer":mock.id(),"cap_wei":"2000000000000000","max_fee_per_gas":"100000000000","max_priority_fee_per_gas":"1000000000","fee_upper_bound":"100000000000","priority_upper_bound":"10000000000"}});
     call(c.as_account(), &c, "new", init, 0).await?;
     let mut vending: Value =
         serde_json::from_str(include_str!("../../engine/examples/vending.json"))?;
@@ -93,24 +93,25 @@ async fn hardening_sandbox() -> Result<()> {
         "submit_order",
         order("vending", "no-fee"),
         PRICE,
-        "WrongAmount",
-    )
-    .await?;
-    let mut drain = json!({"portal_cap_wei":"1000000000000000","nodes":{"slot":{"type":"CoinSlot","price":"1","output":"portal"},"portal":{"type":"Portal","chain":"sepolia","wei":"1000000000000000"}}});
-    call(
-        &owner,
-        &c,
-        "publish_machine",
-        publish("drain", &drain),
-        PRICE,
+        "order storage fee required",
     )
     .await?;
     reject(
         &buyer,
         &c,
         "submit_order",
-        order("drain", "1"),
-        FEE + 1,
+        order("vending", "wrong-price"),
+        PRICE + FEE - 1,
+        "WrongAmount",
+    )
+    .await?;
+    let mut drain = json!({"portal_cap_wei":"1000000000000000","nodes":{"slot":{"type":"CoinSlot","price":"1","output":"portal"},"portal":{"type":"Portal","chain":"sepolia","wei":"1000000000000000"}}});
+    reject(
+        &owner,
+        &c,
+        "publish_machine",
+        publish("drain", &drain),
+        PRICE,
         "Portal rate rule",
     )
     .await?;
@@ -175,7 +176,12 @@ async fn hardening_sandbox() -> Result<()> {
         "private",
     )
     .await?;
+    let counter_before = view(&c, "get_portal_nonce", json!({})).await?;
     call(&buyer, &c, "retry_signature", json!({"payout_id":"0"}), 0).await?;
+    assert_eq!(
+        view(&c, "get_portal_nonce", json!({})).await?,
+        counter_before
+    );
     let retried = view(&c, "get_payout", json!({"payout_id":"0"})).await?;
     assert_eq!(retried["status"], "signed");
     assert_eq!(retried["attempt_id"], "1");
@@ -408,16 +414,29 @@ async fn hardening_sandbox() -> Result<()> {
         0,
     )
     .await?;
-    let nonce_before=view(&c,"get_portal_nonce",json!({})).await?;
-    let liabilities_before=view(&c,"get_liabilities",json!({})).await?;
-    let payout_before=view(&c,"get_payout",json!({"payout_id":"0"})).await?;
-    reject(&buyer,&c,"migrate_g4b",json!({}),0,"private").await?;
-    call(c.as_account(),&c,"migrate_g4b",json!({}),0).await?;
-    assert_eq!(view(&c,"get_portal_nonce",json!({})).await?,nonce_before);
-    assert_eq!(view(&c,"get_payout",json!({"payout_id":"0"})).await?,payout_before);
-    let liabilities_after=view(&c,"get_liabilities",json!({})).await?;
-    for field in ["escrow","vaults","unclaimed","in_flight"] { assert_eq!(liabilities_before[field],liabilities_after[field]); }
-    reject(c.as_account(),&c,"migrate_g4b",json!({}),0,"already migrated").await?;
+    let nonce_before = view(&c, "get_portal_nonce", json!({})).await?;
+    let liabilities_before = view(&c, "get_liabilities", json!({})).await?;
+    let payout_before = view(&c, "get_payout", json!({"payout_id":"0"})).await?;
+    reject(&buyer, &c, "migrate_g4b", json!({}), 0, "private").await?;
+    call(c.as_account(), &c, "migrate_g4b", json!({}), 0).await?;
+    assert_eq!(view(&c, "get_portal_nonce", json!({})).await?, nonce_before);
+    assert_eq!(
+        view(&c, "get_payout", json!({"payout_id":"0"})).await?,
+        payout_before
+    );
+    let liabilities_after = view(&c, "get_liabilities", json!({})).await?;
+    for field in ["escrow", "vaults", "unclaimed", "in_flight"] {
+        assert_eq!(liabilities_before[field], liabilities_after[field]);
+    }
+    reject(
+        c.as_account(),
+        &c,
+        "migrate_g4b",
+        json!({}),
+        0,
+        "already migrated",
+    )
+    .await?;
     println!("PASS G4b same-layout migration preserves nonce, signed payout and liabilities; private and one-time");
     println!("PASS separate fee owner; finished hardening sandbox");
     Ok(())
@@ -524,8 +543,8 @@ async fn storage_envelope() -> Result<()> {
     let owner = w.dev_create_account().await?;
     call(mock.as_account(), &mock, "new", json!({}), 0).await?;
     call(c.as_account(), &c, "new", json!({"owner_id":owner.id(),"min_fee_yocto_per_wei":"1","epoch_blocks":"100000","epoch_budget_wei":"10000000000000000","max_wei_per_payout":"2000000000000000","signature_timeout_blocks":"100","portal_config":{"signer":mock.id(),"cap_wei":"2000000000000000","max_fee_per_gas":"100000000000","max_priority_fee_per_gas":"1000000000","fee_upper_bound":"100000000000","priority_upper_bound":"10000000000"}}),0).await?;
-    // Control bytes expand to six JSON bytes: adversarial maximum-length node IDs.
-    let id = |n: usize| format!("{:02}{}", n, "\u{0001}".repeat(30));
+    // Maximum permitted identifier widths; vault names still exercise escaping.
+    let id = |n: usize| format!("{:02}{}", n, "x".repeat(30));
     let mut nodes = serde_json::Map::new();
     nodes.insert(
         id(0),
@@ -567,7 +586,220 @@ async fn storage_envelope() -> Result<()> {
     )
     .await?;
     let order_bytes = c.view_account().await?.storage_usage - before;
-    println!("G4B ADVERSARIAL STORAGE publish={publish_bytes} bytes order={order_bytes} bytes (32 nodes, max escaped IDs, max order ID, four transfers, Portal/signature, Vault)");
-    assert!(u128::from(order_bytes) * 2 * 10_000_000_000_000_000_000u128 <= FEE);
+    println!("G6 ADVERSARIAL STORAGE publish={publish_bytes} bytes order={order_bytes} bytes (32 nodes, bounded IDs, max order ID, four transfers, Portal/signature, Vault)");
+    assert!(order_bytes <= worldworks_contract::ORDER_STORAGE_BOUND_BYTES);
+    assert!(
+        u128::from(worldworks_contract::ORDER_STORAGE_BOUND_BYTES)
+            * 2
+            * 10_000_000_000_000_000_000u128
+            <= FEE
+    );
+    Ok(())
+}
+
+#[tokio::test]
+async fn g6_portal_resolution_and_gas_budget() -> Result<()> {
+    let w = near_workspaces::sandbox().await?;
+    let c = w
+        .dev_deploy(&std::fs::read(
+            "/opt/ww-target/near/worldworks_contract.wasm",
+        )?)
+        .await?;
+    let mock = w
+        .dev_deploy(&std::fs::read(
+            "/opt/ww-target/portal-mock/portal_mock_signer.wasm",
+        )?)
+        .await?;
+    let owner = w.dev_create_account().await?;
+    call(mock.as_account(), &mock, "new", json!({}), 0).await?;
+    call(c.as_account(),&c,"new",json!({"owner_id":owner.id(),"min_fee_yocto_per_wei":"2","epoch_blocks":"1000","epoch_budget_wei":"4200000000000002","max_wei_per_payout":"2","signature_timeout_blocks":"100","portal_config":{"signer":mock.id(),"cap_wei":"2","max_fee_per_gas":"100000000000","max_priority_fee_per_gas":"1000000000","fee_upper_bound":"100000000000","priority_upper_bound":"10000000000"}}),0).await?;
+    let mut m = json!({"portal_cap_wei":"2","nodes":{"slot":{"type":"CoinSlot","price":"2","output":"gate"},"gate":{"type":"Gate","condition":{"type":"NeedsApproval","worker":"worker"},"pass":"portal","fail":"split"},"worker":{"type":"Worker","gates":["gate"]},"split":{"type":"Splitter","outputs":[{"bps":5000,"target":"portal"},{"bps":5000,"target":"vault"}]},"portal":{"type":"Portal","chain":"sepolia","wei":"1"},"vault":{"type":"Vault","name":"reserve"}}});
+    let mut args = publish("trap", &m);
+    args["workers"] = json!({"worker":owner.id()});
+    reject(
+        &owner,
+        &c,
+        "publish_machine",
+        args,
+        PRICE,
+        "Portal rate rule",
+    )
+    .await?;
+    println!("PASS Astra trapped escrow counterexample rejected at publish (expiry branch)");
+    m["nodes"]["slot"]["price"] = json!("4");
+    let mut args = publish("release", &m);
+    args["workers"] = json!({"worker":owner.id()});
+    args["expiry_blocks"] = json!("1");
+    call(&owner, &c, "publish_machine", args, PRICE).await?;
+    for (i, method) in ["approve", "expire"].iter().enumerate() {
+        let id = i.to_string();
+        call(&owner, &c, "submit_order", order("release", &id), FEE + 4).await?;
+        assert_eq!(
+            view(&c, "get_portal_nonce", json!({})).await?,
+            i.to_string()
+        );
+        call(
+            mock.as_account(),
+            &mock,
+            "configure",
+            json!({"fail":false,"id":id}),
+            0,
+        )
+        .await?;
+        w.fast_forward(2).await?;
+        let r = owner
+            .call(c.id(), method)
+            .args_json(order("release", &id))
+            .max_gas()
+            .transact()
+            .await?;
+        let result: Value = r.json()?;
+        assert_eq!(result["effects"][0]["kind"], "external");
+        assert_eq!(result["effects"][0]["payoutId"], id);
+        assert_eq!(
+            view(&c, "get_portal_nonce", json!({})).await?,
+            (i + 1).to_string()
+        );
+    }
+    call(
+        &owner,
+        &c,
+        "submit_order",
+        order("release", "third"),
+        FEE + 4,
+    )
+    .await?;
+    reject(
+        &owner,
+        &c,
+        "approve",
+        order("release", "third"),
+        0,
+        "epoch budget exhausted",
+    )
+    .await?;
+    assert_eq!(view(&c, "get_portal_nonce", json!({})).await?, "2");
+    println!("PASS Portal approve and expire structured effects; exactly one nonce each; 1-wei payouts exhaust gas-inclusive budget");
+    let zero = json!({"portal_cap_wei":"1","nodes":{"slot":{"type":"CoinSlot","price":"1","output":"split"},"split":{"type":"Splitter","outputs":[{"bps":9999,"target":"vault"},{"bps":1,"target":"portal"}]},"vault":{"type":"Vault","name":"reserve"},"portal":{"type":"Portal","chain":"sepolia","wei":"1"}}});
+    call(
+        &owner,
+        &c,
+        "publish_machine",
+        publish("zero-flow", &zero),
+        PRICE,
+    )
+    .await?;
+    let r = owner
+        .call(c.id(), "submit_order")
+        .args_json(order("zero-flow", "zero"))
+        .deposit(NearToken::from_yoctonear(FEE + 1))
+        .max_gas()
+        .transact()
+        .await?;
+    assert!(r.failures().is_empty());
+    assert!(r.receipt_outcomes().iter().all(|o| &o.executor_id != mock.id()), "zero-flow order must create no signer receipts");
+    assert_eq!(view(&c, "get_portal_nonce", json!({})).await?, "2");
+    let result: Value = r.json()?;
+    assert!(result["effects"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .all(|e| e["kind"] != "external"));
+    println!("PASS zero-fee Portal path never calls signer or consumes nonce");
+    for id in ["bad:node", "bad\"node", "bad\nnode"] {
+        let invalid = json!({"portal_cap_wei":"0","nodes":{"slot":{"type":"CoinSlot","price":"1","output":id},id:{"type":"Vault","name":"v"}}});
+        reject(
+            &owner,
+            &c,
+            "publish_machine",
+            publish("invalid", &invalid),
+            PRICE,
+            "node name length",
+        )
+        .await?;
+    }
+    println!("PASS parser-breaking node IDs rejected");
+    let nonce = view(&c, "get_portal_nonce", json!({})).await?;
+    let liability = view(&c, "get_liabilities", json!({})).await?;
+    call(c.as_account(), &c, "migrate_g6", json!({}), 0).await?;
+    assert_eq!(view(&c, "get_portal_nonce", json!({})).await?, nonce);
+    let after = view(&c, "get_liabilities", json!({})).await?;
+    for f in ["escrow", "vaults", "unclaimed", "in_flight"] {
+        assert_eq!(liability[f], after[f]);
+    }
+    reject(
+        c.as_account(),
+        &c,
+        "migrate_g6",
+        json!({}),
+        0,
+        "already migrated",
+    )
+    .await?;
+    println!("PASS G6 one-time migration preserves liabilities and nonce");
+    w.fast_forward(1001).await?;
+    call(
+        &owner,
+        &c,
+        "set_portal_fees",
+        json!({"max_fee_per_gas":"1","max_priority_fee_per_gas":"0"}),
+        0,
+    )
+    .await?;
+    let direct = json!({"portal_cap_wei":"1","nodes":{"slot":{"type":"CoinSlot","price":"2","output":"portal"},"portal":{"type":"Portal","chain":"sepolia","wei":"1"}}});
+    call(
+        &owner,
+        &c,
+        "publish_machine",
+        publish("count", &direct),
+        PRICE,
+    )
+    .await?;
+    for i in 0..20 {
+        call(
+            mock.as_account(),
+            &mock,
+            "configure",
+            json!({"fail":false,"id":(i+2).to_string()}),
+            0,
+        )
+        .await?;
+        call(
+            &owner,
+            &c,
+            "submit_order",
+            order("count", &i.to_string()),
+            FEE + 2,
+        )
+        .await?;
+    }
+    reject(
+        &owner,
+        &c,
+        "submit_order",
+        order("count", "over"),
+        FEE + 2,
+        "epoch payout count exhausted",
+    )
+    .await?;
+    let page = view(
+        &c,
+        "get_pending_external_payouts",
+        json!({"machine_id":"count","from_index":"2","limit":2}),
+    )
+    .await?;
+    assert_eq!(page.as_array().unwrap().len(), 2);
+    assert_eq!(page[0]["payout_id"], "2");
+    assert_eq!(page[1]["payout_id"], "3");
+    assert_eq!(
+        view(
+            &c,
+            "get_pending_external_payouts",
+            json!({"machine_id":"count","from_index":"0","limit":2})
+        )
+        .await?,
+        json!([])
+    );
+    println!("PASS twenty payouts accepted; twenty-first rejected by independent epoch count cap; bounded history pages");
     Ok(())
 }

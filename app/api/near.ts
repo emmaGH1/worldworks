@@ -32,6 +32,10 @@ export function price(machine: any): string {
   return slots[0].price;
 }
 export function checkId(id:string, max=32) {
+  if(!new RegExp(`^[a-z0-9_-]{1,${max}}$`).test(id)) throw Error(`Identifier must be 1–${max} characters of [a-z0-9_-]`);
+}
+// Reads and owner withdrawals must still reach machines published before G6.
+export function checkLegacyId(id:string, max=32) {
   if(!id.length || new TextEncoder().encode(id).length > max) throw Error(`Identifier must be 1–${max} bytes`);
 }
 export async function limits() {
@@ -39,24 +43,29 @@ export async function limits() {
   return {orderFee:l.order_storage_fee,publishDeposit:l.publish_storage_deposit,rate:l.min_fee_yocto_per_wei,epochBudgetWei:l.epoch_budget_wei,epochRemainingWei:l.remaining_budget_wei,maxWeiPerPayout:l.max_wei_per_payout};
 }
 export async function placeOrder(who: Account, machineId: string, recipient = DEMO_RECIPIENT): Promise<OrderResult> {
-  checkId(machineId);
+  checkLegacyId(machineId);
   const machine = await view('get_machine',{machine_id:machineId});
   if (!machine) throw Error('Unknown machine');
   const orderId = crypto.randomUUID();
   const {result,tx} = await send(who,'submit_order',{machine_id:machineId,order_id:orderId,external_recipient:recipient},BigInt(price(machine.machine)) + BigInt((await limits()).orderFee));
-  const order = await view('get_order',{machine_id:machineId,order_id:orderId});
-  const external = await view('get_pending_external_payouts',{machine_id:machineId});
-  const effects: OrderResult['effects'] = [];
-  // Trace amounts are emitted by the deployed engine, not a speculative preview.
-  for (const line of order.trace as string[]) {
-    const match = /^([^:]+): ([0-9]+) yoctoNEAR$/.exec(line);
-    if (!match) continue;
-    const node = machine.machine.nodes[match[1]];
-    if (node?.type === 'Vault') effects.push({kind:'vault',name:node.name,amount:match[2]});
-    if (node?.type === 'Payout') effects.push({kind:'payout',account:node.account === '$payer' ? who.accountId : node.account,amount:match[2]});
-  }
-  for (const p of external.filter((p:any) => p.order_id === orderId)) effects.push({kind:'external',payoutId:p.payout_id,recipient:p.recipient,wei:p.wei,fee:p.fee});
-  const failures = result.receipts_outcome.filter((r:any) => r.outcome.status?.Failure);
-  if (failures.length) throw Error(`Order ${tx.explorerUrl} has failed receipt(s): ${JSON.stringify(failures)}`);
-  return {tx,orderId,pending:order.pending,effects,trace:order.trace};
+  // Decode the submit receipt itself: detached signer/recovery receipts have
+  // their own return values and must never be mistaken for the order result.
+  const outcome = receiptResult(result, 'submit_order');
+  if (!outcome) return {tx,orderId,pending:true,effects:[],trace:['Submitted; receipt observation unavailable. Check this transaction before retrying.']};
+  return {tx,orderId,...outcome};
+
+}
+
+export function receiptResult(result:any, method:string): Pick<OrderResult,'pending'|'effects'|'trace'> | undefined {
+  const root = result.transaction_outcome?.outcome;
+  const receiptId = root?.receipt_ids?.[0];
+  const receipt = result.receipts_outcome?.find((r:any)=>r.id === receiptId);
+  if(receipt?.outcome.status?.Failure || result.status?.Failure) throw Error(method+' failed');
+  const encoded = receipt?.outcome.status?.SuccessValue;
+  if(!encoded) return undefined;
+  try {
+    const data=JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(encoded),c=>c.charCodeAt(0))));
+    if(typeof data.pending !== 'boolean' || !Array.isArray(data.effects) || !Array.isArray(data.trace)) return undefined;
+    return data;
+  } catch { return undefined; }
 }

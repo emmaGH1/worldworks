@@ -14,15 +14,15 @@ const SEPOLIA_MS = 12000;
 const MOCK_PORTAL = '0x694Ad57416073B1E1f3BC6E13B26BDE28015A8b7'; // the real deployed treasury address (public); mock never moves its funds
 const MOCK_CUSTOMER = 'seeded-customer.testnet';
 const MOCK_CUSTOMER_EVM = '0x5eeD00000000000000000000000000000000c0DE';
-// Plausible contract limits (G4b sizes the order fee at ~2x the measured worst-case order footprint).
+// G6 limits: retained order fee covers twice the conservative lifecycle storage bound.
 const MOCK_LIMITS: Limits = {
-  orderFee: '50000000000000000000000',        // 0.05 NEAR per order, retained by the contract for storage
-  publishDeposit: '100000000000000000000000', // 0.1 NEAR attached to publish for machine storage
+  orderFee: '1320000000000000000000000',       // 1.32 NEAR per order, retained by the contract for storage
+  publishDeposit: '400000000000000000000000', // 0.4 NEAR attached to publish for machine storage
   rate: '1000000',                            // min Portal fee: 1e6 yocto per wei (0.001 NEAR per 0.001 ETH)
   epochBudgetWei: '10000000000000000',        // 0.01 Sepolia ETH per epoch
   epochRemainingWei: '10000000000000000',
 };
-const SPONSORED = '1000000000000000000000000'; // 1 NEAR: ~5 orders of a 0.1 NEAR machine + one publish
+const SPONSORED = '9000000000000000000000000'; // 9 test NEAR per session, matching live funding
 
 type Stored = {
   account?: string;

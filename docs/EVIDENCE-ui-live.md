@@ -1,8 +1,10 @@
+> Historical evidence: fee, balance and confirmation descriptions below may be superseded. See [G6 current state and acceptance](EVIDENCE-g6.md); zero treasury balance and 1 NEAR fee observations are historical, not current configuration.
+
 # INT-1 live UI evidence — 2026-11-12
 
 NEAR testnet only: `ww-portal-261112.testnet`. Ethereum Sepolia only (11155111).
 
-The workshop publishes an account-specific Lemonade machine on demand, attaches the limits-reported 0.40 NEAR deposit from the sponsored browser session (unused storage deposit is refunded), and records its NEAR receipt. The seeded customer pays 0.10 NEAR + 0.77 NEAR order storage fee. The repaired machine retains 0.07 NEAR and sends 0.03 NEAR to the Portal for 0.001 Sepolia ETH. The actual rate is 1,000,000 yoctoNEAR/wei; even Vending's 0.007 NEAR Portal branch exceeds the 0.001 NEAR minimum. No price increase or payout reduction is needed at the deployed rate. Templates derive a lower wei value when a higher rate or lower cap requires it.
+The workshop publishes an account-specific Lemonade machine on demand, attaches the limits-reported 0.40 NEAR deposit from the sponsored browser session (unused storage deposit is refunded), and records its NEAR receipt. The seeded customer pays 0.10 NEAR + 0.77 NEAR order storage fee (superseded: 1.32 NEAR since G6, see [EVIDENCE-g6.md](EVIDENCE-g6.md)). The repaired machine retains 0.07 NEAR and sends 0.03 NEAR to the Portal for 0.001 Sepolia ETH. The actual rate is 1,000,000 yoctoNEAR/wei; even Vending's 0.007 NEAR Portal branch exceeds the 0.001 NEAR minimum. No price increase or payout reduction is needed at the deployed rate. Templates derive a lower wei value when a higher rate or lower cap requires it.
 
 Queue states are pending, automatically retried, and labeled “queued behind an earlier payout.” Signature failures and stalled payouts expose retry controls. Reserve owner withdrawal is exposed through the API facade and reserve card; unclaimed withdrawal appears only for a positive on-chain balance. Both standalone and workshop pay buttons wait for session and limits.
 

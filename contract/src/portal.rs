@@ -218,11 +218,20 @@ impl Contract {
             self.epoch = epoch;
             self.epoch_spent = 0;
         }
-        self.epoch_spent = self.epoch_spent.checked_add(wei).expect("budget overflow");
+        self.epoch_spent = self
+            .epoch_spent
+            .checked_add(
+                wei.checked_add(21000 * self.portal.max_fee_per_gas.0)
+                    .expect("gas reservation overflow"),
+            )
+            .expect("budget overflow");
         assert!(
             self.epoch_spent <= self.epoch_budget_wei.0,
             "epoch budget exhausted"
         );
+        let count = self.epoch_count().checked_add(1).expect("count overflow");
+        assert!(count <= EPOCH_PAYOUT_CAP, "epoch payout count exhausted");
+        env::storage_write(b"g6-count", &must(serde_json::to_vec(&(epoch, count))));
         let nonce = self.portal.next_nonce.0;
         let id = nonce.to_string();
         let tx = EVMTransaction {

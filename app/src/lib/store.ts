@@ -65,7 +65,7 @@ export function updateRow(id: string, patch: Partial<LedgerRow>) {
 }
 
 const statusText: Record<PayoutView['status'], string> = {
-  waiting_for_earlier_nonce: 'queued behind an earlier payout', awaiting_signature: 'signing on NEAR', signed: 'signed', broadcast: 'sent to Sepolia', confirmed: 'confirmed', signature_failed: 'signature failed',
+  waiting_for_signature: 'waiting for signature', waiting_for_earlier_nonce: 'queued behind an earlier payout', awaiting_signature: 'signing on NEAR', signed: 'signed', broadcast: 'sent to Sepolia', confirmed: 'confirmed', signature_failed: 'signature failed',
 };
 
 /** Follow a Portal payout to the end: poll, relay once signed, stop at confirmed/failed. Never claims confirmed early. */
@@ -97,7 +97,7 @@ export function trackPayout(payoutId: string, rowId: string, onDone?: (v: Payout
         try { v = await api.relay(payoutId); }
         catch (e) { relayed = false; put(v, { relayError: (e as Error).message }); }
       }
-      if (v.status === 'signed' || v.status === 'waiting_for_earlier_nonce') relayed = false;
+      if (v.status === 'signed' || v.status === 'waiting_for_earlier_nonce' || v.status === 'waiting_for_signature') relayed = false;
       put(v);
       if (v.status === 'confirmed' || v.status === 'signature_failed') { stopped = true; onDone?.(v); return; }
     } catch { /* transient read error: keep polling */ }

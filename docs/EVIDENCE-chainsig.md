@@ -1,3 +1,5 @@
+> Historical evidence: fee, balance and confirmation descriptions below may be superseded. See [G6 current state and acceptance](EVIDENCE-g6.md); zero treasury balance and 1 NEAR fee observations are historical, not current configuration.
+
 # G2b Chain Signatures evidence — NOT DONE
 
 2026-11-12 UTC. Scope: probes/chainsig/, this report, and DEPLOYMENTS.md.
@@ -132,7 +134,7 @@ EVM testnet faucet requires a human. No login or CAPTCHA was bypassed.
 ## Not done / limitations
 
 1. Funding the derived address: blocked on the checked faucet requirements.
-2. Confirmed EVM payout / explorer transaction link: not done; broadcast rejected for zero balance.
+2. Confirmed EVM payout / explorer transaction link: not done; broadcast rejected for zero balance. *(Superseded: the treasury was funded later; confirmed payouts are in [EVIDENCE-sepolia.md](EVIDENCE-sepolia.md) and [EVIDENCE-g6.md](EVIDENCE-g6.md).)*
 3. Two complete NEAR-submission → signature → EVM-receipt latency measurements: not done. Two signing observation bounds above are real; receipt times are unavailable.
 4. Gate 2 remains NOT DONE. Relayer broadcast/receipt success is implemented but not verified with a funded live transfer.
 5. This probe is owner-only and isolated; no integration with the concurrent production contract or engine was attempted.

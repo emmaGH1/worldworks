@@ -115,10 +115,7 @@ impl Contract {
         workers: BTreeMap<String, AccountId>,
         expiry_blocks: U64,
     ) {
-        assert!(
-            !machine_id.is_empty() && machine_id.len() <= 32,
-            "machine id length"
-        );
+        assert!(valid_id(&machine_id, 32), "machine id length");
         let storage_before = env::storage_usage();
         assert!(
             !self.machines.contains_key(&machine_id),
@@ -132,7 +129,7 @@ impl Contract {
             "portal cap exceeded"
         );
         assert!(
-            machine.nodes.keys().all(|n| !n.is_empty() && n.len() <= 32),
+            machine.nodes.keys().all(|n| valid_id(n, 32)),
             "node name length"
         );
         assert!(
@@ -157,6 +154,11 @@ impl Contract {
             .find(|(_, p)| matches!(p, Part::CoinSlot { .. }))
             .unwrap()
             .0;
+        let price = match machine.nodes[source] {
+            Part::CoinSlot { price, .. } => price,
+            _ => unreachable!(),
+        };
+        self.check_portal_paths(&machine, source, price);
         let (transfers, portals) = effect_bounds(&machine, source);
         assert!(transfers <= 4 && portals <= 1, "resolution effect limit");
         let roles: Vec<_> = machine
@@ -198,12 +200,9 @@ impl Contract {
         machine_id: String,
         order_id: String,
         external_recipient: Option<String>,
-    ) {
+    ) -> serde_json::Value {
         let mut machine = self.load_machine(&machine_id);
-        assert!(
-            !order_id.is_empty() && order_id.len() <= 64,
-            "order id length"
-        );
+        assert!(valid_id(&order_id, 64), "order id length");
         assert!(
             !self
                 .orders
@@ -247,10 +246,10 @@ impl Contract {
             .escrow_liabilities
             .checked_add(env::attached_deposit().as_yoctonear() - ORDER_STORAGE_FEE)
             .expect("liability overflow");
-        self.apply(&machine_id, &order_id, &mut machine, &mut order, outcome);
+        self.apply(&machine_id, &order_id, &mut machine, &mut order, outcome)
     }
 
-    pub fn approve(&mut self, machine_id: String, order_id: String) {
+    pub fn approve(&mut self, machine_id: String, order_id: String) -> serde_json::Value {
         let mut machine = self.load_machine(&machine_id);
         let caller = env::predecessor_account_id();
         let workers: Vec<_> = machine
@@ -291,10 +290,10 @@ impl Contract {
                 "WrongWorker"
             })
         });
-        self.apply(&machine_id, &order_id, &mut machine, &mut order, outcome);
+        self.apply(&machine_id, &order_id, &mut machine, &mut order, outcome)
     }
 
-    pub fn expire(&mut self, machine_id: String, order_id: String) {
+    pub fn expire(&mut self, machine_id: String, order_id: String) -> serde_json::Value {
         let mut machine = self.load_machine(&machine_id);
         let mut order = self.load_order(&machine_id, &order_id);
         assert!(
@@ -306,7 +305,7 @@ impl Contract {
             &machine.machine,
             order_id.clone(),
         ));
-        self.apply(&machine_id, &order_id, &mut machine, &mut order, outcome);
+        self.apply(&machine_id, &order_id, &mut machine, &mut order, outcome)
     }
 
     pub fn get_machine(&self, machine_id: String) -> Option<serde_json::Value> {
@@ -326,8 +325,19 @@ impl Contract {
     pub fn get_vaults(&self, machine_id: String) -> BTreeMap<String, U128> {
         self.load_machine(&machine_id).vaults
     }
-    pub fn get_pending_external_payouts(&self, machine_id: String) -> Vec<ExternalPayout> {
-        (0..self.portal.next_nonce.0)
+    pub fn get_pending_external_payouts(
+        &self,
+        machine_id: String,
+        from_index: Option<U64>,
+        limit: Option<u32>,
+    ) -> Vec<ExternalPayout> {
+        let start = from_index.unwrap_or(U64(0)).0;
+        (start
+            ..self
+                .portal
+                .next_nonce
+                .0
+                .min(start.saturating_add(u64::from(limit.unwrap_or(100).min(200)))))
             .filter_map(|i| self.get_payout(i.to_string()))
             .filter(|p| p.machine_id == machine_id)
             .map(|p| ExternalPayout {
@@ -373,7 +383,9 @@ impl Contract {
         machine: &mut PublishedMachine,
         order: &mut Order,
         outcome: Outcome,
-    ) {
+    ) -> serde_json::Value {
+        let mut effects = Vec::new();
+        let trace = outcome.trace.clone();
         order.pending = outcome.pending;
         order.trace.extend(outcome.trace);
         for effect in outcome.effects {
@@ -383,11 +395,15 @@ impl Contract {
                 .expect("escrow accounting");
             match effect {
                 Effect::VaultCredit { name, amount } => {
+                    effects.push(
+                        serde_json::json!({"kind":"vault","name":name,"amount":U128(amount)}),
+                    );
                     self.vault_liabilities += amount;
                     let old = machine.vaults.entry(name).or_insert(U128(0));
                     old.0 = must(old.0.checked_add(amount).ok_or("vault overflow"));
                 }
                 Effect::Payout { account, amount } => {
+                    effects.push(serde_json::json!({"kind":"payout","account":account,"amount":U128(amount)}));
                     self.transfer_with_recovery(must(account.parse()), amount);
                 }
                 Effect::ExternalPayout {
@@ -395,7 +411,8 @@ impl Contract {
                     wei,
                     fee,
                 } => {
-                    self.create_portal_payout(machine_id, order_id, &recipient, wei, fee);
+                    let id = self.create_portal_payout(machine_id, order_id, &recipient, wei, fee);
+                    effects.push(serde_json::json!({"kind":"external","payoutId":id,"recipient":recipient,"wei":U128(wei),"fee":U128(fee)}));
                 }
             }
         }
@@ -404,6 +421,7 @@ impl Contract {
             &must(serde_json::to_string(order)),
         );
         self.save_machine(machine_id, machine);
+        serde_json::json!({"pending":order.pending,"effects":effects,"trace":trace})
     }
 }
 
@@ -424,7 +442,10 @@ fn effect_bounds(m: &Machine, id: &str) -> (usize, usize) {
         _ => (0, 0),
     }
 }
-pub const ORDER_STORAGE_FEE: u128 = 770_000_000_000_000_000_000_000;
+// 2x the proven 65,536-byte lifecycle envelope at 10^19 yocto/byte,
+// rounded upward to 0.01 NEAR. See docs/STORAGE-g6.md and storage_bound.rs.
+pub const ORDER_STORAGE_BOUND_BYTES: u64 = 65_536;
+pub const ORDER_STORAGE_FEE: u128 = 1_320_000_000_000_000_000_000_000;
 pub const PUBLISH_STORAGE_DEPOSIT: u128 = 400_000_000_000_000_000_000_000;
 #[near]
 impl Contract {
@@ -436,7 +457,7 @@ impl Contract {
         };
         serde_json::json!({"owner_id":self.owner_id,"min_fee_yocto_per_wei":self.min_fee_yocto_per_wei,
             "epoch_blocks":U64(self.epoch_blocks),"epoch_budget_wei":self.epoch_budget_wei,
-            "remaining_budget_wei":U128(self.epoch_budget_wei.0-spent),"max_wei_per_payout":self.portal.cap_wei,
+            "epoch_payout_count_cap":EPOCH_PAYOUT_CAP,"epoch_payout_count":self.epoch_count(),"remaining_budget_wei":U128(self.epoch_budget_wei.0.saturating_sub(spent)),"max_wei_per_payout":self.portal.cap_wei,
             "signature_timeout_blocks":U64(self.signature_timeout_blocks),"order_storage_fee":U128(ORDER_STORAGE_FEE),"publish_storage_deposit":U128(PUBLISH_STORAGE_DEPOSIT)})
     }
     pub fn get_liabilities(&self) -> serde_json::Value {
@@ -513,6 +534,29 @@ struct LegacyContract {
 }
 #[near]
 impl Contract {
+    #[init(ignore_state)]
+    #[private]
+    pub fn migrate_g6() -> Self {
+        assert!(!env::storage_has_key(b"g6-migrated"), "already migrated");
+        let mut c: Self = env::state_read().expect("G5 state required");
+        let current = env::block_height() / c.epoch_blocks;
+        let mut spent = 0u128;
+        let mut count = 0u64;
+        for i in 0..c.portal.next_nonce.0 {
+            let p = c.get_payout(i.to_string()).expect("nonce gap");
+            if p.requested_at.0 / c.epoch_blocks == current {
+                spent = spent
+                    .checked_add(p.wei.0 + 21000 * p.max_fee_per_gas.0)
+                    .expect("budget overflow");
+                count += 1;
+            }
+        }
+        c.epoch = current;
+        c.epoch_spent = spent;
+        env::storage_write(b"g6-count", &must(serde_json::to_vec(&(current, count))));
+        env::storage_write(b"g6-migrated", b"1");
+        c
+    }
     /// G4b changes constants only. Decode and rewrite the exact same root;
     /// all map handles, accounting, fee policy and Portal state remain intact.
     #[init(ignore_state)]
@@ -598,5 +642,73 @@ impl Contract {
         );
         env::storage_write(b"g5-migrated", b"1");
         c
+    }
+}
+
+pub const EPOCH_PAYOUT_CAP: u64 = 20;
+fn valid_id(id: &str, max: usize) -> bool {
+    !id.is_empty()
+        && id.len() <= max
+        && id
+            .bytes()
+            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'_' || b == b'-')
+}
+impl Contract {
+    fn epoch_count(&self) -> u64 {
+        let (epoch, count): (u64, u64) = env::storage_read(b"g6-count")
+            .map(|b| must(serde_json::from_slice(&b)))
+            .unwrap_or((0, 0));
+        if epoch == env::block_height() / self.epoch_blocks {
+            count
+        } else {
+            0
+        }
+    }
+    // Propagate exact integer amounts, including splitter remainder, along all
+    // approval/expiry alternatives. MinAmount branches are deterministic.
+    fn check_portal_paths(&self, m: &Machine, id: &str, value: u128) {
+        use engine::Condition;
+        match &m.nodes[id] {
+            Part::CoinSlot { output, .. } => self.check_portal_paths(m, output, value),
+            Part::Splitter { outputs } => {
+                let mut amounts: Vec<u128> = outputs
+                    .iter()
+                    .map(|s| {
+                        (value / 10000) * u128::from(s.bps)
+                            + (value % 10000) * u128::from(s.bps) / 10000
+                    })
+                    .collect();
+                amounts[0] += value - amounts.iter().sum::<u128>();
+                for (s, a) in outputs.iter().zip(amounts) {
+                    self.check_portal_paths(m, &s.target, a);
+                }
+            }
+            Part::Gate {
+                condition: Condition::MinAmount { amount },
+                pass,
+                fail,
+            } => self.check_portal_paths(m, if value >= *amount { pass } else { fail }, value),
+            Part::Gate { pass, fail, .. } => {
+                self.check_portal_paths(m, pass, value);
+                self.check_portal_paths(m, fail, value);
+            }
+            Part::Portal { wei, .. } if value > 0 => {
+                assert!(
+                    value
+                        >= wei
+                            .checked_mul(self.min_fee_yocto_per_wei.0)
+                            .expect("rate overflow"),
+                    "Portal rate rule"
+                );
+                assert!(*wei <= self.portal.cap_wei.0, "portal cap exceeded");
+                assert!(
+                    wei.checked_add(21000 * self.portal.fee_upper_bound.0)
+                        .expect("budget overflow")
+                        <= self.epoch_budget_wei.0,
+                    "Portal exceeds epoch budget"
+                );
+            }
+            _ => {}
+        }
     }
 }

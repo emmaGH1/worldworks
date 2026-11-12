@@ -1,3 +1,5 @@
+> Historical evidence: fee, balance and confirmation descriptions below may be superseded. See [G6 current state and acceptance](EVIDENCE-g6.md); zero treasury balance and 1 NEAR fee observations are historical, not current configuration.
+
 # G5 hardening evidence — required acceptance checks pass
 
 Testnet only. No commits or pushes. No app or engine files edited by this task.
@@ -18,7 +20,7 @@ state patching; no test hooks exist in deployed production code. The callback is
 record-local and the machine JSON is unchanged.
 
 Storage measured in the final sandbox run: publish vending **1022 bytes**, signed
-vending order **2183 bytes**. Order fee is a conservative fixed **1 test NEAR**
+vending order **2183 bytes**. *(Superseded fee: G4b used 0.77 NEAR, G6 uses 1.32 NEAR; see [EVIDENCE-g6.md](EVIDENCE-g6.md).)* Order fee is a conservative fixed **1 test NEAR**
 (100,000 bytes at current byte price); example orders now attach **2 NEAR**.
 Publication measures actual bytes and refunds excess. The example 0.1 NEAR publish
 deposit is sufficient. Signature records, future traces and recovery credits have
@@ -53,7 +55,7 @@ parameters are immutable. `get_limits` is authoritative for current epoch budget
 
 See the complete [interface section](../contract/USAGE.md#interface-changes-for-the-app).
 Required adapter changes: attach measured publish storage deposit (0.1 NEAR for
-examples), attach price + 1 NEAR order fee, enforce ID/node bounds, replace owner
+examples), attach price + 1 NEAR order fee (superseded: 1.32 NEAR since G6), enforce ID/node bounds, replace owner
 immediate expiry with block-height eligibility, read payout records via payout
 views rather than `get_machine.external_payouts`, and support timed awaiting retry.
 Add `get_limits`, `get_liabilities`, `get_unclaimed(account)`,

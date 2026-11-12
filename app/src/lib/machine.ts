@@ -33,7 +33,7 @@ export const RECEIVES_MONEY = (t: PartType) => t !== 'CoinSlot' && t !== 'Worker
 export const ONE_NEAR = '1000000000000000000000000';
 /** Template price: small, so a sponsored session (about 1 testnet NEAR) lasts several orders. */
 export const TEMPLATE_PRICE = '100000000000000000000000'; // 0.1 NEAR
-export const DEMO_WEI = '1000000000000000'; // 0.001 Sepolia ETH
+export const DEMO_WEI = '100000000000000'; // 0.0001 Sepolia ETH (keeps ~20 Portal payouts per epoch within the budget)
 export function templateWei(): string {
   const l = getLimits();
   if (!import.meta.env.VITE_CONTRACT_ID || !l) return DEMO_WEI;

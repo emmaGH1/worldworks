@@ -1,3 +1,5 @@
+> Historical evidence: fee, balance and confirmation descriptions below may be superseded. See [G6 current state and acceptance](EVIDENCE-g6.md); zero treasury balance and 1 NEAR fee observations are historical, not current configuration.
+
 # G4 live adapter evidence — NEAR verified; Sepolia funding needed
 
 Testnet only. No commit/push. No contract, engine, UI, mock, index or shared type files edited by this implementation agent. The shared workspace includes concurrent work by others; the git status below is the entire workspace, not this agent's ownership list.
@@ -634,7 +636,7 @@ Additional browser-target adapter library build succeeded (ES2022). Vite warns t
 
 Testnet only. No commit or push. Portal address remains `0x694Ad57416073B1E1f3BC6E13B26BDE28015A8b7`.
 
-**NOT DONE against the full spec:** the adversarial measurement is not an exhaustive/proven global worst-case storage bound (requirement 1). The deployed order fee is 0.77 NEAR (38,044 bytes × 2 × 10^19 yocto/byte, rounded up to 0.01 NEAR). Publish deposit recommendation is 0.40 NEAR (19,528 bytes × 2, same rounding); unused publish deposit is refunded. Session funding is 7 NEAR; five 0.1 NEAR orders + one publish require 4.75 NEAR before refunds and gas. See `contract/USAGE.md` for measurement limits.
+*(Superseded by G6: order fee 1.32 NEAR from a derived lifecycle bound, sessions 9 NEAR; see [EVIDENCE-g6.md](EVIDENCE-g6.md).)* **NOT DONE against the full spec:** the adversarial measurement is not an exhaustive/proven global worst-case storage bound (requirement 1). The deployed order fee is 0.77 NEAR (38,044 bytes × 2 × 10^19 yocto/byte, rounded up to 0.01 NEAR). Publish deposit recommendation is 0.40 NEAR (19,528 bytes × 2, same rounding); unused publish deposit is refunded. Session funding is 7 NEAR; five 0.1 NEAR orders + one publish require 4.75 NEAR before refunds and gas. See `contract/USAGE.md` for measurement limits.
 
 Deployment succeeded; its original verification stopped on address casing after byte-for-byte state comparison. The corrected independent verification passed without another deployment. It verified every one of 24 preexisting records, the new migration marker, address derivation, WASM SHA-256 and limits. Earlier e2e attempt stopped before a transaction because the sponsor needed a refill; the final transcript below uses the refilled sponsor.
 

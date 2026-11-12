@@ -1,3 +1,5 @@
+> Historical evidence: fee, balance and confirmation descriptions below may be superseded. See [G6 current state and acceptance](EVIDENCE-g6.md); zero treasury balance and 1 NEAR fee observations are historical, not current configuration.
+
 # G3 Portal evidence — live signing verified; EVM payout not confirmed
 
 NEAR testnet and Ethereum Sepolia only. No commit or push. No keys in the repo.

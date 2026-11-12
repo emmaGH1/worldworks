@@ -3,7 +3,7 @@
 
 export type Yocto = string;           // u128 as decimal string
 export type TxRef = { hash: string; explorerUrl: string };
-export type PayoutStatus = 'awaiting_signature' | 'signed' | 'signature_failed' | 'waiting_for_earlier_nonce' | 'broadcast' | 'confirmed';
+export type PayoutStatus = 'waiting_for_signature' | 'awaiting_signature' | 'signed' | 'signature_failed' | 'waiting_for_earlier_nonce' | 'broadcast' | 'confirmed';
 
 export interface Session { accountId: string; balance: Yocto; isNew: boolean; network: 'testnet'; tx?: TxRef }
 

@@ -48,7 +48,7 @@ export function PortalSteps({ payoutId, compact }: { payoutId: string; compact?:
     },
     {
       key: 'ok', title: 'Confirmed', done, active: false,
-      sub: done ? `${amount} reached ${shortAddr(p.recipient)} on Sepolia` : 'only shown once the Sepolia receipt says success',
+      sub: done ? `${amount} included on Sepolia, seen by two RPCs · ${shortAddr(p.recipient)}` : 'requires success and three more blocks on both RPCs',
     },
   ];
 

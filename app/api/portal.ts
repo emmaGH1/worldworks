@@ -51,13 +51,7 @@ export async function relay(id: string) {
   const stored = await view(ACCOUNT,'get_portal_address',{});
   if(getAddress(stored) !== derived || derived !== '0x694Ad57416073B1E1f3BC6E13B26BDE28015A8b7') throw Error('Portal address mismatch');
   if(await client.getChainId() !== 11155111) throw Error('Sepolia only');
-  const targetRaw=assemble(target), targetHash=keccak256(targetRaw);
-  if(await recoverTransactionAddress({serializedTransaction:targetRaw}) !== derived) throw Error('Signer address mismatch');
   const next = await client.getTransactionCount({address:derived,blockTag:'latest'});
-  if(next > target.nonce) {
-    const known=await client.getTransaction({hash:targetHash});
-    if(known.hash.toLowerCase() !== targetHash) throw Error('RPC transaction hash mismatch');
-  }
   const waiting = await relayPredecessors(next,target.nonce,
     nonce=>view(ACCOUNT,'get_payout',{payout_id:String(nonce)}),
     async p=>{
@@ -66,13 +60,17 @@ export async function relay(id: string) {
       await broadcast(raw);
     });
   if(waiting) return waiting;
+  if(target.status !== 'signed') return {status:'waiting_for_signature',waitingPayoutId:id};
+  const targetRaw=assemble(target), targetHash=keccak256(targetRaw);
+  if(await recoverTransactionAddress({serializedTransaction:targetRaw}) !== derived) throw Error('Signer address mismatch');
+  if(next > target.nonce) { const known=await client.getTransaction({hash:targetHash}); if(known.hash.toLowerCase() !== targetHash) throw Error('RPC transaction hash mismatch'); }
   return {status:'broadcast',evm_tx_hash:targetHash};
 }
 // IDs and reserved nonces are equal for this contract; walk every predecessor.
 export async function relayPredecessors(next:number,target:number,lookup:(nonce:number)=>Promise<any>,send:(p:any)=>Promise<unknown>) {
   for(let nonce=next;nonce<=target;nonce++) {
     const p=await lookup(nonce);
-    if(!p || p.nonce !== nonce || p.status !== 'signed') return {status:'waiting_for_earlier_nonce',waitingPayoutId:String(nonce)};
+    if(!p || p.nonce !== nonce || p.status !== 'signed') return {status:nonce === target ? 'waiting_for_signature' : 'waiting_for_earlier_nonce',waitingPayoutId:String(nonce)};
     await send(p);
   }
 }
