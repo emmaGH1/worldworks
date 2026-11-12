@@ -5,7 +5,7 @@ import { useSyncExternalStore } from 'react';
 import { api } from '../api';
 import type { Yocto } from '../api/types';
 
-export type Limits = { orderFee: Yocto; publishDeposit: Yocto; rate: string; epochBudgetWei: string; epochRemainingWei: string };
+export type Limits = { orderFee: Yocto; publishDeposit: Yocto; rate: string; epochBudgetWei: string; epochRemainingWei: string; maxWeiPerPayout?: string };
 type WithLimits = { limits?: () => Promise<Limits> };
 
 let current: Limits | null = null;

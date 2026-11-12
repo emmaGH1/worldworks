@@ -5,7 +5,7 @@ import type { PayoutView, Session, TxRef } from '../api/types';
 
 export type LedgerRow = {
   id: string;
-  kind: 'publish' | 'order' | 'approve' | 'payout';
+  kind: 'publish' | 'order' | 'approve' | 'payout' | 'withdraw' | 'session';
   title: string;
   detail?: string[];
   amount?: string;
@@ -47,7 +47,7 @@ let sessionPromise: Promise<Session | null> | null = null;
 export function ensureSession(): Promise<Session | null> {
   if (!sessionPromise) {
     sessionPromise = api.session().then(
-      s => { setState({ session: s, sessionError: null }); return s; },
+      s => { setState({ session: s, sessionError: null }); if (s.tx) addRow({kind:'session', title:'Sponsored testnet session created',amount:(Number(BigInt(s.balance) / 10n**21n)/1000).toString(),status:'confirmed',tx:s.tx}); return s; },
       e => { setState({ sessionError: (e as Error).message || 'Could not create a testnet account.' }); sessionPromise = null; return null; },
     );
   }
@@ -65,12 +65,12 @@ export function updateRow(id: string, patch: Partial<LedgerRow>) {
 }
 
 const statusText: Record<PayoutView['status'], string> = {
-  awaiting_signature: 'signing on NEAR', signed: 'signed', broadcast: 'sent to Sepolia', confirmed: 'confirmed', signature_failed: 'signature failed',
+  waiting_for_earlier_nonce: 'queued behind an earlier payout', awaiting_signature: 'signing on NEAR', signed: 'signed', broadcast: 'sent to Sepolia', confirmed: 'confirmed', signature_failed: 'signature failed',
 };
 
 /** Follow a Portal payout to the end: poll, relay once signed, stop at confirmed/failed. Never claims confirmed early. */
 export function trackPayout(payoutId: string, rowId: string, onDone?: (v: PayoutView) => void) {
-  if (state.payouts[payoutId]) return;
+  if (state.payouts[payoutId] && state.payouts[payoutId].status !== 'signature_failed') return;
   const startedAt = Date.now();
   let relayed = false;
   let stopped = false;
@@ -97,6 +97,7 @@ export function trackPayout(payoutId: string, rowId: string, onDone?: (v: Payout
         try { v = await api.relay(payoutId); }
         catch (e) { relayed = false; put(v, { relayError: (e as Error).message }); }
       }
+      if (v.status === 'signed' || v.status === 'waiting_for_earlier_nonce') relayed = false;
       put(v);
       if (v.status === 'confirmed' || v.status === 'signature_failed') { stopped = true; onDone?.(v); return; }
     } catch { /* transient read error: keep polling */ }
@@ -107,6 +108,8 @@ export function trackPayout(payoutId: string, rowId: string, onDone?: (v: Payout
 }
 
 export function retryRelay(payoutId: string) {
+  const row = state.ledger.find(r => r.payoutId === payoutId);
+  if (state.payouts[payoutId]?.status === 'signature_failed' && row) { trackPayout(payoutId, row.id); return; }
   setState(s => ({ payouts: { ...s.payouts, [payoutId]: { ...s.payouts[payoutId], relayError: undefined } } }));
   api.relay(payoutId).catch(e => setState(s => ({ payouts: { ...s.payouts, [payoutId]: { ...s.payouts[payoutId], relayError: (e as Error).message } } })));
 }

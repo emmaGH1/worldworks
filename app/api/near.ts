@@ -36,7 +36,7 @@ export function checkId(id:string, max=32) {
 }
 export async function limits() {
   const l = await view('get_limits',{});
-  return {orderFee:l.order_storage_fee,publishDeposit:l.publish_storage_deposit,rate:l.min_fee_yocto_per_wei,epochBudgetWei:l.epoch_budget_wei,epochRemainingWei:l.remaining_budget_wei};
+  return {orderFee:l.order_storage_fee,publishDeposit:l.publish_storage_deposit,rate:l.min_fee_yocto_per_wei,epochBudgetWei:l.epoch_budget_wei,epochRemainingWei:l.remaining_budget_wei,maxWeiPerPayout:l.max_wei_per_payout};
 }
 export async function placeOrder(who: Account, machineId: string, recipient = DEMO_RECIPIENT): Promise<OrderResult> {
   checkId(machineId);

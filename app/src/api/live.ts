@@ -8,7 +8,7 @@ export class LiveApi implements WorldworksApi {
   readonly mode = 'live' as const;
   workerKeyTx?:TxRef;
   private pendingSession?:Promise<Session>;
-  constructor(private storage:Storage = globalThis.localStorage, private base = config.VITE_API_URL ?? '', contractId = config.VITE_CONTRACT_ID ?? CONTRACT) {
+  constructor(private storage:Storage = globalThis.localStorage, private base = config.VITE_RELAYER_URL ?? config.VITE_API_URL ?? '', contractId = config.VITE_CONTRACT_ID ?? CONTRACT) {
     if(contractId !== CONTRACT) throw Error(`This adapter is pinned to testnet contract ${CONTRACT}`);
   }
   private async post(path:string,body:unknown):Promise<any> {
@@ -88,7 +88,8 @@ export class LiveApi implements WorldworksApi {
     const tx = this.storage.getItem(`worldworks.testnet.payout.${payoutId}`);
     return tx ? {...payout,nearTx:JSON.parse(tx)} : payout;
   }
-  async relay(payoutId:string):Promise<PayoutView> { const result = await this.post('relay',{payout_id:payoutId}); if(result.status === 'waiting_for_earlier_nonce') throw Error(`waiting_for_earlier_nonce: ${result.waitingPayoutId}`); return this.getPayout(payoutId); }
+  async relay(payoutId:string):Promise<PayoutView> { const result = await this.post('relay',{payout_id:payoutId}); if(result.status === 'waiting_for_earlier_nonce') return {...await this.getPayout(payoutId),status:'waiting_for_earlier_nonce',waitingPayoutId:result.waitingPayoutId}; return this.getPayout(payoutId); }
+  async getUnclaimed() { return view('get_unclaimed',{account:(await this.session()).accountId}); }
   limits() { return limits(); }
   async withdrawVault(machineId:string,vaultName:string,amount:string) { checkId(machineId); return (await send(await this.player(),'withdraw_vault',{machine_id:machineId,vault_name:vaultName,amount})).tx; }
   async withdrawUnclaimed() { return (await send(await this.player(),'withdraw_unclaimed',{})).tx; }

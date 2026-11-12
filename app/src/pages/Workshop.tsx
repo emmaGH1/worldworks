@@ -10,7 +10,7 @@ import { machineHash } from '../engine/index';
 import {
   INSERTABLE, PART_LABEL, PART_TYPES, PREVIEW_RECIPIENT, RECEIVES_MONEY, bindWorker, defaultPart, edgeId, friendlyErrors, hasPortal,
   keptInVaults, nextId, outPorts, price, removeNode, setTarget, simulate, simulateRelease, source, templates, title, toDoc,
-  uniqueVaultName, withCap, type Machine, type PartType, type Positions, type TemplateId,
+  uniqueVaultName, withCap, templateWei, type Machine, type PartType, type Positions, type TemplateId,
 } from '../lib/machine';
 import { addRow, ensureSession, getState, setState, trackPayout, updateRow, useApp } from '../lib/store';
 import { play, glint } from '../lib/flow';
@@ -104,12 +104,18 @@ function WorkshopInner() {
   const [activePayout, setActivePayout] = useState<string | null>(null);
   const [sales, setSales] = useState<{ count: number; kept: bigint }>({ count: 0, kept: 0n });
   const [chainVaults, setChainVaults] = useState<{ id: string; vaults: Record<string, string> } | null>(null);
+  const [unclaimed, setUnclaimed] = useState('0');
+  useEffect(() => { if (session) void api.getUnclaimed?.().then(setUnclaimed).catch(() => {}); }, [session]);
   const [publishedIds] = useState(() => new Set<string>());
   const spawn = useRef<Positions>({});
   const wrapper = useRef<HTMLDivElement>(null);
 
   const { limits } = useLimits();
   useEffect(() => { void ensureSession().then(() => loadLimits()); }, []);
+  useEffect(() => {
+    if (api.mode !== 'live' || !limits) return;
+    setMachineRaw(m => withCap({...m, nodes: Object.fromEntries(Object.entries(m.nodes).map(([k,p]) => [k, p.type === 'Portal' ? {...p, wei: templateWei()} : p]))}));
+  }, [limits]);
 
   // load a template (also the first load)
   const loadTemplate = useCallback((id: TemplateId) => {
@@ -157,6 +163,10 @@ function WorkshopInner() {
     // contract admission rules the local engine does not know about
     const portals = Object.keys(machine.nodes).filter(k => machine.nodes[k].type === 'Portal');
     if (portals.length > 1) issues.push({ node: portals[1], text: 'One Portal per machine for now. Remove the extra one.' });
+    for (const [id, p] of Object.entries(machine.nodes)) {
+      if (new TextEncoder().encode(id).length > 32) issues.push({node:id,text:'Part id must be at most 32 bytes.'});
+      if (p.type === 'Portal' && (BigInt(p.wei) <= 0n || limits?.maxWeiPerPayout && BigInt(p.wei) > BigInt(limits.maxWeiPerPayout))) issues.push({node:id,text:'Portal amount must be positive and within the contract payout cap.'});
+    }
     let preview: OrderResult | null = null;
     if (!issues.length) {
       try { preview = api.preview(doc, hasPortal(machine) ? PREVIEW_RECIPIENT : undefined); } catch { preview = null; }
@@ -340,8 +350,8 @@ function WorkshopInner() {
   const machineIdFor = async (m: Machine): Promise<string> => {
     const h = await machineHash(m);
     const hash = typeof h === 'string' ? h : Math.abs([...JSON.stringify(m)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 7)).toString(16);
-    const acct = (getState().session?.accountId ?? 'guest').split('.')[0].replace(/[^a-z0-9]/g, '').slice(-6);
-    return `${tplId}-${hash.slice(0, 8)}-${acct}`;
+    const acct = (getState().session?.accountId ?? 'guest').split('.')[0].replace(/[^a-z0-9]/g, '').slice(-12);
+    return `${tplId}-${hash.replace(/^0x/, '').slice(0, 8)}-${acct}`;
   };
 
   const ensurePublished = async (): Promise<string> => {
@@ -351,9 +361,9 @@ function WorkshopInner() {
     const id = await machineIdFor(snapshot.machine as Machine);
     if (publishedIds.has(id)) return id;
     const existing = await api.getMachine(id);
-    if (existing) { publishedIds.add(id); return id; }
+    if (existing) { if (existing.owner !== s.accountId) throw Error('Machine id belongs to another owner.'); publishedIds.add(id); return id; }
     const deposit = limits?.publishDeposit;
-    const row = addRow({ kind: 'publish', title: `Published “${tpl.name}”`, detail: [`machine id ${id}`, deposit ? `storage deposit ${near(deposit)} NEAR, paid by you` : 'with a storage deposit'], amount: deposit ? near(deposit) : undefined, status: 'pending', statusText: 'sending' });
+    const row = addRow({ kind: 'publish', title: `Published “${tpl.name}”`, detail: [`machine id ${id}`, deposit ? `storage deposit ${near(deposit)} NEAR from your sponsored session; unused deposit refunded` : 'with a storage deposit'], amount: deposit ? near(deposit) : undefined, status: 'pending', statusText: 'sending' });
     try {
       const tx = await api.publish(id, snapshot);
       updateRow(row, { status: 'confirmed', statusText: 'confirmed', tx });
@@ -363,6 +373,18 @@ function WorkshopInner() {
       updateRow(row, { status: 'failed', statusText: 'failed' });
       throw e;
     }
+  };
+
+  const withdraw = async (name?: string) => {
+    if (busy) return;
+    setBusy('Withdrawing on NEAR testnet…');
+    try {
+      const tx = name && chainVaults ? await api.withdrawVault!(chainVaults.id, name, chainVaults.vaults[name]) : await api.withdrawUnclaimed!();
+      addRow({kind:'withdraw',title:name ? `Withdrew ${name} vault` : 'Withdrew unclaimed NEAR',status:'confirmed',tx});
+      if (chainVaults) await refreshVaults(chainVaults.id);
+      setUnclaimed(await api.getUnclaimed!());
+    } catch(e) { setToast({text:(e as Error).message,tone:'bad'}); }
+    setBusy(null);
   };
 
   const refreshVaults = async (id: string) => {
@@ -616,6 +638,8 @@ function WorkshopInner() {
             </div>
             <div>
               <h6>Reserve</h6>
+              {api.mode === 'live' && chainVaults && Object.entries(chainVaults.vaults).filter(([,v]) => BigInt(v) > 0n).map(([name]) => <button key={name} className="mini" disabled={!!busy} onClick={() => withdraw(name)} data-testid="withdraw-vault">Withdraw {name}</button>)}
+              {BigInt(unclaimed) > 0n && <button className="mini" disabled={!!busy} onClick={() => withdraw()} data-testid="withdraw-unclaimed">Withdraw {near(unclaimed)} unclaimed NEAR</button>}
               {keptShare > 0 ? <div className="ok-line">keeps {near(keptPreview)} NEAR per sale</div> : <div className="bad-line"><i>!</i>{Object.values(machine.nodes).some(p => p.type === 'Vault') ? 'nothing reaches a Vault' : 'empty · nothing refills it'}</div>}
               <div className="stats">sales <b data-testid="sales-count">{sales.count}</b> · kept <b data-testid="kept-total">{near(sales.kept)}</b> NEAR</div>
               {reserveOnChain !== null && <div className="stats">{api.mode === 'mock' ? 'mock vault total' : 'vault on chain'} <b data-testid="vault-on-chain">{near(reserveOnChain)}</b> NEAR</div>}
@@ -630,7 +654,7 @@ function WorkshopInner() {
                 <button type="button" className="primary" onClick={approveHeld} disabled={!!busy} data-testid="approve">Approve as {held.worker}</button>
               </div>
             ) : null}
-            <button type="button" className="serve" onClick={serve} disabled={!check.ok || !!busy || !session} data-testid="serve">
+            <button type="button" className="serve" onClick={serve} disabled={!check.ok || !!busy || !session || !limits} data-testid="serve">
               <CustomerArt size={34} />
               <span><b>{busy ?? 'Serve a customer'}</b><small>{!session ? (sessionError ? `Account problem: ${sessionError}` : 'creating your testnet account…') : !check.ok ? 'fix the machine first' : `seeded customer pays ${near(total)} NEAR${limits ? ` + ${near(limits.orderFee)} storage fee` : ''} · testnet`}</small></span>
             </button>

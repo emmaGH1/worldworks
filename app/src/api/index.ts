@@ -52,6 +52,9 @@ export const apiFallbackReason = () => fallbackReason;
 export const api: WorldworksApi & Required<Extras> = {
   get mode() { return impl.mode; },
   session: () => impl.session(),
+  getUnclaimed: () => impl.getUnclaimed?.() ?? Promise.resolve('0'),
+  withdrawVault: (id, name, amount) => impl.withdrawVault?.(id, name, amount) ?? Promise.reject(Error('Vault withdrawal unavailable')),
+  withdrawUnclaimed: () => impl.withdrawUnclaimed?.() ?? Promise.reject(Error('Withdrawal unavailable')),
   validate: doc => impl.validate(doc),
   preview: (doc, recipient) => impl.preview(doc, recipient),
   publish: (id, doc) => impl.publish(id, doc),

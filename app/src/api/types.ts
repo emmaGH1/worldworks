@@ -3,9 +3,9 @@
 
 export type Yocto = string;           // u128 as decimal string
 export type TxRef = { hash: string; explorerUrl: string };
-export type PayoutStatus = 'awaiting_signature' | 'signed' | 'signature_failed' | 'broadcast' | 'confirmed';
+export type PayoutStatus = 'awaiting_signature' | 'signed' | 'signature_failed' | 'waiting_for_earlier_nonce' | 'broadcast' | 'confirmed';
 
-export interface Session { accountId: string; balance: Yocto; isNew: boolean; network: 'testnet' }
+export interface Session { accountId: string; balance: Yocto; isNew: boolean; network: 'testnet'; tx?: TxRef }
 
 export interface MachineDoc {            // what gets published (engine/MACHINE_FORMAT.md)
   machine: unknown;                      // engine JSON, exactly as MACHINE_FORMAT.md
@@ -26,12 +26,13 @@ export interface OrderResult {
 
 export interface PayoutView {
   payoutId: string; status: PayoutStatus; recipient: string; wei: string;
-  portalAddress: string; nonce: number; nearTx?: TxRef; evmTx?: TxRef;
+  portalAddress: string; nonce: number; nearTx?: TxRef; evmTx?: TxRef; waitingPayoutId?: string; retryEligible?: boolean; confirmations?: Array<{ rpc: string; hash: string; blockHash: string; status: number }>;
 }
 
 export interface WorldworksApi {
   mode: 'live' | 'mock';
-  limits(): Promise<{orderFee: Yocto; publishDeposit: Yocto; rate: string; epochBudgetWei: string; epochRemainingWei: string}>;
+  limits(): Promise<{orderFee: Yocto; publishDeposit: Yocto; rate: string; epochBudgetWei: string; epochRemainingWei: string; maxWeiPerPayout?: string}>;
+  getUnclaimed?(): Promise<Yocto>;
   withdrawVault?(machineId: string, vaultName: string, amount: Yocto): Promise<TxRef>;
   withdrawUnclaimed?(): Promise<TxRef>;
   session(): Promise<Session>;                         // creates a funded testnet account on first visit (no wallet, no popup)

@@ -22,7 +22,8 @@ export function PortalSteps({ payoutId, compact }: { payoutId: string; compact?:
   }, [p?.status]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!p) return null;
   const failed = p.status === 'signature_failed';
-  const idx = failed ? 0 : Math.max(0, ORDER.indexOf(p.status));
+  const queued = p.status === 'waiting_for_earlier_nonce';
+  const idx = queued ? 1 : failed ? 0 : Math.max(0, ORDER.indexOf(p.status));
   const done = idx >= 3;
   const now = Date.now();
   const secs = (from?: number, to?: number) => (from ? Math.max(0, Math.round(((to ?? now) - from) / 1000)) : 0);
@@ -37,7 +38,7 @@ export function PortalSteps({ payoutId, compact }: { payoutId: string; compact?:
     },
     {
       key: 'signed', title: 'Signed', done: idx >= 2, active: idx === 1,
-      sub: idx === 1 ? (p.relayError ? `Relay problem: ${p.relayError}` : 'handing the signed bytes to the relayer, which only broadcasts…') : idx > 1 ? 'MPC signature returned to the contract' : 'waiting for the signature',
+      sub: queued ? `Queued behind an earlier payout (${p.waitingPayoutId}). Retrying automatically…` : idx === 1 ? (p.relayError ? `Relay problem: ${p.relayError}` : 'handing the signed bytes to the relayer, which only broadcasts…') : idx > 1 ? 'MPC signature returned to the contract' : 'waiting for the signature',
       extra: idx === 1 && p.relayError ? <button type="button" className="mini" onClick={() => retryRelay(payoutId)}>Try broadcasting again</button> : null,
     },
     {
@@ -62,6 +63,8 @@ export function PortalSteps({ payoutId, compact }: { payoutId: string; compact?:
           </li>
         ))}
       </ol>
+      {failed && <button type="button" className="mini" onClick={() => retryRelay(payoutId)}>Retry payout signature</button>}
+      {!done && !failed && secs(p.startedAt) > 60 && <button type="button" className="mini" onClick={() => retryRelay(payoutId)}>Retry payout</button>}
       {done && (
         <div className="receipts" data-testid="receipts">
           <div className="receipt near">

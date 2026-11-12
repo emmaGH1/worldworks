@@ -23,6 +23,9 @@ export async function confirm(payoutId:string) {
     try {
       const receipt = await rpc.getTransactionReceipt({hash});
       const tx = await rpc.getTransaction({hash});
+      // RPC indexes can expose a mined receipt before their transaction index catches up.
+      // A pending transaction is no confirmation proof; poll again instead of a transport error.
+      if (tx.blockHash === null) return null;
       if(receipt.transactionHash.toLowerCase() !== hash || tx.hash.toLowerCase() !== hash || receipt.status !== 'success' || receipt.from.toLowerCase() !== portalAddress.toLowerCase() || tx.from.toLowerCase() !== portalAddress.toLowerCase() || receipt.to?.toLowerCase() !== p.recipient.toLowerCase() || tx.to?.toLowerCase() !== p.recipient.toLowerCase() || tx.value !== BigInt(p.wei) || tx.nonce !== p.nonce || receipt.blockHash !== tx.blockHash) throw Error('Sepolia receipt/transaction mismatch or revert');
       return {rpc:confirmationUrls[i],hash,blockHash:receipt.blockHash,blockNumber:receipt.blockNumber.toString(),from:receipt.from,to:receipt.to,value:tx.value.toString(),status:1};
     } catch(error) {

@@ -24,7 +24,7 @@ test('two independent matching receipts required; missing, altered, reverted and
     return new Response(JSON.stringify({result:{result:[...Buffer.from(JSON.stringify(data))]}}),{status:200});
   };
   try {
-    for(const status of ['missing','pending','success','one-missing','reverted','offline','hash','sender','recipient','value']) {
+    for(const status of ['missing','pending','index-pending','success','one-missing','reverted','offline','hash','sender','recipient','value']) {
       clients.forEach((c,i)=>{
         c.getChainId=async()=>11155111;
         c.getTransactionReceipt=async()=>{
@@ -34,7 +34,7 @@ test('two independent matching receipts required; missing, altered, reverted and
         };
         c.getTransaction=async()=>{
           if(status==='missing') throw Object.assign(Error(),{name:'TransactionNotFoundError'});
-          return {hash,from:fixture.derived_address,to:fixture.payout.recipient,value:status==='value'&&i===1?1n:BigInt(fixture.payout.wei),nonce:fixture.payout.nonce,blockHash:'0xabc'} as any;
+          return {hash,from:fixture.derived_address,to:fixture.payout.recipient,value:status==='value'&&i===1?1n:BigInt(fixture.payout.wei),nonce:fixture.payout.nonce,blockHash:status==='index-pending' && i<2 ? null : '0xabc'} as any;
         };
       });
       const res=response();await payout({method:'POST',body:{payout_id:'0'}},res);

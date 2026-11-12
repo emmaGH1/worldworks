@@ -146,7 +146,7 @@ export function MachineApp({ machineId }: { machineId: string }) {
               <small>{recipient && !isEvmAddress(recipient) ? 'That is not a 0x address with 40 hex characters.' : `This machine pays ${preview?.effects.filter(e => e.kind === 'external').map(e => `${eth((e as { wei: string }).wei)} Sepolia ETH`).join(', ') || 'Sepolia ETH'} to this address.`}</small>
             </label>
           )}
-          <button type="button" className="app-btn" onClick={pay} disabled={paying || !session || !recipientOk} data-testid="app-pay">
+          <button type="button" className="app-btn" onClick={pay} disabled={paying || !session || !recipientOk || !limits} data-testid="app-pay">
             {paying ? 'Paying on NEAR testnet…' : `Pay ${fee !== null ? near(total + fee) : near(total)} NEAR`}
           </button>
           <p className="payer">

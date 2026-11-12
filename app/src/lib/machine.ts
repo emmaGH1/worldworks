@@ -1,6 +1,7 @@
 // Machine model helpers for the UI. The machine object is exactly engine/MACHINE_FORMAT.md;
 // positions are UI-only and never published.
 import type { MachineDoc, OrderResult } from '../api/types';
+import { getLimits } from './limits';
 import { near, eth, pct, shortAddr } from './units';
 
 export type PartType = 'CoinSlot' | 'Splitter' | 'Vault' | 'Gate' | 'Worker' | 'Payout' | 'Portal';
@@ -33,6 +34,13 @@ export const ONE_NEAR = '1000000000000000000000000';
 /** Template price: small, so a sponsored session (about 1 testnet NEAR) lasts several orders. */
 export const TEMPLATE_PRICE = '100000000000000000000000'; // 0.1 NEAR
 export const DEMO_WEI = '1000000000000000'; // 0.001 Sepolia ETH
+export function templateWei(): string {
+  const l = getLimits();
+  if (!import.meta.env.VITE_CONTRACT_ID || !l) return DEMO_WEI;
+  // Vending sends the smallest template share (7%) to its Portal.
+  const affordable = BigInt(TEMPLATE_PRICE) * 7n / 100n / BigInt(l.rate);
+  return [BigInt(DEMO_WEI), affordable, BigInt(l.maxWeiPerPayout ?? DEMO_WEI)].reduce((a,b) => a < b ? a : b).toString();
+}
 export const PREVIEW_RECIPIENT = '0x0000000000000000000000000000000000000000';
 
 export type OutPort = { port: string; target: string; label?: string };
@@ -78,7 +86,7 @@ export function defaultPart(m: Machine, type: PartType, session?: string): Part 
     case 'Gate': return { type, condition: { type: 'MinAmount', amount: '0' }, pass: '', fail: '' };
     case 'Worker': return { type, gates: [] };
     case 'Payout': return { type, account: session || 'you.testnet' };
-    case 'Portal': return { type, chain: 'sepolia', wei: DEMO_WEI };
+    case 'Portal': return { type, chain: 'sepolia', wei: templateWei() };
   }
 }
 
@@ -352,7 +360,7 @@ export type Template = { id: TemplateId; name: string; tagline: string; machine:
 export function lemonadeBroken(): Machine {
   return withCap({ portal_cap_wei: '0', nodes: {
     slot: { type: 'CoinSlot', price: TEMPLATE_PRICE, output: 'portal' },
-    portal: { type: 'Portal', chain: 'sepolia', wei: DEMO_WEI },
+    portal: { type: 'Portal', chain: 'sepolia', wei: templateWei() },
   } });
 }
 export function lemonadeFixed(): Machine {
@@ -360,7 +368,7 @@ export function lemonadeFixed(): Machine {
     slot: { type: 'CoinSlot', price: TEMPLATE_PRICE, output: 'split' },
     split: { type: 'Splitter', outputs: [{ bps: 3000, target: 'portal' }, { bps: 7000, target: 'vault' }] },
     vault: { type: 'Vault', name: 'reserve' },
-    portal: { type: 'Portal', chain: 'sepolia', wei: DEMO_WEI },
+    portal: { type: 'Portal', chain: 'sepolia', wei: templateWei() },
   } });
 }
 
@@ -393,7 +401,7 @@ export function templates(session?: string): Template[] {
         reserve_fee: { type: 'Splitter', outputs: [{ bps: 9000, target: 'reserve' }, { bps: 1000, target: 'delivery' }] },
         reserve: { type: 'Vault', name: 'reserve' },
         creator: { type: 'Payout', account: you },
-        portal: { type: 'Portal', chain: 'sepolia', wei: DEMO_WEI },
+        portal: { type: 'Portal', chain: 'sepolia', wei: templateWei() },
         delivery: { type: 'Gate', condition: { type: 'MinAmount', amount: '0' }, pass: 'portal', fail: 'portal' },
       } }),
       positions: { slot: { x: 0, y: 60 }, fees: { x: 250, y: 60 }, reserve_fee: { x: 500, y: -110 }, creator: { x: 500, y: 250 }, reserve: { x: 760, y: -250 }, delivery: { x: 760, y: 20 }, portal: { x: 1010, y: 20 } },

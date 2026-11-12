@@ -9,7 +9,7 @@ function ago(t: number) {
   return s < 60 ? `${s}s ago` : `${Math.round(s / 60)}m ago`;
 }
 
-const ICON: Record<LedgerRow['kind'], string> = { publish: '⬆', order: '●', approve: '✓', payout: '◎' };
+const ICON: Record<LedgerRow['kind'], string> = { session: '●', withdraw: '●', publish: '⬆', order: '●', approve: '✓', payout: '◎' };
 
 export function Row({ r }: { r: LedgerRow }) {
   return (
