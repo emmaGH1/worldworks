@@ -424,7 +424,8 @@ fn effect_bounds(m: &Machine, id: &str) -> (usize, usize) {
         _ => (0, 0),
     }
 }
-pub const ORDER_STORAGE_FEE: u128 = 1_000_000_000_000_000_000_000_000;
+pub const ORDER_STORAGE_FEE: u128 = 770_000_000_000_000_000_000_000;
+pub const PUBLISH_STORAGE_DEPOSIT: u128 = 400_000_000_000_000_000_000_000;
 #[near]
 impl Contract {
     pub fn get_limits(&self) -> serde_json::Value {
@@ -436,7 +437,7 @@ impl Contract {
         serde_json::json!({"owner_id":self.owner_id,"min_fee_yocto_per_wei":self.min_fee_yocto_per_wei,
             "epoch_blocks":U64(self.epoch_blocks),"epoch_budget_wei":self.epoch_budget_wei,
             "remaining_budget_wei":U128(self.epoch_budget_wei.0-spent),"max_wei_per_payout":self.portal.cap_wei,
-            "signature_timeout_blocks":U64(self.signature_timeout_blocks),"order_storage_fee":U128(ORDER_STORAGE_FEE)})
+            "signature_timeout_blocks":U64(self.signature_timeout_blocks),"order_storage_fee":U128(ORDER_STORAGE_FEE),"publish_storage_deposit":U128(PUBLISH_STORAGE_DEPOSIT)})
     }
     pub fn get_liabilities(&self) -> serde_json::Value {
         serde_json::json!({"escrow":U128(self.escrow_liabilities),"vaults":U128(self.vault_liabilities),
@@ -512,6 +513,16 @@ struct LegacyContract {
 }
 #[near]
 impl Contract {
+    /// G4b changes constants only. Decode and rewrite the exact same root;
+    /// all map handles, accounting, fee policy and Portal state remain intact.
+    #[init(ignore_state)]
+    #[private]
+    pub fn migrate_g4b() -> Self {
+        assert!(!env::storage_has_key(b"g4b-migrated"), "already migrated");
+        let c: Self = env::state_read().expect("G5 state required");
+        env::storage_write(b"g4b-migrated", b"1");
+        c
+    }
     /// One-time self-account G3 migration, before access-key removal.
     /// IDs must be enumerated from a full view_state snapshot by the deployer.
     #[init(ignore_state)]

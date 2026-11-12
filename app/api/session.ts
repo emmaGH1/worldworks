@@ -2,8 +2,8 @@ import { createHash } from 'node:crypto';
 import { PublicKey } from 'near-api-js';
 import { rpc, txRef } from './near.js';
 import { body, envAccount, failure, serialized, type Request, type Response } from './server-common.js';
-// Fixed per-account funding: 3 NEAR, enough for two 1 NEAR orders + publish/gas/storage.
-export const FUNDING = 3_000_000_000_000_000_000_000_000n;
+// 7 NEAR covers five 0.1 NEAR orders plus the measured fee, publish, account storage and gas.
+export const FUNDING = 7_000_000_000_000_000_000_000_000n;
 export default async function handler(req:Request,res:Response) {
   try {
     const {publicKey} = body(req,res,'session');

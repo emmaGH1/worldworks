@@ -3,7 +3,7 @@ import { body, envAccount, failure, serialized, type Request, type Response } fr
 export default async function handler(req:Request,res:Response) {
   try {
     const data = body(req,res,'customer');
-    if(typeof data.machineId !== 'string' || !data.machineId.length || data.machineId.length > 128) return res.status(400).json({error:'Invalid machineId'});
+    if(typeof data.machineId !== 'string' || !data.machineId.length || new TextEncoder().encode(data.machineId).length > 32) return res.status(400).json({error:'Invalid machineId'});
     if(data.recipient !== undefined && (typeof data.recipient !== 'string' || !/^0x[0-9a-fA-F]{40}$/.test(data.recipient))) return res.status(400).json({error:'Invalid Sepolia recipient'});
     return await serialized(async()=>{
       const customer = envAccount('CUSTOMER');

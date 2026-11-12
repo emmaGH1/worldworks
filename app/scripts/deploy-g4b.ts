@@ -1,0 +1,24 @@
+// Only run after acceptance sandbox checks pass; uses the existing testnet account.
+import assert from 'node:assert/strict';
+import {readFileSync,writeFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {account,actions,CONTRACT,GAS,rpc,view,txRef} from '../api/near.js';
+import {derive} from '../api/portal.js';
+const key=JSON.parse(readFileSync('/opt/ww-secrets/portal-deploy.json','utf8'));
+if(key.account_id) assert.equal(key.account_id,CONTRACT);
+const before=await rpc('query',{request_type:'view_state',finality:'final',account_id:CONTRACT,prefix_base64:''});
+writeFileSync('/opt/ww-target/g4b-before-state.json',JSON.stringify(before,null,2));
+const address=await derive(); assert.equal(address,'0x694Ad57416073B1E1f3BC6E13B26BDE28015A8b7');
+assert.equal((await view('get_portal_address',{})).toLowerCase(),address.toLowerCase());
+const wasm=readFileSync('/opt/ww-target/near/worldworks_contract.wasm');
+const who=account(CONTRACT,key.private_key);
+const r=await who.signAndSendTransaction({receiverId:CONTRACT,actions:[actions.deployContract(wasm),actions.functionCall('migrate_g4b',{},GAS,0n)],waitUntil:'FINAL'});
+console.log('deploy/state-preserving migration',JSON.stringify(txRef(r.transaction.hash)));
+assert(!r.receipts_outcome.some((r:any)=>r.outcome.status?.Failure));
+const after=await rpc('query',{request_type:'view_state',finality:'final',account_id:CONTRACT,prefix_base64:''});
+for(const v of before.values) assert.deepEqual(after.values.find((a:any)=>a.key===v.key),v,'state changed');
+assert.equal(after.values.length,before.values.length+1);
+assert.equal((await view('get_portal_address',{})).toLowerCase(),address.toLowerCase());
+const deployed=await rpc('query',{request_type:'view_code',finality:'final',account_id:CONTRACT});
+assert.equal(createHash('sha256').update(Buffer.from(deployed.code_base64,'base64')).digest('hex'),createHash('sha256').update(wasm).digest('hex'));
+console.log(JSON.stringify({address,wasmBytes:wasm.length,sha256:createHash('sha256').update(wasm).digest('hex'),preservedRecords:before.values.length,limits:await view('get_limits',{}),liabilities:await view('get_liabilities',{})},null,2));

@@ -18,21 +18,18 @@ path `worldworks/portal/sepolia/v1`. No EVM private key exists in the relayer.
   reserved nonce, even if not yet mined. There is no runtime nonce-reset method.
 - `publish_machine(machine_id, machine_json, workers, expiry_blocks)` is now
   **payable**: attach at least measured storage growth times NEAR storage byte cost.
-  Excess is returned asynchronously with transfer recovery. 0.1 NEAR comfortably
-  covers the supplied examples. Machine IDs: 1–32 bytes; node IDs: 1–32 bytes;
+  Excess is returned asynchronously with transfer recovery. The app attaches the `get_limits().publish_storage_deposit` recommendation
+  of 0.40 NEAR; actual unused storage deposit is refunded. Machine IDs: 1–32 bytes; node IDs: 1–32 bytes;
   order IDs: 1–64 bytes; accounts must satisfy NEAR rules. Existing IDs are immutable.
   Machine cap cannot exceed contract max; zero-wei Portal, multiple Portal nodes,
   more than four transfer effects or one Portal effect per resolution are rejected.
   Split branches add; gate alternatives take the maximum, including parallel paths.
 - `submit_order(machine_id, order_id, external_recipient?)` must attach exactly
   **CoinSlot price + ORDER_STORAGE_FEE**, where fee is
-  `1000000000000000000000000` yoctoNEAR (**1 test NEAR**). This fee is retained,
+  `770000000000000000000000` yoctoNEAR (**0.77 test NEAR**). This fee is retained,
   including on expiry; only the price goes through the graph. Example price 1 NEAR
-  therefore requires **2 NEAR**. Read `get_limits().order_storage_fee` in the app.
-  Storage fee covers 100,000 bytes at 10^19 yoctoNEAR/byte; measured signed vending
-  growth is about 2,200 bytes, publish about 1,025 bytes (exact run in evidence).
-  Conservative fixed fee reserves space for future traces, signature, vaults and
-  recovery credits; it is deliberately large for this bounded testnet build.
+  therefore requires **1.77 NEAR**. Read `get_limits().order_storage_fee` in the app.
+  See the G4b measurement below for sizing and its remaining limitation.
 - Portal admission requires NEAR inflow to the Portal >= `wei *
   min_fee_yocto_per_wei`; overflow, per-payout cap and current epoch exhaustion panic
   atomically. Receipt deposits return on failure; gas is still charged. For held
@@ -133,3 +130,40 @@ Sandbox tests patch 200 historical payout records and a lost callback directly
 using sandbox state patching; production exports no testing hooks. Migration test
 uses the saved public G3 snapshot and checks nonce, signatures and liabilities.
 See `../docs/EVIDENCE-hardening.md` for complete outputs and testnet links.
+
+## G4b measurement and deployment
+
+Sandbox `storage_envelope` measures 32 nodes, 32-byte machine/node IDs (node IDs
+contain control bytes expanding to six JSON bytes), a 64-byte order ID, four
+transfer effects to a 64-character account, a Vault with a 32-character escaped
+name, and an external payout including unsigned transaction, payload and mock
+signature. Publish **19,528 bytes**, completed order **38,044 bytes**. At
+10^19 yoctoNEAR per byte, twice the observed footprints rounded upward to 0.01
+NEAR gives publish **0.40 NEAR** and order **0.77 NEAR**. The order test uses a
+1 NEAR price; maximum u128 decimal widths, every graph topology, all held-worker
+combinations and all possible Unicode vault names were not exhaustively measured.
+This is an adversarial measured fixture, **not a proven global worst-case bound**.
+Requirement 1's exact worst-case sizing remains unverified; do not describe G4b
+as fully complete on this evidence alone. Ordinary vending measured ~2,187 bytes
+per signed order and ~1,026 bytes per publish (sandbox account widths vary).
+
+The fixed recommendation is a refundable publish deposit, not a publish fee.
+Publish still checks actual byte cost and rejects insufficient deposits; clients
+may attach more for a larger machine. Order fee is retained, including on expiry.
+
+`migrate_g4b()` is private and one-time. It reads/writes the same G5 root layout;
+all records, handles, liabilities, nonce, signatures, policies and derivation stay
+unchanged. It adds only a migration marker. Deploy and migration are atomic.
+`app/scripts/deploy-g4b.ts` verifies all preexisting state records byte-for-byte
+and the deployed WASM hash. `verify-g4b.ts` permits repeating verification against
+the pre-migration public snapshot, before placing new orders. Neither script
+contains keys; deployment credentials stay under `/opt/ww-secrets`.
+
+Sponsored sessions receive **7 NEAR**. Five orders of a 0.1 NEAR machine require
+5 × (0.1 + 0.77) = **4.35 NEAR**; one publish attaches **0.40 NEAR**, leaving
+**2.25 NEAR** for account storage and gas (and publish refunds increase headroom).
+Relay returns broadcast only; payout confirmation checks transaction and successful
+receipt independently at two Sepolia RPC hosts, including hash, sender, recipient,
+value, nonce and matching block hash. `npm run relay -- <id>` relays earlier signed
+nonces first; an unsigned predecessor returns `waiting_for_earlier_nonce`.
+`npm run confirm -- <id>` reports both proofs only after both agree.

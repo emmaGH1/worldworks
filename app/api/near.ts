@@ -2,7 +2,7 @@
 import { Account, KeyPair, KeyPairSigner, actions } from 'near-api-js';
 import type { OrderResult, TxRef } from '../src/api/types.js';
 export { Account, KeyPair, KeyPairSigner, actions };
-export const RPC = 'https://rpc.testnet.near.org';
+export const RPC = 'https://rpc.testnet.fastnear.com';
 export const CONTRACT = 'ww-portal-261112.testnet';
 export const DEMO_RECIPIENT = '0x000000000000000000000000000000000000dEaD';
 export const GAS = 300_000_000_000_000n;
@@ -31,11 +31,19 @@ export function price(machine: any): string {
   if (slots.length !== 1) throw Error('Expected one CoinSlot');
   return slots[0].price;
 }
+export function checkId(id:string, max=32) {
+  if(!id.length || new TextEncoder().encode(id).length > max) throw Error(`Identifier must be 1–${max} bytes`);
+}
+export async function limits() {
+  const l = await view('get_limits',{});
+  return {orderFee:l.order_storage_fee,publishDeposit:l.publish_storage_deposit,rate:l.min_fee_yocto_per_wei,epochBudgetWei:l.epoch_budget_wei,epochRemainingWei:l.remaining_budget_wei};
+}
 export async function placeOrder(who: Account, machineId: string, recipient = DEMO_RECIPIENT): Promise<OrderResult> {
+  checkId(machineId);
   const machine = await view('get_machine',{machine_id:machineId});
   if (!machine) throw Error('Unknown machine');
   const orderId = crypto.randomUUID();
-  const {result,tx} = await send(who,'submit_order',{machine_id:machineId,order_id:orderId,external_recipient:recipient},BigInt(price(machine.machine)));
+  const {result,tx} = await send(who,'submit_order',{machine_id:machineId,order_id:orderId,external_recipient:recipient},BigInt(price(machine.machine)) + BigInt((await limits()).orderFee));
   const order = await view('get_order',{machine_id:machineId,order_id:orderId});
   const external = await view('get_pending_external_payouts',{machine_id:machineId});
   const effects: OrderResult['effects'] = [];

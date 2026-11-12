@@ -3,7 +3,7 @@ use near_workspaces::types::NearToken;
 use near_workspaces::{Account, Contract};
 use serde_json::{json, Value};
 const PRICE: u128 = 1_000_000_000_000_000_000_000_000;
-const FEE: u128 = PRICE;
+const FEE: u128 = 770_000_000_000_000_000_000_000;
 async fn call(a: &Account, c: &Contract, m: &str, v: Value, d: u128) -> Result<()> {
     let r = a
         .call(c.id(), m)
@@ -126,7 +126,7 @@ async fn hardening_sandbox() -> Result<()> {
     )
     .await?;
     println!(
-        "STORAGE signed vending order: {} bytes (fee covers 100000 bytes)",
+        "STORAGE signed vending order: {} bytes (G4b fee)",
         c.view_account().await?.storage_usage - before
     );
     let p = view(&c, "get_payout", json!({"payout_id":"0"})).await?;
@@ -408,6 +408,17 @@ async fn hardening_sandbox() -> Result<()> {
         0,
     )
     .await?;
+    let nonce_before=view(&c,"get_portal_nonce",json!({})).await?;
+    let liabilities_before=view(&c,"get_liabilities",json!({})).await?;
+    let payout_before=view(&c,"get_payout",json!({"payout_id":"0"})).await?;
+    reject(&buyer,&c,"migrate_g4b",json!({}),0,"private").await?;
+    call(c.as_account(),&c,"migrate_g4b",json!({}),0).await?;
+    assert_eq!(view(&c,"get_portal_nonce",json!({})).await?,nonce_before);
+    assert_eq!(view(&c,"get_payout",json!({"payout_id":"0"})).await?,payout_before);
+    let liabilities_after=view(&c,"get_liabilities",json!({})).await?;
+    for field in ["escrow","vaults","unclaimed","in_flight"] { assert_eq!(liabilities_before[field],liabilities_after[field]); }
+    reject(c.as_account(),&c,"migrate_g4b",json!({}),0,"already migrated").await?;
+    println!("PASS G4b same-layout migration preserves nonce, signed payout and liabilities; private and one-time");
     println!("PASS separate fee owner; finished hardening sandbox");
     Ok(())
 }
@@ -494,5 +505,69 @@ async fn migrates_full_g3_snapshot_without_nonce_or_liability_loss() -> Result<(
     )
     .await?;
     println!("PASS full G3 snapshot migration: nonce 4 preserved, payout bytes/signature unchanged, vaults {vaults}, held {held}, repeated migration rejected");
+    Ok(())
+}
+
+#[tokio::test]
+async fn storage_envelope() -> Result<()> {
+    let w = near_workspaces::sandbox().await?;
+    let c = w
+        .dev_deploy(&std::fs::read(
+            "/opt/ww-target/near/worldworks_contract.wasm",
+        )?)
+        .await?;
+    let mock = w
+        .dev_deploy(&std::fs::read(
+            "/opt/ww-target/portal-mock/portal_mock_signer.wasm",
+        )?)
+        .await?;
+    let owner = w.dev_create_account().await?;
+    call(mock.as_account(), &mock, "new", json!({}), 0).await?;
+    call(c.as_account(), &c, "new", json!({"owner_id":owner.id(),"min_fee_yocto_per_wei":"1","epoch_blocks":"100000","epoch_budget_wei":"10000000000000000","max_wei_per_payout":"2000000000000000","signature_timeout_blocks":"100","portal_config":{"signer":mock.id(),"cap_wei":"2000000000000000","max_fee_per_gas":"100000000000","max_priority_fee_per_gas":"1000000000","fee_upper_bound":"100000000000","priority_upper_bound":"10000000000"}}),0).await?;
+    // Control bytes expand to six JSON bytes: adversarial maximum-length node IDs.
+    let id = |n: usize| format!("{:02}{}", n, "\u{0001}".repeat(30));
+    let mut nodes = serde_json::Map::new();
+    nodes.insert(
+        id(0),
+        json!({"type":"CoinSlot","price":u128::MAX.to_string(),"output":id(1)}),
+    );
+    for n in 1..25 {
+        nodes.insert(id(n),json!({"type":"Splitter","outputs":[{"bps":9999,"target":id(n+1)},{"bps":1,"target":id(31)}]}));
+    }
+    nodes.insert(id(25),json!({"type":"Splitter","outputs":[{"bps":2500,"target":id(26)},{"bps":2500,"target":id(27)},{"bps":2500,"target":id(28)},{"bps":2500,"target":id(29)}]}));
+    for n in 26..29 {
+        nodes.insert(id(n), json!({"type":"Payout","account":"a".repeat(64)}));
+    }
+    nodes.insert(id(29),json!({"type":"Splitter","outputs":[{"bps":5000,"target":id(30)},{"bps":5000,"target":id(31)}]}));
+    nodes.insert(
+        id(30),
+        json!({"type":"Portal","chain":"sepolia","wei":"2000000000000000"}),
+    );
+    nodes.insert(id(31), json!({"type":"Vault","name":"\u{0001}".repeat(32)}));
+    // Fourth transfer shares an existing leaf, keeping all 32 nodes reachable.
+    nodes.get_mut(&id(29)).unwrap()["outputs"] = json!([{"bps":4000,"target":id(30)},{"bps":3000,"target":id(31)},{"bps":3000,"target":id(26)}]);
+    let m = json!({"nodes":nodes,"portal_cap_wei":"2000000000000000"});
+    let machine = "m".repeat(32);
+    let before = c.view_account().await?.storage_usage;
+    call(&owner, &c, "publish_machine", publish(&machine, &m), PRICE).await?;
+    let publish_bytes = c.view_account().await?.storage_usage - before;
+    // Buyer requires a balance above u128 max attached amount; use a smaller 38-digit amount.
+    let mut m = m;
+    m["nodes"][id(0)]["price"] = json!(PRICE.to_string());
+    // Measure the actual persisted execution with a funded sandbox account.
+    let machine2 = "n".repeat(32);
+    call(&owner, &c, "publish_machine", publish(&machine2, &m), PRICE).await?;
+    let before = c.view_account().await?.storage_usage;
+    call(
+        &owner,
+        &c,
+        "submit_order",
+        order(&machine2, &"o".repeat(64)),
+        PRICE + FEE,
+    )
+    .await?;
+    let order_bytes = c.view_account().await?.storage_usage - before;
+    println!("G4B ADVERSARIAL STORAGE publish={publish_bytes} bytes order={order_bytes} bytes (32 nodes, max escaped IDs, max order ID, four transfers, Portal/signature, Vault)");
+    assert!(u128::from(order_bytes) * 2 * 10_000_000_000_000_000_000u128 <= FEE);
     Ok(())
 }

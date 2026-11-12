@@ -31,6 +31,9 @@ export interface PayoutView {
 
 export interface WorldworksApi {
   mode: 'live' | 'mock';
+  limits(): Promise<{orderFee: Yocto; publishDeposit: Yocto; rate: string; epochBudgetWei: string; epochRemainingWei: string}>;
+  withdrawVault?(machineId: string, vaultName: string, amount: Yocto): Promise<TxRef>;
+  withdrawUnclaimed?(): Promise<TxRef>;
   session(): Promise<Session>;                         // creates a funded testnet account on first visit (no wallet, no popup)
   validate(doc: MachineDoc): { ok: true } | { ok: false; errors: string[] };   // wasm, local
   preview(doc: MachineDoc, recipient?: string): OrderResult;                    // wasm, local, tx.hash = 'preview'

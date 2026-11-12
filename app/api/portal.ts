@@ -12,10 +12,11 @@ import { sepolia } from 'viem/chains';
 
 
 export const ACCOUNT = process.env.PORTAL_CONTRACT ?? 'ww-portal-261112.testnet';
+if(ACCOUNT !== 'ww-portal-261112.testnet') throw Error('Pinned testnet contract only');
 const PATH = 'worldworks/portal/sepolia/v1';
 export const client = createPublicClient({chain: sepolia, transport: http(process.env.SEPOLIA_RPC_URL ?? 'https://rpc.sepolia.ethpandaops.io', {timeout:15000, retryCount:1})});
 export async function rpc(method: string, params: unknown): Promise<any> {
-  const res = await fetch('https://rpc.testnet.near.org', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({jsonrpc:'2.0', id:1, method, params}), signal:AbortSignal.timeout(30000)});
+  const res = await fetch('https://rpc.testnet.fastnear.com', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({jsonrpc:'2.0', id:1, method, params}), signal:AbortSignal.timeout(30000)});
   const body = await res.json() as any;
   if (!res.ok || body.error) throw Error(JSON.stringify(body));
   return body.result;
@@ -44,13 +45,36 @@ export function assemble(p: any) {
   return serializeTransaction(tx, {r,s,yParity:sig.recovery_id});
 }
 export async function relay(id: string) {
-  const p = await view(ACCOUNT,'get_payout',{payout_id:id});
-  const raw = assemble(p);
+  const target = await view(ACCOUNT,'get_payout',{payout_id:id});
+  if(!target) throw Error('Unknown payout');
   const derived = await derive();
   const stored = await view(ACCOUNT,'get_portal_address',{});
-  if (typeof stored !== 'string' || getAddress(stored) !== derived) throw Error('Portal address unavailable or inconsistent');
-  if(await recoverTransactionAddress({serializedTransaction:raw}) !== derived) throw Error('Signer address mismatch');
-  return broadcast(raw);
+  if(getAddress(stored) !== derived || derived !== '0x694Ad57416073B1E1f3BC6E13B26BDE28015A8b7') throw Error('Portal address mismatch');
+  if(await client.getChainId() !== 11155111) throw Error('Sepolia only');
+  const targetRaw=assemble(target), targetHash=keccak256(targetRaw);
+  if(await recoverTransactionAddress({serializedTransaction:targetRaw}) !== derived) throw Error('Signer address mismatch');
+  const next = await client.getTransactionCount({address:derived,blockTag:'latest'});
+  if(next > target.nonce) {
+    const known=await client.getTransaction({hash:targetHash});
+    if(known.hash.toLowerCase() !== targetHash) throw Error('RPC transaction hash mismatch');
+  }
+  const waiting = await relayPredecessors(next,target.nonce,
+    nonce=>view(ACCOUNT,'get_payout',{payout_id:String(nonce)}),
+    async p=>{
+      const raw=assemble(p);
+      if(await recoverTransactionAddress({serializedTransaction:raw}) !== derived) throw Error('Signer address mismatch');
+      await broadcast(raw);
+    });
+  if(waiting) return waiting;
+  return {status:'broadcast',evm_tx_hash:targetHash};
+}
+// IDs and reserved nonces are equal for this contract; walk every predecessor.
+export async function relayPredecessors(next:number,target:number,lookup:(nonce:number)=>Promise<any>,send:(p:any)=>Promise<unknown>) {
+  for(let nonce=next;nonce<=target;nonce++) {
+    const p=await lookup(nonce);
+    if(!p || p.nonce !== nonce || p.status !== 'signed') return {status:'waiting_for_earlier_nonce',waitingPayoutId:String(nonce)};
+    await send(p);
+  }
 }
 export async function broadcast(raw: Hex, rpcClient: {
   getChainId(): Promise<number>;
@@ -59,10 +83,14 @@ export async function broadcast(raw: Hex, rpcClient: {
 } = client) {
   if(await rpcClient.getChainId() !== 11155111) throw Error('Sepolia only');
   const hash = keccak256(raw);
-  try { await rpcClient.sendRawTransaction({serializedTransaction:raw}); }
+  try {
+    const returned = await rpcClient.sendRawTransaction({serializedTransaction:raw});
+    if(returned.toLowerCase() !== hash) throw Error('RPC transaction hash mismatch');
+  }
   catch (error) {
     // Accept only a transaction the RPC can actually find by its exact hash.
-    try { await rpcClient.getTransaction({hash}); }
+    if(String(error).includes('hash mismatch')) throw error;
+    try { const tx = await rpcClient.getTransaction({hash}) as {hash?:string}; if(tx.hash?.toLowerCase() !== hash) throw error; }
     catch { throw error; }
   }
   return {evm_tx_hash:hash};

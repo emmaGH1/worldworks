@@ -1,5 +1,5 @@
 import type { WorldworksApi, MachineDoc, Session, OrderResult, PayoutView, TxRef } from './types.js';
-import { account, KeyPair, actions, CONTRACT, DEMO_RECIPIENT, rpc, view, send, price, placeOrder, txRef } from '../../api/near.js';
+import { account, KeyPair, actions, CONTRACT, DEMO_RECIPIENT, rpc, view, send, price, placeOrder, txRef, limits, checkId } from '../../api/near.js';
 import { validateMachine } from '../engine/index.js';
 import { validate as wasmValidate, preview_order } from '../engine/pkg/worldworks_engine_wasm.js';
 const config = (import.meta as ImportMeta & {env?:Record<string,string>}).env ?? {};
@@ -47,11 +47,13 @@ export class LiveApi implements WorldworksApi {
     return {tx:{hash:'preview',explorerUrl:''},orderId:'preview',pending:result.pending,trace:result.trace,effects:result.effects.map((e:any)=>e.Payout ? {kind:'payout',...e.Payout} : e.VaultCredit ? {kind:'vault',...e.VaultCredit} : {kind:'external',payoutId:'preview',...e.ExternalPayout})};
   }
   async publish(machineId:string,doc:MachineDoc):Promise<TxRef> {
+    checkId(machineId);
+    for(const id of Object.keys((doc.machine as any).nodes ?? {})) checkId(id);
     await this.session();
     const valid = this.validate(doc); if(!valid.ok) throw Error(valid.errors.join(', '));
     const who = await this.player();
     if(Object.values(doc.workers).includes(who.accountId)) await this.ensureWorkerKey();
-    return (await send(who,'publish_machine',{machine_id:machineId,machine_json:JSON.stringify(doc.machine),workers:doc.workers,expiry_blocks:'100'})).tx;
+    return (await send(who,'publish_machine',{machine_id:machineId,machine_json:JSON.stringify(doc.machine),workers:doc.workers,expiry_blocks:'100'},BigInt((await this.limits()).publishDeposit))).tx;
   }
   async ensureWorkerKey():Promise<TxRef|undefined> {
     const who = await this.player(), key = this.key('worker');
@@ -69,20 +71,27 @@ export class LiveApi implements WorldworksApi {
     if(!permission || permission.receiver_id !== CONTRACT || permission.method_names.length !== 1 || permission.method_names[0] !== 'approve') throw Error('Worker key does not have approve-only permission');
     return {publicKey,permission:data.permission,label:'This key can only approve'};
   }
-  async getMachine(machineId:string) { const m = await view('get_machine',{machine_id:machineId}); return m ? {doc:{machine:m.machine,workers:m.workers},owner:m.owner,vaults:m.vaults} : null; }
+  async getMachine(machineId:string) { checkId(machineId); const m = await view('get_machine',{machine_id:machineId}); return m ? {doc:{machine:m.machine,workers:m.workers},owner:m.owner,vaults:m.vaults} : null; }
   private remember<T extends OrderResult>(result:T):T {
     for(const effect of result.effects) if(effect.kind === 'external') this.storage.setItem(`worldworks.testnet.payout.${effect.payoutId}`,JSON.stringify(result.tx));
     return result;
   }
   async order(machineId:string,recipient?:string) { return this.remember(await placeOrder(await this.player(),machineId,recipient)); }
   async customerOrder(machineId:string) { return this.remember(await this.post('customer',{machineId})); }
-  async approve(machineId:string,orderId:string) { await this.workerPermission(); return (await send(await this.player(true),'approve',{machine_id:machineId,order_id:orderId})).tx; }
+  async approve(machineId:string,orderId:string) { checkId(machineId); checkId(orderId,64); await this.workerPermission(); return (await send(await this.player(true),'approve',{machine_id:machineId,order_id:orderId})).tx; }
   async getPayout(payoutId:string):Promise<PayoutView> {
-    const payout = await this.post('payout',{payout_id:payoutId});
+    let payout = await this.post('payout',{payout_id:payoutId});
+    if(payout.status === 'signature_failed' || payout.retryEligible) {
+      await send(await this.player(),'retry_signature',{payout_id:payoutId});
+      payout = await this.post('payout',{payout_id:payoutId});
+    }
     const tx = this.storage.getItem(`worldworks.testnet.payout.${payoutId}`);
     return tx ? {...payout,nearTx:JSON.parse(tx)} : payout;
   }
-  async relay(payoutId:string):Promise<PayoutView> { await this.post('relay',{payout_id:payoutId}); return this.getPayout(payoutId); }
+  async relay(payoutId:string):Promise<PayoutView> { const result = await this.post('relay',{payout_id:payoutId}); if(result.status === 'waiting_for_earlier_nonce') throw Error(`waiting_for_earlier_nonce: ${result.waitingPayoutId}`); return this.getPayout(payoutId); }
+  limits() { return limits(); }
+  async withdrawVault(machineId:string,vaultName:string,amount:string) { checkId(machineId); return (await send(await this.player(),'withdraw_vault',{machine_id:machineId,vault_name:vaultName,amount})).tx; }
+  async withdrawUnclaimed() { return (await send(await this.player(),'withdraw_unclaimed',{})).tx; }
   async contractInfo() { return {contractId:CONTRACT,portalAddress:await view('get_portal_address',{}),explorer:`https://testnet.nearblocks.io/address/${CONTRACT}`}; }
 }
 export const liveApi:WorldworksApi = new LiveApi();

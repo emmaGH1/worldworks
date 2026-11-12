@@ -1,0 +1,4 @@
+import { confirm } from '../api/payout.js';
+const id=process.argv[2];
+if(!id || !/^(0|[1-9][0-9]{0,19})$/.test(id)) throw Error('Usage: npm run confirm -- <payout_id>');
+console.log(JSON.stringify(await confirm(id),null,2));
