@@ -7,11 +7,11 @@ Testnet only. No commit/push. No contract, engine, UI, mock, index or shared typ
 ## Implemented files
 
 - app/src/api/live.ts
-- app/api/near.ts, server-common.ts, session.ts, customer.ts, payout.ts
+- app/api/_near.ts, server-common.ts, session.ts, customer.ts, payout.ts
 - app/scripts/dev-api.ts, e2e-live.ts, live.test.ts
 - docs/DEPLOYMENTS.md and this file
 
-The existing relay.ts/portal.ts remain unchanged. Session creates a deterministic funded subaccount from the browser's public key (3 testnet NEAR maximum, no refill). Scoped keys have 0.5 testnet NEAR gas allowance, receiver ww-portal-261112.testnet, method approve only. Dedicated seeded customer has a 1 testnet NEAR per-order maximum. The adapter reads stored order traces/history for effects and payout IDs because submit_order returns void. Failed receipts produce an explicit error containing the real order explorer link. No failed NEAR transfer is reported as a successful order.
+The existing relay.ts/portal.ts remain unchanged. Session creates a deterministic funded subaccount from the browser's public key (4.5 testnet NEAR maximum, no refill). Scoped keys have 0.5 testnet NEAR gas allowance, receiver ww-portal-261112.testnet, method approve only. Dedicated seeded customer has a 1 testnet NEAR per-order maximum. The adapter reads stored order traces/history for effects and payout IDs because submit_order returns void. Failed receipts produce an explicit error containing the real order explorer link. No failed NEAR transfer is reported as a successful order.
 
 ## Accounts created
 
@@ -564,7 +564,7 @@ AccessKeyNotEnoughAllowanceActionError: Not enough allowance for access key ed25
     at JsonRpcProvider.sendJsonRpc (/data/home/.t3/projects/near-hackathon/app/node_modules/near-api-js/src/providers/json-rpc-provider.ts:878:19)
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
     at async Account.signAndSendTransaction (/data/home/.t3/projects/near-hackathon/app/node_modules/near-api-js/src/accounts/account.ts:485:22)
-    at async send (/data/home/.t3/projects/near-hackathon/app/api/near.ts:26:18)
+    at async send (/data/home/.t3/projects/near-hackathon/app/api/_near.ts:26:18)
     at async LiveApi.approve (/data/home/.t3/projects/near-hackathon/app/src/api/live.ts:74:91) {
   txHash: '',
   blockHash: '',
@@ -601,9 +601,9 @@ Generated private-key values from sponsor, customer, and both browser session/wo
  M contract/tests/sandbox.rs
  M docs/DEPLOYMENTS.md
 ?? app/api/customer.ts
-?? app/api/near.ts
+?? app/api/_near.ts
 ?? app/api/payout.ts
-?? app/api/server-common.ts
+?? app/api/_server-common.ts
 ?? app/api/session.ts
 ?? app/public/
 ?? app/scripts/dev-api.ts

@@ -75,7 +75,7 @@ See [full Portal evidence](EVIDENCE-portal.md) and `contract/USAGE.md`.
 - Initial browser acceptance account: `p101b6c90d5db046759a9.ww-sponsor-g4-261112.testnet` ([creation](https://explorer.testnet.near.org/transactions/EpRnwSqMetJ6bVGLWHtYDZMqcbXJ6Yp92iBbu8k8oPx1)).
 - Final browser acceptance account: `p23c3935347650b70686b.ww-sponsor-g4-261112.testnet` ([creation](https://explorer.testnet.near.org/transactions/CPEEc2ra3vT59eawBs7tuxCAj8kdnrGwDGwdodD1UBdK)).
 - Testnet contract remains `ww-portal-261112.testnet`; no contract changes/deployment.
-- Session grant is fixed at **3 testnet NEAR** per public key, with no refill endpoint. A deterministic subaccount prevents repeat funding after server restart. This covers two standard 1 NEAR orders, a publish, and gas/storage overhead.
+- Session grant is fixed at **4.5 testnet NEAR** per public key, with no refill endpoint. A deterministic subaccount prevents repeat funding after server restart. This covers two standard 1 NEAR orders, a publish, and gas/storage overhead.
 - Worker access key allowance: **0.5 NEAR** for gas; receiver exactly the testnet contract; only method `approve`. RPC evidence exposed by `LiveApi.workerPermission()`; key-add transaction exposed by `workerKeyTx` when added in this instance. Existing `WorldworksApi` and `PayoutView` are unchanged.
 - Server credentials and acceptance browser storage live only in `/opt/ww-secrets/`, files mode 600. Local environment file: `/opt/ww-secrets/live.env` (`SPONSOR_ACCOUNT_ID`, `SPONSOR_PRIVATE_KEY`, `CUSTOMER_ACCOUNT_ID`, `CUSTOMER_PRIVATE_KEY`). Vercel requires the same server-only variables; never use VITE-prefixed secrets.
 
@@ -96,7 +96,7 @@ API listens on loopback port 3001 (override `API_PORT`). Local browser CORS allo
 
 See [full G4 acceptance evidence](EVIDENCE-live.md), including conditional Sepolia funding status. No commits, pushes, mainnet calls, or hosting deployment are part of this implementation.
 
-Each E2E run creates a fresh local browser key file under `/opt/ww-secrets/` and consumes another 3 NEAR sponsor grant. Refill the testnet sponsor when needed; `E2E_STORAGE_FILE` can explicitly reuse a previously funded browser session (its orders still cost NEAR). No automatic faucet refill occurs.
+Each E2E run creates a fresh local browser key file under `/opt/ww-secrets/` and consumes another 4.5 NEAR sponsor grant. Refill the testnet sponsor when needed; `E2E_STORAGE_FILE` can explicitly reuse a previously funded browser session (its orders still cost NEAR). No automatic faucet refill occurs.
 
 
 ## G5 hardened main contract — 2026-11-12 UTC

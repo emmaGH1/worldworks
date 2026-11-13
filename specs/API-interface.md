@@ -88,3 +88,10 @@ Confirmed requires matching successful receipt/transaction on both independent
 Sepolia RPCs and head >= receipt.blockNumber + 3 on both.
 History view pagination uses nonce from_index and a maximum 200-record scan,
 default 100; increment from_index by scan limit, even for empty filtered pages.
+
+
+### GAME-1-fix recovery additions
+
+`order(machineId, recipient?, orderId?)` and `customerOrder(machineId, orderId?)` accept a browser-generated `[a-z0-9_-]{1,64}` identifier. The customer endpoint requires `orderId`; repeated identifiers read the contract order before spending. `getOrder(machineId, orderId)` returns `OrderResult | null` with observed pending state and structured external effects; historical vault/direct effects are not inferred from traces. A recovered order has an empty transaction reference when its submitted hash was never observed, rather than a fabricated link.
+
+`balance(): Promise<Yocto>` reads current spendable session funds. `retrySignature?(payoutId): Promise<void>` is an explicit mutation, separate from the read-only `getPayout`. Automatic callers gate it by 15 seconds and allow at most two attempts per payout per page; manual user retries remain explicit. Unknown observations remain neutral until a contract read confirms acceptance.

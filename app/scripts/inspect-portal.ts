@@ -1,4 +1,4 @@
-import { ACCOUNT, assemble, client, derive, view } from '../api/portal.js';
+import { ACCOUNT, assemble, client, derive, view } from '../api/_portal.js';
 import { recoverTransactionAddress, keccak256 } from 'viem';
 const payout = await view(ACCOUNT,'get_payout',{payout_id:process.argv[2] ?? '0'});
 const address = await derive();

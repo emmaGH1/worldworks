@@ -14,7 +14,7 @@ App: **{{HOSTED_URL}}** · Demo video and post: **{{DEMO_POST_URL}}**
 
 The hosted app runs in live mode: your browser gets a new sponsored NEAR testnet account and the steps below send testnet transactions. If a **MOCK DATA** badge is visible, nothing is on chain.
 
-1. **Open the app** → the *Lemonade Machine* loads with a **BROKE** stamp: every sale goes to the Portal and the machine keeps nothing. A testnet account is created for you (funded with 3 test NEAR); no wallet is needed.
+1. **Open the app** → the *Lemonade Machine* loads with a **BROKE** stamp: every sale goes to the Portal and the machine keeps nothing. A testnet account is created for you (funded with 4.5 test NEAR); no wallet is needed.
 2. **Drag *Splitter* from the Parts column onto the pipe between Coin Slot and Portal** → a reserve Vault appears, the split reads `30% → Portal · 70% → reserve`, and the stamp changes to **RUNNING**.
 3. **Click *Serve a customer*** → the machine is published from your account (0.40 NEAR refundable deposit), a seeded customer pays 0.10 NEAR + 1.32 NEAR order storage fee, and the Reserve card shows 0.07 NEAR kept on chain.
 4. **Watch the Portal panel** → *Signing on NEAR* → *Signed* → *Broadcast to Sepolia* → *Confirmed: 0.0001 ETH included on Sepolia, seen by two RPCs*, with a NEAR receipt link and a Sepolia tx link. The recorded live runs took 57.7 s and 87.6 s for the whole workshop flow ([INT-1](docs/EVIDENCE-ui-live.md), [G6](docs/EVIDENCE-g6.md#ui-flows)).
@@ -57,7 +57,7 @@ Source: [G6 evidence](docs/EVIDENCE-g6.md) and [contract usage](contract/USAGE.m
 |---|---|
 | Order storage fee (retained) | 1.32 test NEAR per order: twice a 65,536-byte lifecycle bound × 10^19 yoctoNEAR/byte ([derivation](docs/STORAGE-g6.md)) |
 | Publish deposit | 0.40 test NEAR; unused storage deposit is refunded |
-| Sponsored session | 3 test NEAR per new browser account |
+| Sponsored session | 4.5 test NEAR per new browser account |
 | Portal epoch | 0.01 Sepolia ETH budget per 1,000 NEAR blocks; each payout reserves value + 21,000 × snapshot max fee per gas; at most 20 payouts per epoch |
 | Per payout | at most 0.002 ETH; NEAR sent to the Portal must be ≥ wei × 10^6 yoctoNEAR |
 | Fee snapshot | max fee 3 gwei, priority 1 gwei (owner call above; applies to payouts created after it) |
@@ -71,13 +71,13 @@ Payouts 0–14 above were 0.001 ETH under the earlier 100 gwei fee snapshot. Pay
 
 | Behavior | Implementation | Evidence |
 |---|---|---|
-| The browser generates a key; the server creates and funds a sponsored testnet account for it (3 NEAR, idempotent per public key). Sponsor and customer keys stay server-side. | [`app/api/session.ts`](app/api/session.ts), [`app/src/api/live.ts`](app/src/api/live.ts) | [live UI](docs/EVIDENCE-ui-live.md), [G6](docs/EVIDENCE-g6.md) |
+| The browser generates a key; the server creates and funds a sponsored testnet account for it (4.5 NEAR, idempotent per public key). Sponsor and customer keys stay server-side. | [`app/api/session.ts`](app/api/session.ts), [`app/src/api/live.ts`](app/src/api/live.ts) | [live UI](docs/EVIDENCE-ui-live.md), [G6](docs/EVIDENCE-g6.md) |
 | A Worker gets a function-call key limited to `approve` on this contract; the contract also checks the published role binding. | [`app/src/api/live.ts`](app/src/api/live.ts), [`contract/src/lib.rs`](contract/src/lib.rs) | [sandbox tests](contract/tests/sandbox.rs) |
 | Published graphs run in a deterministic Rust interpreter inside the contract; the browser preview uses the same engine compiled to WASM. | [`engine/`](engine/src/lib.rs), [`engine-wasm/`](engine-wasm/src/lib.rs), [`contract/`](contract/src/lib.rs) | [engine tests](engine/tests/engine.rs) |
 | The contract builds each Sepolia EIP-1559 transfer itself: chain 11155111, fixed recipient and value, empty calldata, 21,000 gas, allocated nonce, snapshotted fees. Retries reuse the stored bytes and nonce. | [`contract/src/lib.rs`](contract/src/lib.rs) | [Portal](docs/EVIDENCE-portal.md), [hardening](docs/EVIDENCE-hardening.md) |
 | Chain Signatures: the contract requests the signature from `v1.signer-prod.testnet` (domain 0, path `worldworks/portal/sepolia/v1`). | [`contract/src/lib.rs`](contract/src/lib.rs) | [Sepolia receipts](docs/EVIDENCE-sepolia.md) |
-| `submit_order`, `approve` and `expire` return structured effects with payout IDs; the app decodes its own receipt instead of parsing traces. | [`app/api/near.ts`](app/api/near.ts) | [G6](docs/EVIDENCE-g6.md#on-chain-structured-receipt-values-decoded-with-receiptresult) |
-| Keyless relayer: checks the unsigned bytes and the recovered sender against contract state, then broadcasts in nonce order. | [`app/api/portal.ts`](app/api/portal.ts), [`app/api/relay.ts`](app/api/relay.ts), [`app/scripts/relay.ts`](app/scripts/relay.ts) | [relay tests](app/scripts/relay.test.ts) |
+| `submit_order`, `approve` and `expire` return structured effects with payout IDs; the app decodes its own receipt instead of parsing traces. | [`app/api/_near.ts`](app/api/_near.ts) | [G6](docs/EVIDENCE-g6.md#on-chain-structured-receipt-values-decoded-with-receiptresult) |
+| Keyless relayer: checks the unsigned bytes and the recovered sender against contract state, then broadcasts in nonce order. | [`app/api/_portal.ts`](app/api/_portal.ts), [`app/api/relay.ts`](app/api/relay.ts), [`app/scripts/relay.ts`](app/scripts/relay.ts) | [relay tests](app/scripts/relay.test.ts) |
 | Confirmation: two RPC hosts, matching hash, sender, recipient, value, block hash and success status, and ≥ 3 blocks on top on both. | [`app/api/payout.ts`](app/api/payout.ts) | [G6](docs/EVIDENCE-g6.md), [unit tests](app/scripts/live.test.ts) |
 
 ## Real and simulated
@@ -131,15 +131,15 @@ The first build prints `SHA-256 checksum bs58: 2asqVNPwvj4YvJb9kztRvWDJvzSbwpmjn
 cd app
 npm ci
 npm run typecheck && npx tsc -p api/tsconfig.json
-node --import tsx --test scripts/live.test.ts scripts/relay.test.ts    # 22 tests, fixtures only
+node --import tsx --test scripts/*.test.ts    # fixtures only
 VITE_CONTRACT_ID= npm run build                                        # mock-mode build
 npm run preview -- --host 127.0.0.1 --port 4197 --strictPort
 ```
 
-In a second shell, from `app/`, run the mock browser flow (about 35 s; expects `RESULT: PASS` and `console errors: 0`):
+In a second shell, from `app/`, run the mock browser flow (desktop, phone and recovery cases; expects `RESULT: PASS` and `console errors: 0`):
 
 ```sh
-UI_BASE=http://127.0.0.1:4197 node ui-tests/flow.mjs
+UI_BASE=http://127.0.0.1:4197 node ui-tests/game-mock.mjs
 ```
 
 The UI tests load `playwright-core` from `/opt/ww-shot/node_modules` and Chromium from a fixed path set in [`app/ui-tests/common.mjs`](app/ui-tests/common.mjs); edit those two lines for another machine. `npm ci` does not install them.
@@ -156,7 +156,7 @@ A funded live deployment needs `SPONSOR_ACCOUNT_ID`, `SPONSOR_PRIVATE_KEY`, `CUS
 ## Architecture
 
 ```text
-Browser: workshop  /  standalone app /m/<id>
+Browser: game  /  standalone app /m/<id>
  ├─ engine (WASM) ── local validation and "next sale" preview
  ├─ browser NEAR key ──► ww-portal-261112.testnet (shared contract)
  │                         ├─ Rust graph interpreter: Coin Slot, Splitter, Gate, Worker, Vault, Payout

@@ -4,9 +4,9 @@
 // NEAR tx ~1.5 s, Chain Signatures signature ~14.5 s, Sepolia confirmation ~12 s.
 // validate/preview are real: they run the same Rust engine compiled to wasm.
 import { validate as wasmValidate, preview_order as wasmPreview } from '../engine/pkg/worldworks_engine_wasm.js';
-import type { MachineDoc, OrderResult, PayoutView, Session, TxRef, WorldworksApi } from './types';
-import { lemonadeFixed, templates, simulateRelease, type Machine, type Part } from '../lib/machine';
-import type { Limits } from '../lib/limits';
+import type { MachineDoc, OrderResult, PayoutView, Session, TxRef, WorldworksApi } from './types.js';
+import { lemonadeFixed, templates, simulateRelease, type Machine, type Part } from '../lib/machine.js';
+import type { Limits } from '../lib/limits.js';
 
 const NEAR_TX_MS = 1500;
 const SIGNATURE_MS = 14500;
@@ -22,9 +22,10 @@ const MOCK_LIMITS: Limits = {
   epochBudgetWei: '10000000000000000',        // 0.01 Sepolia ETH per epoch
   epochRemainingWei: '10000000000000000',
 };
-const SPONSORED = '3000000000000000000000000'; // 3 test NEAR per session, matching live funding
+const SPONSORED = '4500000000000000000000000'; // 4.5 test NEAR per session, matching live funding
 
 type Stored = {
+  orders?: Record<string,OrderResult>;
   account?: string;
   balance?: string;
   budgetSpent?: string;
@@ -50,6 +51,8 @@ function load(): Stored {
   return { machines: {}, held: {}, payouts: {}, nonce: 0 };
 }
 let db = load();
+const scenario = () => new URLSearchParams(location.search).get('mockCase');
+let unknownReads=0;
 function save() { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch { /* ignore */ } }
 
 function seed() {
@@ -84,7 +87,8 @@ function heldGate(m: Machine, trace: string[]): string | undefined {
   return gates.find(g => trace.some(t => t.includes(g))) ?? gates[0];
 }
 
-async function placeOrder(machineId: string, payer: string, recipient?: string, fromSession = false): Promise<OrderResult> {
+async function placeOrder(machineId: string, payer: string, recipient?: string, fromSession = false, orderId:string = crypto.randomUUID()): Promise<OrderResult> {
+  if(db.orders?.[`${machineId}/${orderId}`]) return db.orders[`${machineId}/${orderId}`];
   await sleep(NEAR_TX_MS);
   const rec = db.machines[machineId];
   if (!rec) throw new Error(`No machine called “${machineId}”.`);
@@ -110,7 +114,7 @@ async function placeOrder(machineId: string, payer: string, recipient?: string, 
     db.balance = (bal - cost).toString();
   }
   const tx = nearTx();
-  const orderId = `o-${Date.now().toString(36)}-${rand('abcdefghjkmnpqrstuvwxyz23456789', 4)}`;
+
   const effects = mapEffects(res.effects, payer, (r, wei, fee) => {
     const payoutId = String(db.nonce++);
     db.payouts[payoutId] = { createdAt: Date.now(), view: { payoutId, status: 'awaiting_signature', recipient: r, wei, portalAddress: MOCK_PORTAL, nonce: Number(payoutId), nearTx: tx } };
@@ -124,8 +128,10 @@ async function placeOrder(machineId: string, payer: string, recipient?: string, 
     const slot = Object.values(m.nodes).find(p => p.type === 'CoinSlot') as Extract<Part, { type: 'CoinSlot' }>;
     db.held[`${machineId}/${orderId}`] = { machineId, gate: heldGate(m, res.trace) ?? '', amount: (BigInt(slot.price) - credited).toString(), payer, recipient };
   }
+  const result = { tx, orderId, pending: res.pending, effects, trace: res.trace };
+  (db.orders ??= {})[`${machineId}/${orderId}`] = result;
   save();
-  return { tx, orderId, pending: res.pending, effects, trace: res.trace };
+  return result;
 }
 
 function payoutNow(id: string): PayoutView {
@@ -184,12 +190,15 @@ export const mockApi: WorldworksApi & { limits(): Promise<Limits> } = {
     return rec ? JSON.parse(JSON.stringify(rec)) : null;
   },
 
-  order(machineId, recipient) {
-    return placeOrder(machineId, db.account ?? 'unknown.testnet', recipient, true);
+  async order(machineId, recipient, orderId) {
+    const result=await placeOrder(machineId, db.account ?? 'unknown.testnet', recipient, true, orderId);
+    if(scenario()==='orderUnknown') {unknownReads=3;return {...result,observation:'unknown'};}
+    return result;
   },
 
-  async customerOrder(machineId) {
-    const r = await placeOrder(machineId, MOCK_CUSTOMER, MOCK_CUSTOMER_EVM);
+  async customerOrder(machineId, orderId) {
+    const r = await placeOrder(machineId, MOCK_CUSTOMER, MOCK_CUSTOMER_EVM, false, orderId);
+    if(scenario()==='customer504') { unknownReads=3; throw Object.assign(Error('API 504'),{status:504}); }
     return { ...r, customer: MOCK_CUSTOMER };
   },
 
@@ -221,8 +230,11 @@ export const mockApi: WorldworksApi & { limits(): Promise<Limits> } = {
     return { tx, effects, pending: sim.held.length > 0 };
   },
 
+  async balance() { return db.balance ?? SPONSORED; },
+  async getOrder(machineId,orderId) { if(unknownReads-->0)return null;return db.orders?.[`${machineId}/${orderId}`] ?? null; },
   async getPayout(payoutId) {
     await sleep(250);
+    if(scenario()==='earlier' && payoutId==='999') return {payoutId,status:'signature_failed',recipient:MOCK_CUSTOMER_EVM,wei:'1',portalAddress:MOCK_PORTAL,nonce:999};
     const v = payoutNow(payoutId);
     save();
     return v;
@@ -231,6 +243,7 @@ export const mockApi: WorldworksApi & { limits(): Promise<Limits> } = {
   async relay(payoutId) {
     await sleep(900);
     const v = payoutNow(payoutId);
+    if(scenario()==='earlier') return {...v,status:'waiting_for_earlier_nonce',waitingPayoutId:'999'};
     if (v.status !== 'signed') throw new Error(`Payout ${payoutId} is ${v.status}, not signed yet.`);
     const p = db.payouts[payoutId];
     p.relayedAt = Date.now();

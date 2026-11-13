@@ -1,5 +1,5 @@
 import type { WorldworksApi, MachineDoc, Session, OrderResult, PayoutView, TxRef, ApproveResult } from './types.js';
-import { account, KeyPair, actions, CONTRACT, DEMO_RECIPIENT, rpc, view, send, price, placeOrder, txRef, limits, checkId, checkLegacyId, receiptResult } from '../../api/near.js';
+import { account, KeyPair, actions, CONTRACT, DEMO_RECIPIENT, rpc, view, send, price, placeOrder, txRef, limits, checkId, checkLegacyId, receiptResult, readOrder } from '../../api/_near.js';
 import { validateMachine } from '../engine/index.js';
 import { validate as wasmValidate, preview_order } from '../engine/pkg/worldworks_engine_wasm.js';
 const config = (import.meta as ImportMeta & {env?:Record<string,string>}).env ?? {};
@@ -13,7 +13,9 @@ export class LiveApi implements WorldworksApi {
   }
   private async post(path:string,body:unknown):Promise<any> {
     const response = await fetch(`${this.base}/api/${path}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    const data = await response.json(); if(!response.ok) throw Error(data.error ?? `API ${response.status}`); return data;
+    if(!response.ok) throw Object.assign(Error(`API ${response.status}`),{status:response.status});
+    if(!response.headers.get('content-type')?.includes('application/json')) throw Error('API returned a non-JSON response');
+    return response.json();
   }
   private key(name='session') {
     const path = `worldworks.testnet.${name}.key`;
@@ -73,11 +75,19 @@ export class LiveApi implements WorldworksApi {
   }
   async getMachine(machineId:string) { checkLegacyId(machineId); const m = await view('get_machine',{machine_id:machineId}); return m ? {doc:{machine:m.machine,workers:m.workers},owner:m.owner,vaults:m.vaults} : null; }
   private remember<T extends OrderResult>(result:T):T {
+    if(result.tx.hash) this.storage.setItem(`worldworks.testnet.order.${result.orderId}`,JSON.stringify(result.tx));
     for(const effect of result.effects) if(effect.kind === 'external') this.storage.setItem(`worldworks.testnet.payout.${effect.payoutId}`,JSON.stringify(result.tx));
     return result;
   }
-  async order(machineId:string,recipient?:string) { return this.remember(await placeOrder(await this.player(),machineId,recipient)); }
-  async customerOrder(machineId:string) { return this.remember(await this.post('customer',{machineId})); }
+  async order(machineId:string,recipient?:string,orderId?:string) { return this.remember(await placeOrder(await this.player(),machineId,recipient,orderId)); }
+  async customerOrder(machineId:string,orderId:string=crypto.randomUUID()) { return this.remember(await this.post('customer',{machineId,orderId})); }
+  async getOrder(machineId:string,orderId:string) {
+    const found=await readOrder(machineId,orderId);if(!found)return null;
+    const saved=this.storage.getItem(`worldworks.testnet.order.${orderId}`);
+    return this.remember({...found,tx:saved?JSON.parse(saved):found.tx});
+  }
+  async balance() { return (await (await this.player()).getState()).balance.available.toString(); }
+  async retrySignature(payoutId:string) { await send(await this.player(),'retry_signature',{payout_id:payoutId}); }
   async approve(machineId:string,orderId:string):Promise<ApproveResult> {
     checkLegacyId(machineId); checkLegacyId(orderId,64); await this.workerPermission();
     const {result,tx}=await send(await this.player(true),'approve',{machine_id:machineId,order_id:orderId});
@@ -88,10 +98,6 @@ export class LiveApi implements WorldworksApi {
   }
   async getPayout(payoutId:string):Promise<PayoutView> {
     let payout = await this.post('payout',{payout_id:payoutId});
-    if(payout.status === 'signature_failed' || payout.retryEligible) {
-      await send(await this.player(),'retry_signature',{payout_id:payoutId});
-      payout = await this.post('payout',{payout_id:payoutId});
-    }
     const tx = this.storage.getItem(`worldworks.testnet.payout.${payoutId}`);
     return tx ? {...payout,nearTx:JSON.parse(tx)} : payout;
   }

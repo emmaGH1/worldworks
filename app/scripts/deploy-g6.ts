@@ -2,8 +2,8 @@
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
-import {account,actions,CONTRACT,GAS,rpc,view,txRef} from '../api/near.js';
-import {derive} from '../api/portal.js';
+import {account,actions,CONTRACT,GAS,rpc,view,txRef} from '../api/_near.js';
+import {derive} from '../api/_portal.js';
 const key=JSON.parse(readFileSync('/opt/ww-secrets/portal-deploy.json','utf8'));
 if(key.account_id) assert.equal(key.account_id,CONTRACT);
 const before=await rpc('query',{request_type:'view_state',finality:'final',account_id:CONTRACT,prefix_base64:''});

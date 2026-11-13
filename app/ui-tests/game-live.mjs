@@ -15,7 +15,7 @@ const errors = [];
 const t0 = Date.now();
 const ts = () => `[${((Date.now() - t0) / 1000).toFixed(1).padStart(6)}s]`;
 const assert = (ok, msg) => { if (!ok) throw new Error('FAIL: ' + msg); console.log(ts(), 'ok:', msg); };
-const shot = async (page, name) => { await page.screenshot({ path: OUT + name }); console.log(ts(), 'still: docs/design/screens/' + name); };
+const shot = async (page, name) => { if(process.env.UI_SHOTS==='0')return; await page.screenshot({ path: OUT + name }); console.log(ts(), 'still: docs/design/screens/' + name); };
 const NEAR_TX = /^https:\/\/(testnet\.nearblocks\.io\/txns|explorer\.testnet\.near\.org\/transactions|testnet\.near\.rocks\/tx)\/[1-9A-HJ-NP-Za-km-z]{40,}$/;
 const SEPOLIA_TX = /^https:\/\/sepolia\.etherscan\.io\/tx\/0x[0-9a-fA-F]{64}$/;
 
@@ -69,7 +69,7 @@ try {
   const page = await ctx.newPage();
   watchErrors(page, errors);
   const proofs = observe(page);
-  await page.goto(BASE + '/?level=2&fx=high&intro=0');
+  await page.goto(BASE + (process.env.UI_LOWFX==='1'?'/?level=2&lowfx=1&intro=0':'/?level=2&fx=high&intro=0'));
   await page.waitForFunction(() => window.__ww && window.__game, null, { timeout: 60000 });
   assert(await page.locator('[data-testid="mock-badge"]').count() === 0, 'live mode (no MOCK DATA badge)');
   assert((await page.evaluate(() => window.__game.state().mode)) === 'live', 'API mode live');

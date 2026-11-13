@@ -1,8 +1,8 @@
 // Machine model helpers for the UI. The machine object is exactly engine/MACHINE_FORMAT.md;
 // positions are UI-only and never published.
-import type { MachineDoc, OrderResult } from '../api/types';
-import { getLimits } from './limits';
-import { near, eth, pct, shortAddr } from './units';
+import type { MachineDoc, OrderResult } from '../api/types.js';
+import { getLimits } from './limits.js';
+import { near, eth, pct, shortAddr } from './units.js';
 
 export type PartType = 'CoinSlot' | 'Splitter' | 'Vault' | 'Gate' | 'Worker' | 'Payout' | 'Portal';
 export type Condition = { type: 'MinAmount'; amount: string } | { type: 'NeedsApproval'; worker: string };
@@ -36,7 +36,7 @@ export const TEMPLATE_PRICE = '100000000000000000000000'; // 0.1 NEAR
 export const DEMO_WEI = '100000000000000'; // 0.0001 Sepolia ETH (keeps ~20 Portal payouts per epoch within the budget)
 export function templateWei(): string {
   const l = getLimits();
-  if (!import.meta.env.VITE_CONTRACT_ID || !l) return DEMO_WEI;
+  if (!import.meta.env?.VITE_CONTRACT_ID || !l) return DEMO_WEI;
   // Vending sends the smallest template share (7%) to its Portal.
   const affordable = BigInt(TEMPLATE_PRICE) * 7n / 100n / BigInt(l.rate);
   return [BigInt(DEMO_WEI), affordable, BigInt(l.maxWeiPerPayout ?? DEMO_WEI)].reduce((a,b) => a < b ? a : b).toString();

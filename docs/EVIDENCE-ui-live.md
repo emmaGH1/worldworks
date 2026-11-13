@@ -16,12 +16,12 @@ Commands run from `app/`, with the existing installed dependencies. npm cache: `
 API_PORT=3009 node --env-file=/opt/ww-secrets/live.env --import tsx scripts/dev-api.ts
 VITE_CONTRACT_ID=ww-portal-261112.testnet VITE_RELAYER_URL=http://127.0.0.1:3009 npm run dev -- --host 127.0.0.1 --port 4182 --strictPort
 # Separate shell; headless Chromium and playwright-core are pinned in common.mjs.
-UI_BASE=http://127.0.0.1:4182 node ui-tests/flow-live.mjs
+UI_BASE=http://127.0.0.1:4182 node ui-tests/game-live.mjs
 # A new browser context visiting /m/:id directly, retaining the sponsored account:
-UI_BASE=http://127.0.0.1:4182 UI_STORAGE_STATE=/opt/ww-secrets/int1-ui-state.json node ui-tests/app-live.mjs
+UI_BASE=http://127.0.0.1:4182 UI_STORAGE_STATE=/opt/ww-secrets/int1-ui-state.json node ui-tests/game-live.mjs
 ```
 
-`app-live.mjs` also supports a fresh account when UI_STORAGE_STATE is omitted and an arbitrary published id via UI_MACHINE_ID. This recorded standalone run reused the funded workshop account in a new browser context to conserve faucet funds. Browser storage containing keys is saved only under `/opt/ww-secrets`; it is never copied into evidence.
+`game-live.mjs` also supports a fresh account when UI_STORAGE_STATE is omitted and an arbitrary published id via UI_MACHINE_ID. This recorded standalone run reused the funded workshop account in a new browser context to conserve faucet funds. Browser storage containing keys is saved only under `/opt/ww-secrets`; it is never copied into evidence.
 
 ## Earlier failures resolved
 
@@ -1500,7 +1500,7 @@ computing gzip size...
 
 Exit status: 0.
 
-### `UI_BASE=http://127.0.0.1:4183 node ui-tests/flow.mjs`
+### `UI_BASE=http://127.0.0.1:4183 node ui-tests/game-mock.mjs`
 
 ```text
 [  1.8s] ok   MOCK DATA badge is visible in mock mode
@@ -1534,7 +1534,7 @@ RESULT: PASS
 
 Exit status: 0.
 
-### `UI_BASE=http://127.0.0.1:4182 node ui-tests/flow-live.mjs (final fresh session)`
+### `UI_BASE=http://127.0.0.1:4182 node ui-tests/game-live.mjs (final fresh session)`
 
 ```text
 ok: live mode
@@ -1595,7 +1595,7 @@ RESULT: PASS
 
 Exit status: 0.
 
-### `UI_BASE=http://127.0.0.1:4182 UI_STORAGE_STATE=/opt/ww-secrets/int1-ui-state.json node ui-tests/app-live.mjs`
+### `UI_BASE=http://127.0.0.1:4182 UI_STORAGE_STATE=/opt/ww-secrets/int1-ui-state.json node ui-tests/game-live.mjs`
 
 ```text
 ok: standalone live mode
@@ -1769,7 +1769,7 @@ Exit status: 0.
 
 ## Files changed
 
-- `app/api/near.ts`
+- `app/api/_near.ts`
 - `app/api/payout.ts`
 - `app/scripts/live.test.ts`
 - `app/src/api/index.ts`
@@ -1782,8 +1782,8 @@ Exit status: 0.
 - `app/src/lib/store.ts`
 - `app/src/pages/MachineApp.tsx`
 - `app/src/pages/Workshop.tsx`
-- `app/ui-tests/app-live.mjs`
-- `app/ui-tests/flow-live.mjs`
+- `app/ui-tests/game-live.mjs`
+- `app/ui-tests/game-live.mjs`
 - `app/ui-tests/live-common.mjs`
 - `docs/EVIDENCE-ui-live.md`
 - `docs/design/screens/live-01-broken.png`

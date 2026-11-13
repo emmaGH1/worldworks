@@ -42,11 +42,13 @@ export async function limits() {
   const l = await view('get_limits',{});
   return {orderFee:l.order_storage_fee,publishDeposit:l.publish_storage_deposit,rate:l.min_fee_yocto_per_wei,epochBudgetWei:l.epoch_budget_wei,epochRemainingWei:l.remaining_budget_wei,maxWeiPerPayout:l.max_wei_per_payout};
 }
-export async function placeOrder(who: Account, machineId: string, recipient = DEMO_RECIPIENT): Promise<OrderResult> {
+export async function placeOrder(who: Account, machineId: string, recipient = DEMO_RECIPIENT, orderId:string = crypto.randomUUID()): Promise<OrderResult> {
   checkLegacyId(machineId);
   const machine = await view('get_machine',{machine_id:machineId});
   if (!machine) throw Error('Unknown machine');
-  const orderId = crypto.randomUUID();
+  checkId(orderId,64);
+  const existing = await readOrder(machineId, orderId);
+  if (existing) return existing;
   const {result,tx} = await send(who,'submit_order',{machine_id:machineId,order_id:orderId,external_recipient:recipient},BigInt(price(machine.machine)) + BigInt((await limits()).orderFee));
   // Decode the submit receipt itself: detached signer/recovery receipts have
   // their own return values and must never be mistaken for the order result.
@@ -68,4 +70,18 @@ export function receiptResult(result:any, method:string): Pick<OrderResult,'pend
     if(typeof data.pending !== 'boolean' || !Array.isArray(data.effects) || !Array.isArray(data.trace)) return undefined;
     return data;
   } catch { return undefined; }
+}
+
+// Contract order existence is authoritative; only structured payout records supply recovered effects.
+export async function readOrder(machineId:string, orderId:string):Promise<OrderResult|null> {
+  checkLegacyId(machineId); checkId(orderId,64);
+  const order = await view('get_order',{machine_id:machineId,order_id:orderId});
+  if(!order) return null;
+  const effects:OrderResult['effects'] = [];
+  const nonce=Number(await view('get_portal_nonce',{}));
+  for(let from=0;from<nonce;from+=200) {
+    const payouts = await view('get_pending_external_payouts',{machine_id:machineId,from_index:String(from),limit:200});
+    for(const p of payouts) if(p.order_id === orderId) effects.push({kind:'external',payoutId:p.payout_id,recipient:p.recipient,wei:p.wei,fee:p.fee});
+  }
+  return {orderId,tx:{hash:'',explorerUrl:''},pending:order.pending,effects,trace:order.trace};
 }

@@ -60,7 +60,7 @@ export const COIN_YOCTO = 10n ** 22n;
 const COIN_COLOR: Record<FlowKind, string> = { sim: '#ffc53a', real: '#2ee6a8', mock: '#ff8a74' };
 const KIND_LABEL: Record<FlowKind, string> = { sim: 'SIMULATED', real: 'REAL · testnet', mock: 'MOCK' };
 
-export function createWorld(canvas: HTMLCanvasElement, tagLayer: HTMLElement, opts: WorldOptions): World {
+function createWebGLWorld(canvas: HTMLCanvasElement, tagLayer: HTMLElement, opts: WorldOptions): World {
   const params = new URLSearchParams(location.search);
   const touch = matchMedia('(pointer: coarse)').matches;
   const fxHigh = params.get('fx') === 'high';
@@ -75,6 +75,8 @@ export function createWorld(canvas: HTMLCanvasElement, tagLayer: HTMLElement, op
   renderer.toneMappingExposure = 1.05;
   renderer.shadowMap.type = THREE.PCFShadowMap;
   const scene = new THREE.Scene();
+  const retired = new Set<THREE.Object3D>();
+  scene.addEventListener('childremoved',event=>retired.add(event.child));
   scene.background = new THREE.Color('#3f979d');
   const pmrem = new THREE.PMREMGenerator(renderer);
   const envTex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
@@ -1070,8 +1072,11 @@ export function createWorld(canvas: HTMLCanvasElement, tagLayer: HTMLElement, op
       if (disposed) return; disposed = true;
       cancelAnimationFrame(raf); removeEventListener('resize', onResize);
       for (const t of tags) t.el.remove(); for (const f of floaters) f.el.remove();
-      scene.traverse(o => { const m = o as THREE.Mesh; if (m.geometry) m.geometry.dispose(); });
-      envTex.dispose(); pmrem.dispose(); renderer.dispose();
+      const geometries=new Set<THREE.BufferGeometry>(), materials=new Set<THREE.Material>(), textures=new Set<THREE.Texture>();
+      const collect=(o:THREE.Object3D)=>{const m=o as THREE.Mesh;if(m.geometry)geometries.add(m.geometry);for(const material of (Array.isArray(m.material)?m.material:[m.material])) if(material){materials.add(material);for(const value of Object.values(material))if(value instanceof THREE.Texture)textures.add(value);}};
+      scene.traverse(collect);retired.forEach(o=>o.traverse(collect));retired.clear();
+      geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());
+      envTex.dispose(); pmrem.dispose(); renderer.dispose(); renderer.forceContextLoss();
       void ac?.close().catch(() => {});
       const w = window as unknown as { __ww?: unknown }; if (w.__ww === hooks) delete w.__ww;
     },
@@ -1082,4 +1087,31 @@ export function createWorld(canvas: HTMLCanvasElement, tagLayer: HTMLElement, op
   void Promise.race([document.fonts?.ready ?? Promise.resolve(), new Promise(r => setTimeout(r, 1500))]).then(() => { if (!disposed) { redraws.forEach(f => f()); updateTags(); } });
   raf = requestAnimationFrame(t => { last = t; bootAt = t; frame(t); });
   return world;
+}
+
+/** Updated by createWorld; the game layer can select its non-WebGL presentation. */
+export let webglUnavailable = false;
+
+/** Checkout and game controls remain available on devices without WebGL. */
+export function createWorld(canvas:HTMLCanvasElement,tags:HTMLElement,opts:WorldOptions):World {
+  const probe=document.createElement('canvas');
+  if(new URLSearchParams(location.search).get('webgl') !== '0' && probe.getContext('webgl2')) {
+    probe.getContext('webgl2')?.getExtension('WEBGL_lose_context')?.loseContext();
+    try { const world=createWebGLWorld(canvas,tags,opts);webglUnavailable=false;return world; } catch { /* continue in 2D */ }
+  }
+  webglUnavailable=true;
+  canvas.dataset.fallback='2d';
+  const c=canvas.getContext('2d');
+  const draw=()=>{canvas.width=innerWidth;canvas.height=innerHeight;if(!c)return;
+    c.fillStyle='#3f979d';c.fillRect(0,0,canvas.width,canvas.height);
+    c.fillStyle='#f6e5b8';c.beginPath();c.ellipse(canvas.width*.4,canvas.height*.55,220,95,0,0,Math.PI*2);c.fill();
+    c.fillStyle='#24575b';c.font='bold 22px sans-serif';c.textAlign='center';c.fillText('Lemonade → Splitter → Savings',canvas.width*.4,canvas.height*.52);c.fillText('Portal → Sepolia',canvas.width*.4,canvas.height*.58);
+    c.font='14px sans-serif';c.fillText('2D view · all controls available',canvas.width*.4,canvas.height*.64);
+  };draw();addEventListener('resize',draw);
+  let sim=true;const callbacks=new Set<()=>void>();
+  const timer=setInterval(()=>{if(sim && opts.nextSimOrder){const f=opts.nextSimOrder();if(f)opts.onSale?.(f);}callbacks.forEach(f=>f());},2500);
+  const noop=()=>{};
+  return {setParts:noop,setArmed:noop,setHover:noop,hitSlot:()=>true,placeSplitter:noop,setSimCustomers:on=>{sim=on;},callRealCustomer:noop,payReal:noop,realCustomerLeave:noop,setPortal:noop,releaseHeld:noop,
+    screen:()=>({x:innerWidth*.4,y:innerHeight*.55,visible:true}),onFrame:f=>{callbacks.add(f);return()=>{callbacks.delete(f);};},setMuted:noop,focus:noop,pick:()=>null,setCaptions:noop,relayout:draw,fxLevel:()=>2,
+    dispose:()=>{clearInterval(timer);removeEventListener('resize',draw);callbacks.clear();}};
 }

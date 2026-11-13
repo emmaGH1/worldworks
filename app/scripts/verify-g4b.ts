@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
-import {CONTRACT,rpc,view} from '../api/near.js';
-import {derive} from '../api/portal.js';
+import {CONTRACT,rpc,view} from '../api/_near.js';
+import {derive} from '../api/_portal.js';
 const before=JSON.parse(readFileSync('/opt/ww-target/g4b-before-state.json','utf8'));
 const after=await rpc('query',{request_type:'view_state',finality:'final',account_id:CONTRACT,prefix_base64:''});
 // Existing stored records are immutable during this verification; run before new orders.

@@ -24,7 +24,7 @@ At the deployed values one 0.001 ETH payout reserves 0.0031 ETH, so about three 
 ## Items
 
 1. Storage bound — IDs restricted (`valid_id` in `contract/src/lib.rs`); bound derivation in [STORAGE-g6.md](STORAGE-g6.md); `storage_bound.rs` width checks; sandbox adversarial order measured 13,041 bytes (< 63,360 derived bound ≤ 65,536 envelope). Fee 1.32 NEAR (≥ 0.78 NEAR).
-2. Structured effects — `submit_order`/`approve`/`expire` return `{pending,effects,trace}` with `payoutId`; `app/api/near.ts` `receiptResult` decodes the function's own receipt. Regressions: unit test with a `a: "vault"` name and a `bad:node` legacy machine; sandbox rejects `bad:node`, `bad"node`, `bad\nnode`. Live receipts decoded below.
+2. Structured effects — `submit_order`/`approve`/`expire` return `{pending,effects,trace}` with `payoutId`; `app/api/_near.ts` `receiptResult` decodes the function's own receipt. Regressions: unit test with a `a: "vault"` name and a `bad:node` legacy machine; sandbox rejects `bad:node`, `bad"node`, `bad\nnode`. Live receipts decoded below.
 3. `tsx` is in `app/package-lock.json`; fresh `npm ci` then all app checks pass.
 4. Sandbox regressions restored: zero-fee path creates no signer receipt and no nonce; nonce +1 per payout, unchanged on retry; Portal released through approve and through expire.
 5. Superseded markers added to every EVIDENCE-*.md header plus inline at the zero-balance and 1 NEAR / 0.77 NEAR fee statements.
@@ -129,7 +129,7 @@ New/changed unit tests: confirmation `shallow`/`one-shallow` depth cases; struct
 
 Servers: mock production preview on 4203; live preview (built with `VITE_CONTRACT_ID=ww-portal-261112.testnet VITE_RELAYER_URL=http://127.0.0.1:3019`) on 4202; `API_PORT=3019 node --env-file=/opt/ww-secrets/live.env --import tsx scripts/dev-api.ts`. Screenshots in `/opt/ww-target/g6-final/screens/`.
 
-Mock — `UI_BASE=http://127.0.0.1:4203 node ui-tests/flow.mjs`:
+Mock — `UI_BASE=http://127.0.0.1:4203 node ui-tests/game-mock.mjs`:
 
 ```text
 [ 38.0s] ok   Portal went through its states in order (awaiting_signature > signed > broadcast > confirmed)
@@ -138,7 +138,7 @@ console errors: 0
 RESULT: PASS
 ```
 
-Live, fresh sponsored session (`p83ed05965fc83a2d2141.ww-sponsor-g4-261112.testnet`, funded 9 NEAR) — `UI_BASE=http://127.0.0.1:4202 node ui-tests/flow-live.mjs`:
+Live, fresh sponsored session (`p83ed05965fc83a2d2141.ww-sponsor-g4-261112.testnet`, funded 9 NEAR) — `UI_BASE=http://127.0.0.1:4202 node ui-tests/game-live.mjs`:
 
 ```text
 ok: live mode / broken Lemonade opens / Splitter validates / real reserve after sale
@@ -160,7 +160,7 @@ RESULT: PASS
 
 Payout 13 confirmation (both RPCs, block 12122226, head 12122229, depth 3): ethpandaops and tenderly, same block hash `0xc85a79c6…bf75`.
 
-Live standalone app, same session — `UI_STORAGE_STATE=/opt/ww-secrets/int1-ui-state.json node ui-tests/app-live.mjs`:
+Live standalone app, same session — `UI_STORAGE_STATE=/opt/ww-secrets/int1-ui-state.json node ui-tests/game-live.mjs`:
 
 ```text
 machine: lemonade-b49a4e8f-5fc83a2d2141 total: 1.42 NEAR

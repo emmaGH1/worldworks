@@ -53,7 +53,7 @@ Funds before the take: sponsor `ww-sponsor-g4-261112.testnet` 11.74 NEAR, treasu
 
 | Take | What | Result |
 |---|---|---|
-| Rehearsal | `record-demo.mjs` against the **mock** build on :4203, from a scratch copy with the mock guard disabled, to check the drag, cursor and encoder | Native drag registered (no fallback). Footage deleted, never used. |
+| Rehearsal | `game-mock.mjs` against the **mock** build on :4203, from a scratch copy with the mock guard disabled, to check the drag, cursor and encoder | Native drag registered (no fallback). Footage deleted, never used. |
 | **Take 1** | Live workshop + standalone page + /verify, 00:13:54–00:16:56 UTC | **Used.** No `drag-fallback`, no unexpected Portal status (`awaiting_signature → signed → broadcast → confirmed`, twice). `ws.mp4`: 181.3 s. |
 | Take 1, explorer pass 1 | Explorer pages recorded at the end of the take | Not used: the NEAR link opened the selector page, and Etherscan was challenged (Blockscout fallback). |
 | Take 1, explorer pass 2 | `DEMO_EXPLORERS_FROM`, NEAR Rocks + Blockscout with a scroll to From | Not used: Blockscout filled its "Sponsored" row with a display ad. |
@@ -145,9 +145,9 @@ From `app/`, with secrets loaded only through `--env-file` and never printed:
 API_PORT=3009 node --env-file=/opt/ww-secrets/live.env --import tsx scripts/dev-api.ts
 VITE_CONTRACT_ID=ww-portal-261112.testnet VITE_RELAYER_URL=http://127.0.0.1:3009 npx vite build --outDir /data/tmp/ww-demo/dist-live --emptyOutDir
 npx vite preview --outDir /data/tmp/ww-demo/dist-live --host 127.0.0.1 --port 4202 --strictPort
-UI_BASE=http://127.0.0.1:4202 INSTABOX_HEADLESS=1 DEMO_OUT=/opt/ww-video/take-1 node ui-tests/record-demo.mjs
+UI_BASE=http://127.0.0.1:4202 INSTABOX_HEADLESS=1 DEMO_OUT=/opt/ww-video/take-1 node ui-tests/game-mock.mjs
 # explorer pages only, no new transactions:
-INSTABOX_HEADLESS=1 DEMO_OUT=/opt/ww-video/take-1 DEMO_EXPLORERS_FROM=/opt/ww-video/take-1 node ui-tests/record-demo.mjs
+INSTABOX_HEADLESS=1 DEMO_OUT=/opt/ww-video/take-1 DEMO_EXPLORERS_FROM=/opt/ww-video/take-1 node ui-tests/game-mock.mjs
 ```
 
 Screens, as viewport stills at 1920×1080 → 1440×810 palette PNG (`live-03-pending` is a frame of `ws.mp4` at 34.0 s, because the script took no still there):

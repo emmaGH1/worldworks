@@ -1,4 +1,4 @@
-import { account } from './near.js';
+import { account } from './_near.js';
 export type Request = {method?:string;body?:unknown;socket?:{remoteAddress?:string};headers?:Record<string,string|string[]|undefined>};
 export type Response = {status(code:number):{json(body:unknown):unknown};setHeader(name:string,value:string):unknown};
 const limits = new Map<string,{until:number;count:number}>();

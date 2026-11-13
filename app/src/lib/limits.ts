@@ -2,8 +2,8 @@
 // attaches a storage deposit. The live adapter exposes them through the optional `limits()` method that
 // specs/G4b-adopt-g5.md adds to WorldworksApi; until types.ts has it, we read it defensively here.
 import { useSyncExternalStore } from 'react';
-import { api } from '../api';
-import type { Yocto } from '../api/types';
+import { api } from '../api/index.js';
+import type { Yocto } from '../api/types.js';
 
 export type Limits = { orderFee: Yocto; publishDeposit: Yocto; rate: string; epochBudgetWei: string; epochRemainingWei: string; maxWeiPerPayout?: string };
 type WithLimits = { limits?: () => Promise<Limits> };

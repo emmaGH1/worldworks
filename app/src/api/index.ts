@@ -1,20 +1,21 @@
+/// <reference types="vite/client" />
 // Picks the API implementation once at startup.
 // live.ts (written separately) is loaded lazily and only when VITE_CONTRACT_ID is set; if it does not
 // exist yet, import.meta.glob returns nothing and we fall back to the mock, which the UI labels "MOCK DATA".
 import init from '../engine/pkg/worldworks_engine_wasm.js';
-import { mockApi } from './mock';
-import type { WorldworksApi } from './types';
-import type { Limits } from '../lib/limits';
+import { mockApi } from './mock.js';
+import type { WorldworksApi } from './types.js';
+import type { Limits } from '../lib/limits.js';
 
 /** Optional methods added by specs/G4b-adopt-g5.md; read defensively until types.ts carries them. */
 type Extras = { limits?: () => Promise<Limits> };
 
-export type { WorldworksApi } from './types';
+export type { WorldworksApi } from './types.js';
 
 let impl: WorldworksApi = mockApi;
 let fallbackReason = '';
 
-const liveModules = import.meta.glob('./live.ts');
+const liveModules = import.meta.env ? import.meta.glob('./live.ts') : {};
 
 function pickLive(mod: Record<string, unknown>): WorldworksApi | null {
   const isApi = (x: unknown): x is WorldworksApi => !!x && typeof x === 'object' && typeof (x as WorldworksApi).order === 'function';
@@ -38,6 +39,7 @@ export async function initApi(): Promise<WorldworksApi> {
         if (live) impl = live;
         else fallbackReason = 'The live adapter did not export an API.';
       } catch (e) {
+        if(/dynamically imported module|Importing a module script failed|ChunkLoadError|Loading chunk|Failed to load module script/i.test(String(e))) throw e;
         fallbackReason = `The live adapter failed to load: ${(e as Error).message}`;
       }
     }
@@ -59,9 +61,12 @@ export const api: WorldworksApi & Required<Extras> = {
   preview: (doc, recipient) => impl.preview(doc, recipient),
   publish: (id, doc) => impl.publish(id, doc),
   getMachine: id => impl.getMachine(id),
-  order: (id, recipient) => impl.order(id, recipient),
-  customerOrder: id => impl.customerOrder(id),
+  order: (id, recipient, orderId) => impl.order(id, recipient, orderId),
+  customerOrder: (id, orderId) => impl.customerOrder(id, orderId),
   approve: (id, orderId) => impl.approve(id, orderId),
+  balance: () => impl.balance(),
+  getOrder: (id, orderId) => impl.getOrder(id,orderId),
+  retrySignature: id => impl.retrySignature?.(id) ?? Promise.resolve(),
   getPayout: id => impl.getPayout(id),
   relay: id => impl.relay(id),
   contractInfo: () => impl.contractInfo(),

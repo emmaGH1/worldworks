@@ -74,7 +74,7 @@ The Portal step has real network waits. Measured in take 1: Serve → order done
 
 ### Capture method (as built)
 
-The script is [`app/ui-tests/record-demo.mjs`](../../app/ui-tests/record-demo.mjs). Differences from the first plan, all forced by the machine or by what the take showed:
+The script is [`app/ui-tests/game-mock.mjs`](../../app/ui-tests/game-mock.mjs). Differences from the first plan, all forced by the machine or by what the take showed:
 
 - **Viewport 1440×810 CSS px at device scale 4/3**, so the screencast is exactly 1920×1080 but UI text is a third larger than at a 1920 px viewport (legible at 78% stage scale on a phone). Bounding boxes in `marks.json` are CSS px; multiply by 4/3 for video px.
 - **No JPEG frames on disk.** CDP `Page.startScreencast` JPEG frames (quality 92) are piped straight into ffmpeg as constant 30 fps H.264 (CRF 17), each frame held until Chrome's next frame timestamp. The root disk had ~300 MB free when work started; one take is ~37 MB. No Playwright WebM backup is recorded.
@@ -84,11 +84,11 @@ The script is [`app/ui-tests/record-demo.mjs`](../../app/ui-tests/record-demo.mj
 - Viewport-only stills `stills/live-0*.png` (no fullPage screenshots, which would resize the viewport inside the recording) feed `docs/design/screens/live-*.png`.
 
 ```sh
-# from app/: live API + live build (VITE_CONTRACT_ID set), as in flow-live.mjs / EVIDENCE-ui-live.md
+# from app/: live API + live build (VITE_CONTRACT_ID set), as in game-live.mjs / EVIDENCE-ui-live.md
 API_PORT=3009 node --env-file=/opt/ww-secrets/live.env --import tsx scripts/dev-api.ts
 VITE_CONTRACT_ID=ww-portal-261112.testnet VITE_RELAYER_URL=http://127.0.0.1:3009 npx vite build --outDir /data/tmp/ww-demo/dist-live
 npx vite preview --outDir /data/tmp/ww-demo/dist-live --host 127.0.0.1 --port 4202 --strictPort
-UI_BASE=http://127.0.0.1:4202 INSTABOX_HEADLESS=1 DEMO_OUT=/opt/ww-video/take-1 node ui-tests/record-demo.mjs
+UI_BASE=http://127.0.0.1:4202 INSTABOX_HEADLESS=1 DEMO_OUT=/opt/ww-video/take-1 node ui-tests/game-mock.mjs
 ```
 
 **Source time of a mark** = `mark.epoch − clips[label].t0` from `marks.json`.
@@ -214,8 +214,8 @@ Never on screen or in VO: immutable, no admin can move funds, exclusive signing 
 
 ## 8. Take checklist
 
-1. Funds checked (sponsor NEAR, treasury Sepolia ETH); live API healthy; `flow-live.mjs` passed today.
-2. `node ui-tests/record-demo.mjs` → `RECORDED` line, no `drag-fallback`, no unexpected Portal status in `marks.json`.
+1. Funds checked (sponsor NEAR, treasury Sepolia ETH); live API healthy; `game-live.mjs` passed today.
+2. `node ui-tests/game-mock.mjs` → `RECORDED` line, no `drag-fallback`, no unexpected Portal status in `marks.json`.
 3. Build MP4s, look at one frame per shot.
 4. Fill the shot table with real mark times; fill `sign_wait_s`, `app_wait_s`, `record_date`, explorer URLs.
 5. Build, `check`, `snapshot --review`, preview, render both cuts.

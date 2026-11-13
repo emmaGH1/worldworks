@@ -1,9 +1,10 @@
 // /m/:machineId — any published machine as a standalone checkout: the same island in the game's visual language,
 // a pay button that places a REAL order from a sponsored testnet session, and the same Portal sequence.
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { submitOrder, finishOrder, pendingOrder, canPay, fundingMessage } from '../lib/orders';
 import { api } from '../api';
 import type { MachineDoc, OrderResult, TxRef } from '../api/types';
-import { addRow, ensureSession, trackPayout, useApp } from '../lib/store';
+import { addRow, ensureSession, getState, retryRelay, updateRow, trackPayout, useApp } from '../lib/store';
 import { loadLimits, useLimits } from '../lib/limits';
 import { navigate } from '../lib/router';
 import { describe, hasPortal, price, PREVIEW_RECIPIENT, type Machine } from '../lib/machine';
@@ -29,7 +30,9 @@ export function AppPage({ machineId }: { machineId: string }) {
   const [recipient, setRecipient] = useState(DEMO_RECIPIENT);
   const [paying, setPaying] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [receipts, setReceipts] = useState<Receipt[]>([]);
+  const receiptKey=`ww-receipts-${api.mode}-${machineId}`;
+  const [receipts, setReceipts] = useState<Receipt[]>(()=>{try{return JSON.parse(localStorage.getItem(receiptKey) ?? '[]');}catch{return [];}});
+  useEffect(()=>{localStorage.setItem(receiptKey,JSON.stringify(receipts));for(const r of receipts)if(!r.result.observation)finishOrder(r.result.orderId);},[receipts]);
 
   useEffect(() => {
     const w = createWorld(canvasRef.current!, tagsRef.current!, {
@@ -76,8 +79,10 @@ export function AppPage({ machineId }: { machineId: string }) {
       const s = await ensureSession();
       if (!s) throw new Error('No testnet account yet. Reload to try again.');
       const rec = portal ? recipient.trim() : undefined;
-      const result = await api.order(machineId, rec);
-      addRow({ kind: 'order', title: `Bought from ${displayName(machineId)}`, detail: [`machine ${machineId}`, ...(fee !== null ? [`price ${near(total)} + storage fee ${near(fee)}`] : [])], amount: near(fee !== null ? total + fee : total), status: 'confirmed', statusText: result.observation === 'unknown' ? 'sent · outcome unknown' : 'confirmed', tx: result.tx });
+      if(!pendingOrder() && (!fee || !canPay(await api.balance(),total,fee))) throw Error(fundingMessage);
+      const result = await submitOrder(machineId,false,rec,r=>{setErr('Outcome unknown — checking…');if(r) setReceipts(rs=>[{result:r,at:Date.now()},...rs.filter(x=>x.result.orderId!==r.orderId)]);});
+      setErr(null);
+      addRow({ kind: 'order', orderId:result.orderId, title: `Bought from ${displayName(machineId)}`, detail: [`machine ${machineId}`, ...(fee !== null ? [`price ${near(total)} + storage fee ${near(fee)}`] : [])], amount: near(fee !== null ? total + fee : total), status: result.observation === 'unknown' ? 'unknown' : 'confirmed', statusText: result.observation === 'unknown' ? 'sent · outcome unknown' : 'confirmed', tx: result.tx });
       let payoutId: string | undefined;
       if (result.observation === 'unknown') world.realCustomerLeave();
       else {
@@ -89,7 +94,7 @@ export function AppPage({ machineId }: { machineId: string }) {
           trackPayout(e.payoutId, row);
         }
       }
-      setReceipts(r => [{ result, at: Date.now(), recipient: rec, payoutId }, ...r]);
+      setReceipts(r => [{ result, at: Date.now(), recipient: rec, payoutId }, ...r.filter(x=>x.result.orderId!==result.orderId)]);
       void reload();
     } catch (e) {
       world.realCustomerLeave();
@@ -98,11 +103,18 @@ export function AppPage({ machineId }: { machineId: string }) {
     setPaying(false);
   };
 
+  useEffect(()=>{if(machine && world && pendingOrder()?.machineId===machineId) void pay();},[machine,world]);
+
   const approve = async (orderId: string) => {
     try {
       const res = await api.approve(machineId, orderId);
       const tx = (res as { tx?: TxRef }).tx ?? (res as unknown as TxRef);
       const effects = (res as { effects?: OrderResult['effects'] }).effects ?? [];
+      if(res.observation === 'unknown') {
+        const row=addRow({kind:'approve',title:`Approval submitted for ${orderId}`,status:'unknown',statusText:'Submitted — result not confirmed yet',tx});
+        setReceipts(rs=>rs.map(r=>r.result.orderId===orderId?{...r,result:{...r.result,observation:'unknown'},approved:tx}:r));
+        void row;return;
+      }
       world?.releaseHeld();
       for (const e of effects) {
         if (e.kind !== 'external') continue;
@@ -115,6 +127,27 @@ export function AppPage({ machineId }: { machineId: string }) {
       void reload();
     } catch (e) { setReceipts(rs => rs.map(r => (r.result.orderId === orderId ? { ...r, approveErr: (e as Error).message } : r))); }
   };
+
+  useEffect(()=>{
+    const unresolved=receipts.filter(r=>r.approved && r.result.observation==='unknown');
+    if(!unresolved.length)return;
+    let cancelled=false;
+    const timer=setInterval(async()=>{
+      for(const receipt of unresolved) {
+        try {
+          const found=await api.getOrder(machineId,receipt.result.orderId);
+          if(cancelled || !found || found.pending)continue;
+          for(const effect of found.effects)if(effect.kind==='external') {
+            const existing=getState().ledger.find(r=>r.payoutId===effect.payoutId);
+            const row=existing?.id ?? addRow({kind:'payout',title:'Portal → Sepolia',status:'pending',payoutId:effect.payoutId,tx:receipt.approved});trackPayout(effect.payoutId,row);
+          }
+          for(const row of getState().ledger)if(row.kind==='approve' && row.tx?.hash===receipt.approved?.hash)updateRow(row.id,{status:'confirmed',statusText:'Approval observed on chain'});
+          setReceipts(rs=>rs.map(r=>r.result.orderId===found.orderId?{...r,result:{...found,tx:r.result.tx},payoutId:found.effects.find(e=>e.kind==='external')?.payoutId}:r));
+        } catch {}
+      }
+    },2000);
+    return()=>{cancelled=true;clearInterval(timer);};
+  },[receipts,machineId]);
 
   const vaultTotal = loaded ? Object.values(loaded.vaults).reduce((a, v) => a + BigInt(v), 0n) : 0n;
   const shares = (preview?.effects ?? []).map(e => ({
@@ -196,10 +229,11 @@ export function AppPage({ machineId }: { machineId: string }) {
 
 function ReceiptView({ r, world, total, fee, workerRole, onApprove, sessionAccount }: { r: Receipt; world: World | null; total: bigint; fee: bigint | null; workerRole?: string; onApprove: (id: string) => void; sessionAccount?: string }) {
   usePortalSync(world, r.result.orderId, r.payoutId ?? null);
+  const payout=useApp(s=>r.payoutId?s.payouts[r.payoutId]:undefined);
   return (
     <article className="g-receipt" data-testid="app-receipt">
-      <header><span className="g-ok-dot" aria-hidden /><div><b>Paid {fee !== null ? near(total + fee) : near(total)} NEAR</b><small>order {r.result.orderId} · {new Date(r.at).toLocaleTimeString()}</small></div><Tx tx={r.result.tx} label="NEAR tx" /></header>
-      {r.result.observation === 'unknown' && <p className="warn">Sent, but the outcome could not be read. Check the explorer before paying again.</p>}
+      <header><span className={r.result.observation==='unknown'?'g-neutral-dot':'g-ok-dot'} aria-hidden /><div><b>{r.result.observation === 'unknown' ? 'Submitted — result not confirmed yet' : `Paid ${fee !== null ? near(total + fee) : near(total)} NEAR`}</b><small>order {r.result.orderId} · {new Date(r.at).toLocaleTimeString()}</small></div><Tx tx={r.result.tx} label="NEAR tx" /></header>
+      {r.result.observation === 'unknown' && <p className="warn">Submitted — result not confirmed yet. Checking this order before another payment.</p>}
       <ul>
         {r.result.effects.map((e, i) => (
           <li key={i}>
@@ -209,10 +243,11 @@ function ReceiptView({ r, world, total, fee, workerRole, onApprove, sessionAccou
           </li>
         ))}
         {r.result.pending && !r.approved && <li className="g-held">The rest is held until the Worker approves.{workerRole && <> You are “{workerRole}”. <button type="button" className="g-mini" onClick={() => onApprove(r.result.orderId)}>Approve as {workerRole}</button></>}</li>}
-        {r.approved && <li>Approved. <Tx tx={r.approved} label="approval tx" /></li>}
+        {r.approved && <li>{r.result.observation==='unknown'?'Approval submitted — result not confirmed yet.':'Approved.'} <Tx tx={r.approved} label="approval tx" /></li>}
         {r.approveErr && <li className="warn">Approval failed: {r.approveErr}</li>}
       </ul>
       {r.payoutId && <PortalCard payoutId={r.payoutId} />}
+      {r.payoutId && payout?.relayError && payout.status!=='signed' && <p className="g-muted" role="status">{payout.relayError} <button className="g-mini" onClick={()=>retryRelay(r.payoutId!)}>Retry</button></p>}
     </article>
   );
 }

@@ -6,9 +6,9 @@ import session from '../api/session.js';
 import customer from '../api/customer.js';
 import { confirmationClients } from '../api/payout.js';
 import { keccak256 } from 'viem';
-import { assemble, client } from '../api/portal.js';
-import { body, quota, type Request } from '../api/server-common.js';
-import { Account, KeyPair, CONTRACT, placeOrder } from '../api/near.js';
+import { assemble, client } from '../api/_portal.js';
+import { body, quota, type Request } from '../api/_server-common.js';
+import { Account, KeyPair, CONTRACT, placeOrder } from '../api/_near.js';
 function response() {
   const result = {code:0,data:null as any,setHeader:(_n:string,_v:string)=>{},status:(code:number)=>({json:(data:any)=>{result.code=code;result.data=data;}})};
   return result;
@@ -57,14 +57,14 @@ test('per-IP session rate limit rejects sixth request and method guard rejects G
 });
 
 test('structured receipt effects preserve names that broke trace parsing and never query post-order history',async()=>{
-  const {receiptResult}=await import('../api/near.js');
+  const {receiptResult}=await import('../api/_near.js');
   const data={pending:false,effects:[{kind:'vault',name:'a: "vault"',amount:'2'},{kind:'external',payoutId:'7',recipient:'0x'+'11'.repeat(20),wei:'1',fee:'1'}],trace:['a: "vault": 2 yoctoNEAR']};
   const result={transaction_outcome:{outcome:{receipt_ids:['submit']}},receipts_outcome:[{id:'submit',outcome:{status:{SuccessValue:Buffer.from(JSON.stringify(data)).toString('base64')}}},{id:'sign',outcome:{status:{SuccessValue:'dHJ1ZQ=='}}}]};
   assert.deepEqual(receiptResult(result,'submit_order'),data);
   assert.equal(receiptResult({},'submit_order'),undefined);
 });
 test('unsigned target has its own state after signed predecessors advance',async()=>{
-  const {relayPredecessors}=await import('../api/portal.js');
+  const {relayPredecessors}=await import('../api/_portal.js');
   const sent:number[]=[];
   assert.deepEqual(await relayPredecessors(0,2,async nonce=>({nonce,status:nonce===2?'awaiting_signature':'signed'}),async p=>{sent.push(p.nonce);}),{status:'waiting_for_signature',waitingPayoutId:'2'});
   assert.deepEqual(sent,[0,1]);
@@ -87,7 +87,7 @@ test('session validation precedes quota; repeat idempotency key neither creates 
   let exists=false,creates=0,balance=100_000_000_000_000_000_000_000_000n;
   globalThis.fetch=async()=>new Response(JSON.stringify(exists?{result:{amount:'9000000000000000000000000'}}:{error:{message:'UNKNOWN_ACCOUNT'}}));
   Account.prototype.getState=async()=>({balance:{total:balance,available:balance}}) as any;
-  Account.prototype.createAccount=async()=>{creates++;exists=true;balance-=3_000_000_000_000_000_000_000_000n;return {transaction:{hash:'fixture-session-hash'}} as any;};
+  Account.prototype.createAccount=async()=>{creates++;exists=true;balance-=4_500_000_000_000_000_000_000_000n;return {transaction:{hash:'fixture-session-hash'}} as any;};
   try {
     for(let n=0;n<8;n++) {const r=response();await session({method:'POST',body:{publicKey:'bad'},socket:{remoteAddress:'idempotency-test'}},r);assert.equal(r.code,400);}
     const req={method:'POST',body:{publicKey,idempotencyKey:publicKey},socket:{remoteAddress:'idempotency-test'}};
@@ -108,7 +108,7 @@ test('placeOrder returns submitted tx/order when observation is absent; no histo
   globalThis.fetch=async(_url,opts)=>{
     assert(!submitted,'post-submit observation must not query history');
     const method=JSON.parse(String(opts?.body)).params.method_name;calls.push(method);
-    const data=method==='get_machine'?{machine:{nodes:{slot:{type:'CoinSlot',price:'2',output:'bad:node'},'bad:node':{type:'Vault',name:'v'}}}}:{order_storage_fee:'1320000000000000000000000'};
+    const data=method==='get_order'?null:method==='get_machine'?{machine:{nodes:{slot:{type:'CoinSlot',price:'2',output:'bad:node'},'bad:node':{type:'Vault',name:'v'}}}}:{order_storage_fee:'1320000000000000000000000'};
     return new Response(JSON.stringify({result:{result:[...Buffer.from(JSON.stringify(data))]}}));
   };
   try {
@@ -117,11 +117,11 @@ test('placeOrder returns submitted tx/order when observation is absent; no histo
     assert.equal(result.tx.hash,'submitted-hash');assert.match(result.orderId,/^[a-z0-9-]{36}$/);
     assert.deepEqual(result.effects,[]);assert.match(result.trace[0],/observation unavailable/);
     assert.equal(result.observation,'unknown');assert.equal(result.pending,false);
-    assert.deepEqual(calls,['get_machine','get_limits']);
+    assert.deepEqual(calls,['get_machine','get_order','get_limits']);
   } finally {globalThis.fetch=prior;}
 });
 test('aggregate spend caps use account balance deltas and reject before sending',async()=>{
-  const {withSpend,CUSTOMER_HOURLY_CAP}=await import('../api/server-common.js');
+  const {withSpend,CUSTOMER_HOURLY_CAP}=await import('../api/_server-common.js');
   let balance=100_000_000_000_000_000_000_000_000n,sent=0;
   const who={accountId:'spend-fixture.testnet',getState:async()=>({balance:{total:balance}})} as any;
   await withSpend('CUSTOMER',who,CUSTOMER_HOURLY_CAP,async()=>{sent++;balance-=CUSTOMER_HOURLY_CAP-1n;});
@@ -131,7 +131,7 @@ test('aggregate spend caps use account balance deltas and reject before sending'
 
 test('approve surfaces Portal effects from the approve receipt; undecodable receipt is observation unknown, not pending',async()=>{
   const {LiveApi}=await import('../src/api/live.js');
-  const {Account}=await import('../api/near.js');
+  const {Account}=await import('../api/_near.js');
   const mem=new Map<string,string>();
   const storage={getItem:(k:string)=>mem.get(k)??null,setItem:(k:string,v:string)=>{mem.set(k,v);},removeItem:(k:string)=>{mem.delete(k);}};
   const api=new LiveApi(storage,'');

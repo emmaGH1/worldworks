@@ -44,7 +44,7 @@ This command reads NEAR state and Sepolia RPCs; it does not broadcast. This draf
 | Published graphs execute in a deterministic Rust interpreter; app preview uses its WASM build. | [engine](../engine/src/lib.rs), [WASM wrapper](../engine-wasm/src/lib.rs), [contract](../contract/src/lib.rs) | [engine tests](../engine/tests/engine.rs), [hardening evidence](EVIDENCE-hardening.md) |
 | Contract constructs Sepolia EIP-1559 transfers: fixed chain, empty calldata, 21,000 gas, allocated nonce and snapshotted fees. Retries use stored payloads. | [contract](../contract/src/lib.rs) | [Portal evidence](EVIDENCE-portal.md), [hardening evidence](EVIDENCE-hardening.md) |
 | Chain Signatures signs for derivation path `worldworks/portal/sepolia/v1`, through `v1.signer-prod.testnet`. | [contract](../contract/src/lib.rs) | [Portal evidence](EVIDENCE-portal.md), [receipt evidence](EVIDENCE-sepolia.md) |
-| Keyless EVM relayer verifies unsigned bytes and recovered sender, then broadcasts in nonce order. NEAR sponsor/customer services do hold NEAR keys. | [Portal relay implementation](../app/api/portal.ts), [CLI](../app/scripts/relay.ts) | [live evidence](EVIDENCE-live.md), [relay tests](../app/scripts/relay.test.ts) |
+| Keyless EVM relayer verifies unsigned bytes and recovered sender, then broadcasts in nonce order. NEAR sponsor/customer services do hold NEAR keys. | [Portal relay implementation](../app/api/_portal.ts), [CLI](../app/scripts/relay.ts) | [live evidence](EVIDENCE-live.md), [relay tests](../app/scripts/relay.test.ts) |
 | Confirmation requires transaction and successful receipt agreement at two different RPC hosts, including sender, recipient, value, nonce and block hash. | [confirmation endpoint](../app/api/payout.ts) | [Sepolia evidence](EVIDENCE-sepolia.md), [live UI evidence](EVIDENCE-ui-live.md) |
 
 ## Real versus simulated
@@ -115,7 +115,7 @@ npm run preview -- --host 127.0.0.1 --port 4197 --strictPort
 In another shell, from `app/`:
 
 ```sh
-UI_BASE=http://127.0.0.1:4197 node ui-tests/flow.mjs
+UI_BASE=http://127.0.0.1:4197 node ui-tests/game-mock.mjs
 ```
 
 Expect **MOCK DATA**, a repaired machine, a simulated sale, mock Portal progression and a passing test with no console errors. The UI runner currently requires `playwright-core` at `/opt/ww-shot/node_modules/playwright-core` and Chromium at `/data/home/.cache/ms-playwright/chromium-1243/chrome-linux64/chrome` (see [helper](../app/ui-tests/common.mjs)). These are environment-specific prerequisites, not installed by `npm ci`; a portable clean-checkout UI bootstrap remains a gap. Build warnings about Motion directives and bundle size do not prevent completion. `npm ci` was not rerun during this documentation-only pass.

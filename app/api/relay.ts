@@ -1,4 +1,4 @@
-import { relay } from './portal.js';
+import { relay } from './_portal.js';
 // Structural Node request/response types work with Vercel without runtime imports.
 export default async function handler(req: {method?: string; body?: unknown}, res: {
   status(code: number): {json(body: unknown): unknown}; setHeader(name: string, value: string): unknown;

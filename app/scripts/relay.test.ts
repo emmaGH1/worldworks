@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { recoverTransactionAddress, parseTransaction, keccak256 } from 'viem';
-import { assemble, broadcast, relayPredecessors } from '../api/portal.js';
+import { assemble, broadcast, relayPredecessors } from '../api/_portal.js';
 const record = JSON.parse(readFileSync(new URL('./portal-signature-fixture.json',import.meta.url),'utf8'));
 const original = record.payout;
 test('live signature recovers contract-derived address and fixes transaction fields', async () => {

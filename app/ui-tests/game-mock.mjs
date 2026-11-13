@@ -10,13 +10,13 @@ const OUT = new URL('../../docs/design/screens/', import.meta.url).pathname;
 mkdirSync(OUT, { recursive: true });
 const errors = [];
 const assert = (ok, msg) => { if (!ok) throw new Error('FAIL: ' + msg); console.log('ok:', msg); };
-const shot = async (page, name) => { await page.screenshot({ path: OUT + name }); console.log('still: docs/design/screens/' + name); };
+const shot = async (page, name) => { if(process.env.UI_SHOTS==='0')return; await page.screenshot({ path: OUT + name }); console.log('still: docs/design/screens/' + name); };
 const state = page => page.evaluate(() => window.__game.state());
 const wstate = page => page.evaluate(() => window.__ww.state());
 const advance = (page, s) => page.evaluate(sec => window.__ww.advance(sec), s);
 
 async function open(page, path) {
-  await page.goto(BASE + path);
+  await page.goto(BASE + (process.env.UI_LOWFX==='1'?path.replace('fx=high','lowfx=1'):path));
   await page.waitForFunction(() => window.__ww && (window.__game || document.querySelector('[data-testid="checkout"]')), null, { timeout: 30000 });
   await page.evaluate(() => window.__ww.pause(true));
 }
@@ -158,7 +158,8 @@ try {
   await shot(page, 'game-09-app.png');
   await page.click('[data-testid="app-pay"]');
   await page.waitForSelector('[data-testid="app-receipt"]', { timeout: 20000 });
-  await until(page, async () => (await wstate(page)).real.some(r => r.shown === 'swirl'), 'app Portal swirl', 20000, 0.4);
+  await until(page, async () => (await wstate(page)).real.some(r => r.shown !== 'none'), 'app Portal reacts after coins arrive', 90000, 0.6);
+  assert(!(await wstate(page)).real.some(r=>r.shown==='popped') || (await portalStatus(page))==='confirmed','app never pops before confirmed');
   await shot(page, 'game-10-app-paying.png');
   await until(page, async () => (await portalStatus(page)) === 'confirmed', 'app confirmed', 60000, 0.4);
   await until(page, async () => (await wstate(page)).popped.length > 0, 'app gem pop', 30000, 0.3);
@@ -207,6 +208,32 @@ try {
   await advance(ph, 2);
   await level2Run(ph, 'game-p-', true);
   await pctx.close();
+
+  // Surviving-layer recovery: standalone checkout observes an unknown result without re-spending.
+  // Predecessor/read-error policy and customer 504 recovery are covered in gamefix.test.ts;
+  // the jobs rewrite owns game-specific Close/copy/run persistence.
+  const unknownCtx=await browser.newContext({viewport:{width:1440,height:900}});
+  const up=await unknownCtx.newPage();watchErrors(up,errors);
+  await up.goto(BASE+'/m/lemonade?webgl=0&mockCase=orderUnknown');
+  await up.waitForFunction(()=>!document.querySelector('[data-testid="app-pay"]')?.disabled);
+  await up.click('[data-testid="app-pay"]');
+  await up.waitForSelector('[data-testid="app-receipt"]');
+  assert((await up.innerText('[data-testid="app-receipt"]')).includes('Submitted — result not confirmed yet'),'unknown checkout receipt stays neutral');
+  await up.waitForFunction(()=>document.querySelector('[data-testid="app-receipt"] header b')?.textContent.startsWith('Paid'),null,{timeout:30000});
+  await up.reload();await up.waitForSelector('[data-testid="app-receipt"]');
+  const orders=await up.evaluate(()=>Object.keys(JSON.parse(localStorage.getItem('ww-mock-v2')).orders));
+  assert(orders.length===1,'unknown result and reload restore one paid order');
+  await unknownCtx.close();
+
+  const flat=await browser.newContext({viewport:{width:1440,height:900}});
+  const fp=await flat.newPage();watchErrors(fp,errors);
+  await fp.goto(BASE+'/m/lemonade?webgl=0');
+  await fp.waitForSelector('canvas[data-fallback="2d"]');
+  await fp.waitForFunction(()=>!document.querySelector('[data-testid="app-pay"]')?.disabled);
+  await fp.click('[data-testid="app-pay"]');await fp.waitForSelector('[data-testid="app-receipt"]',{timeout:20000});
+  assert((await fp.innerText('[data-testid="app-receipt"]')).includes('Paid'),'2D fallback checkout can pay');
+  await fp.evaluate(()=>{history.pushState({},'', '/m/%E0%A4%A?webgl=0');dispatchEvent(new PopStateEvent('popstate'));});await fp.waitForSelector('[data-testid="app-missing"]');
+  assert(true,'malformed encoded route does not crash');await flat.close();
 
   // keyboard-only placement on a fresh context
   const kctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });

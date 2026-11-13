@@ -1,7 +1,7 @@
-import { ACCOUNT, view, assemble, client } from './portal.js';
+import { ACCOUNT, view, assemble, client } from './_portal.js';
 import { createPublicClient, http, keccak256, recoverTransactionAddress } from 'viem';
 import { sepolia } from 'viem/chains';
-import type { Request, Response } from './server-common.js';
+import type { Request, Response } from './_server-common.js';
 export const confirmationUrls = [process.env.SEPOLIA_CONFIRM_RPC_1 ?? 'https://rpc.sepolia.ethpandaops.io',process.env.SEPOLIA_CONFIRM_RPC_2 ?? 'https://sepolia.gateway.tenderly.co'];
 if(new URL(confirmationUrls[0]).hostname === new URL(confirmationUrls[1]).hostname) throw Error('Confirmation requires independent RPC hosts');
 export const confirmationClients = confirmationUrls.map(url=>createPublicClient({chain:sepolia,transport:http(url,{timeout:15000,retryCount:1})}));
@@ -46,7 +46,7 @@ export async function confirm(payoutId:string) {
   return result;
 }
 async function clientBlock() {
-  const {rpc} = await import('./portal.js');
+  const {rpc} = await import('./_portal.js');
   return (await rpc('block',{finality:'final'})).header.height as number;
 }
 export default async function handler(req:Request,res:Response) {

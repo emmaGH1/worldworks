@@ -309,8 +309,61 @@ Desktop 1440×900 and phone 390×844 @2x. MOCK stills carry the MOCK DATA pill. 
 - **60 fps on real hardware is not verified.** This VM renders in software at about 5 fps, which is why the stills use deterministic stepping. The game has not been opened on a real phone GPU. Auto-fallback is in place but untested on real devices.
 - **The live acceptance run is desktop only.** Phone stills are mock.
 - **Real-time timing on a slow GPU**: if the device is slow, the Portal status can run ahead of the coin animation. The world then shows swirl → beam back to back once the coins arrive (≥1.2 s swirl). It never shows a state the API has not reached.
-- **Old UI tests are obsolete**: `ui-tests/flow*.mjs`, `screens.mjs`, `app-live.mjs` and `record-demo.mjs` drive the old React Workshop, which is no longer routed. They will fail and should be retired or rewritten against `game-*.mjs`.
+- **Old UI tests are obsolete**: `ui-tests/flow*.mjs`, `game-mock.mjs`, `game-live.mjs` and `game-mock.mjs` drive the old React Workshop, which is no longer routed. They will fail and should be retired or rewritten against `game-*.mjs`.
 - **The `/m/:id` 3D scene is a fixed template.** Parts are toggled from the machine's node types; machines with several Splitters or Gates are not laid out as their actual graph.
 - **Sound** is the concept's WebAudio synth, muted by default, placeholder quality.
 - **Bundle**: the lazy `game` chunk is 163 kB gzip (three.js). It is not split further.
 - **`app/concepts/ui2/`** (source plus an old `dist/`) is still in the tree, untracked. Only its `node_modules` was removed.
+
+## GAME-1-fix
+
+The orchestrator changed scope to a puzzle/jobs rewrite during verification. Final work is limited to the surviving API, store, standalone checkout, route boundary, world lifecycle and cleanup layers. `GamePage.tsx` and `hud.tsx` were restored to `976cee4` so Opus can replace them without these edits. Items 6/7 and game-specific copy, Close/level controls and run persistence are deferred to that rewrite. No contract changes, commits or pushes.
+
+| Finding | Fix in surviving layer | File:line | Test |
+|---|---|---|---|
+| Earlier nonce stuck, unlimited retries, silent read failures | Advance `waitingPayoutId`; gate automatic signature retries by 15 seconds and cap at two per payout/page; stop after five failures with exposed error + manual retry; publish reactive state/subscription | `app/src/lib/store.ts:79`, `app/src/lib/store.ts:46` | predecessor, retry-bound, five-failures/manual-restart unit tests |
+| Customer duplicates and ambiguous HTTP outcome | Browser UUID through API; contract-state existence check before spending; durable intent/result and read-only recovery after network/5xx; check HTTP and content type before parsing JSON | `app/src/lib/orders.ts:12`, `app/api/customer.ts:6`, `app/api/_near.ts:45`, `app/src/api/live.ts:14` | repeated-ID sends once; customer 504 resolves without a second submission; HTTP/content-type tests |
+| Unknown observations appear confirmed | Neutral ledger status + order ID; unknown checkout/approval receipt text; resolve by contract order and structured external payout records; preserve known transaction link | `app/src/lib/store.ts:13`, `app/src/lib/orders.ts:30`, `app/src/game/AppPage.tsx:113` | unknown/link recovery test; approve observation fixture; standalone unknown mock |
+| Route/chunk/WebGL crashes | Per-route boundaries with reload; safe decoding; exported `webglUnavailable` flag updated by `createWorld`; 2D fallback retains checkout and controls | `app/src/main.tsx:17`, `app/src/game/world.ts:1093` | forced-2D checkout and malformed client route mock; typecheck/build |
+| Exhausted session funds | Fresh spendable balance includes price, order fee and gas margin; clear explanation; new grants/mock set to 4.5 NEAR | `app/src/lib/orders.ts:4`, `app/src/game/AppPage.tsx:81`, `app/api/session.ts:6` | balance boundaries/funding unit tests; actual live checkout purchase |
+| Reload loses tracking or repeats spend | Persist ledger, order intent/result and checkout receipts; acknowledge result only after UI persistence; restore trackers; deduplicate order/payout rows | `app/src/lib/orders.ts:12`, `app/src/lib/store.ts:59`, `app/src/game/AppPage.tsx:33` | durable-result/no-second-spend unit test; ledger dedup test; standalone reload mock |
+| GPU resource leaks | Collect active/retired geometries, materials, textures; dispose renderer and force context loss | `app/src/game/world.ts:78`, `app/src/game/world.ts:1075` | mock route transitions; typecheck/build |
+| Helpers treated as endpoints | `_near.ts`, `_portal.ts`, `_server-common.ts`; imports updated; Vercel SPA rewrite still excludes `/api/*` | `app/api/_near.ts:1`, `app/api/_portal.ts:1`, `app/vercel.json:10` | API typecheck, build and live local API |
+| Obsolete UI/tests | Remove Workshop/MachineApp, exclusive components and old UI scripts; keep common/live-common and update README/docs references | `app/src/pages/`, `app/ui-tests/`, `README.md:113` | typechecks/build and game mock |
+
+Game/jobs handoff:
+
+- Import `submitOrder`, `pendingOrder`, `finishOrder`, `trackPayout`, `retryRelay`, `useApp`/`subscribeState` from the store. Persist the job run's order ID, payout IDs and transaction links before `finishOrder(orderId)` acknowledges it. Resume an existing intent before any new spend.
+- Tracking survives component/level changes and `restoreLedger()` restarts unfinished payouts at boot. Keep Close and level switching enabled during payout tracking. Render `waitingPayoutId` as “waiting for an earlier payout #N”; render `relayError` for every phase and provide `retryRelay(id)` as manual Retry.
+- Treat unknown order/approval observations as neutral. Do not show supplier-paid/star completion without a confirmed external effect. Key job completion by mode and contract ID. These are game-layer responsibilities under the revised scope.
+- `webglUnavailable` is exported by `world.ts` and updated by `createWorld`; its returned fallback keeps the standalone checkout functional without WebGL.
+
+Recovery uses `get_order` plus structured `get_pending_external_payouts`. Historical vault/direct effects are not reconstructed from trace strings. A completely lost submit response may leave no recoverable transaction hash; no explorer link is fabricated. A missing order read does not prove failure, so another spend stays blocked while the outcome is unknown.
+
+Validation:
+
+- `npm run typecheck` and `npx tsc --noEmit -p api/tsconfig.json`: PASS.
+- `node --import tsx --test scripts/*.test.ts`: PASS, 32/32 tests.
+- Mock and pinned-live Vite builds: PASS (existing size/browser-externalization advisories).
+- The earlier full game-mock suite passed with zero console errors, including game-specific queue/Close/reload checks before those game edits were removed. The final scoped suite retains standalone unknown/reload, forced-2D checkout and malformed client route; its result is recorded below.
+- Software-rendered VM runs use `UI_LOWFX=1 UI_SHOTS=0`; assertions still require API confirmation before a visual payment pop. The original swirl-only assertion was timing-sensitive and now accepts the current API-driven phase. Generated screenshot overwrites were restored.
+- Interface detector: two pre-existing advisory bounce eases; appearance preserved.
+
+Exactly one live script invocation ran with the local dev API using `/opt/ww-secrets/live.env`. **The scope change to one order arrived after the script had already submitted its standalone order**; this invocation therefore placed two orders, and no further orders/runs were made. Both payouts confirmed with matching successful receipts on two independent RPCs, 3+ blocks deep. **RESULT: PASS; console errors: 0** (238.4 seconds).
+
+| Live action | Public evidence |
+|---|---|
+| Publish `lemon-ca78234e-36f08e99cf27` | [NEAR publish](https://testnet.near.rocks/tx/4k9k1NxR6GK7hAvE9RVdxAZoVBf788Y9E3KPVm8zeQzr) |
+| Seeded-customer order | [NEAR order](https://testnet.near.rocks/tx/HpLp2LYGkNx24ZbpUsyCvZ4iJjLiPPX6Y93HNryMWydb) |
+| Portal payout 27: 0.0001 Sepolia ETH | [Sepolia transfer](https://sepolia.etherscan.io/tx/0xbde42bb2245cba8879d85e173fa38c2e72b13ded23f362130a5e037f2fa4d79c) |
+| Standalone checkout order | [NEAR order](https://testnet.near.rocks/tx/Fz2AAiGhgjnmk1FN8ru4NL9eMxz5MBi7QpB1szFgdYEa) |
+| Portal payout 28: 0.0001 Sepolia ETH | [Sepolia transfer](https://sepolia.etherscan.io/tx/0x87168fde407b56e769d213517e75d8d1d2dfb7b74e0bf02e950039b489927b42) |
+
+The live run used the pre-handoff game UI and the final surviving API/store/checkout behavior. The final WebGL flag export is additive; no live run was repeated after the scope change.
+
+Final scoped verification after restoring GamePage/HUD:
+
+- `UI_BASE=http://localhost:4240 UI_LOWFX=1 UI_SHOTS=0 node ui-tests/game-mock.mjs`: **RESULT: PASS; console errors: 0**. Desktop/phone/keyboard flow, standalone unknown-result recovery and reload with exactly one mock order, WebGL-off checkout and safe malformed client route all passed.
+- Final source typechecks and all **32/32** unit tests passed again; final Vite artifact `/tmp/ww-gamefix-final` built successfully.
+- Focused checks against that final artifact passed: 2D checkout unknown → observed → reload still has one order, with zero console errors; an intentionally blocked lazy GamePage chunk displayed “New version available, reload” and a Reload button. The failed fetch in the latter check was intentional.
+- The store re-exports durable order helpers and exposes `subscribeState` alongside `useApp`/`getState`. Standalone checkout renders read-recovery Retry controls without modifying the shared HUD. Boot-time dynamic-chunk failures also expose Reload rather than silently switching to mock.

@@ -325,3 +325,7 @@
   .ww-game .g-portal-card { padding: 8px 9px; }
   .ww-game .pc-steps { margin: 6px 0 2px; }
 }
+
+/* Unobserved results carry no success or failure cue. */
+.lr.unknown .lr-st, .lr-st.unknown { color: var(--muted, #66716b); }
+canvas[data-fallback="2d"] { background: #3f979d; }
