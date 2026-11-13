@@ -40,10 +40,26 @@ All are simulated/MOCK; gold Real rows remain zero.
 
 ## Not done / limits
 
-- No deployment, commit, push, new live order, sponsored session or live gold-flag verification. The existing production URL still serves the previous deployment. Actual real-money totals continue to require confirmed receipts; this task adds no new chain evidence.
+- No deployment, commit, push, new live order, sponsored session or live gold-flag verification. Production was redeployed after this task; its bundle contains the GAME-7 controls. Actual real-money totals continue to require confirmed receipts; this task adds no new chain evidence.
 - No physical-phone performance or subjective audio listening test. Touch-hold is checked through synthetic touch pointer events; full gameplay uses desktop Chromium at phone dimensions. Existing normal-audio gesture checks were not rerun in this task.
 - Miniatures are simplified authored instanced geometry, not full editor mesh copies. Portal ring motion and belt flows illustrate activity; neither is proof of a real signature or payment. Factory Gate traffic follows the delivered preview; Test retains separate delivery/refund branches.
 - Fresh empty factories display demo motion but no demo earnings. The saved simulated economy runs only while the overview is visible; there is no background/offline income.
 - Tooltips use small DOM inspection targets over the scenes. Factory belt inspection points cover route segments rather than every pixel of each belt; the 2D factory keeps its accessible plot/counter grid and does not draw the 3D miniature inspector. Editor reasoning works in both rendering paths. Fine-grained hit areas can be small on phones; no claim of exhaustive physical-touch usability.
 - Baked shading is simplified plot-level blobs; no real-time shadows or postprocessing. Piles cap at 18 coins per house, customers at two per running plot; counters continue beyond those visual caps.
 - All-five screenshots do not contain every possible machine kind: the saved fixture has no Vault. Vault explanation is unit-tested; geometry is present but lacks a dedicated still. No exhaustive visual regression test of arbitrary custom friend layouts or malformed saved builds.
+
+## Audit fixes after GAME-7 (Claude Opus audit of `c73585d`)
+
+| Finding | Fix | Test |
+|---|---|---|
+| F2 blocked site storage crashed first load | `lsGet`/`lsSet` guards for the guide, hint and hint-dismiss keys in `JobsGame.tsx` | typecheck; manual review |
+| F3 You house Real total read 0 after reload | the player's account id is remembered per scope and used for the factory lookup; Real still requires confirmed receipts | existing real-total tests |
+| F4 touch sound unlock | unlock also on `pointerup`, `touchend`, `click` | not verified on a physical phone |
+| F6 coin piles emptied on scene rebuild | `setTotals` immediately after `createFactoryScene` | build |
+| F7 gold flag before a confirmed receipt | `confirmedPlots()` in `factory.ts`; shipped-but-unconfirmed plots get a neutral flag | `scripts/game7b.test.ts` |
+| F8 touch tooltip stuck | touch outside `[data-reason]` hides it | manual review |
+| F9 instance buffers not disposed | every `InstancedMesh` is registered for disposal | build |
+| F10 coin cap implicit | `Math.min(paths*2,160)` | build |
+| Docs | CLAIMS fast-forward/tooltip rows, README facts/files/owner_writes/dependencies, RULES sources, sound CREDITS | — |
+
+Not changed: F5 (per-frame DOM work and lowfx render loop) and Your shop's plot position (F10a). Both are performance/layout polish, not correctness.

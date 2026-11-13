@@ -61,4 +61,4 @@ Solved saved builds appear as factory plots. Their miniature parts and moving co
 
 ## Sources
 
-Rules checked against `app/src/game/jobs/jobs.ts` (jobs, scoring, compiler and Test), `JobsGame.tsx` (progression and live flow), `factory.ts` / `FactoryView.tsx` (Sim/Real separation), [machine format](../engine/MACHINE_FORMAT.md), [contract interface](../contract/USAGE.md), and [GAME-3](EVIDENCE-game3.md), [GAME-4](EVIDENCE-game4.md), [GAME-5](EVIDENCE-game5.md), [GAME-6 evidence](EVIDENCE-game6.md). See [CLAIMS](CLAIMS.md) for evidence locations and verification limits.
+Rules checked against `app/src/game/jobs/jobs.ts` (jobs, scoring, compiler and Test), `JobsGame.tsx` (progression and live flow), `factory.ts` / `FactoryView.tsx` (Sim/Real separation), `reasoning.ts` / `simClock.ts` (tooltips and simulated-only 4×), [machine format](../engine/MACHINE_FORMAT.md), [contract interface](../contract/USAGE.md), and [GAME-3](EVIDENCE-game3.md), [GAME-4](EVIDENCE-game4.md), [GAME-5](EVIDENCE-game5.md), [GAME-6](EVIDENCE-game6.md), [GAME-7 evidence](EVIDENCE-game7.md). See [CLAIMS](CLAIMS.md) for evidence locations and verification limits.

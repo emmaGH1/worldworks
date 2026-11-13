@@ -8,7 +8,7 @@ WORLDWORKS is “Factorio for programmable money”: wire parts into money machi
 
 1. Open the live game, choose **Start job 1**, and follow the guide. Place a Splitter and Payouts for Ada, Bola and Chi; try the dials, then **Test**. This is local simulation. A passing solution is 60/20/20. You can build and Test without creating a chain account. Stop before **Ship** to spend nothing.
 2. See an **existing real payout**, without making another: [job-3 NEAR order](https://testnet.near.rocks/tx/Wckcgn6SAXC8bvfMN9KBmfkxpfdbAf4uKfj8oCkw4G8) → [0.0005 ETH on Sepolia, payout 32](https://sepolia.etherscan.io/tx/0xe0d34930bb80261cab1a9c8d488551e29e94f106c7e68a11e234c5db3ddc8d7a). These are recorded receipts, not transactions your visit created.
-3. Open [an existing standalone shop](https://worldworks.vercel.app/m/shop-ab044e8b-c83a2d2141) to inspect its checkout. **Pay** sends a new testnet order; viewing it does not. Its [recorded payment](https://testnet.near.rocks/tx/EJeyoqAjbMxrArWGt29PvfNfJ35rR9FRNp9B4GwjJ1eE) split NEAR between the player and a friend. This shop has no Portal; the cross-chain receipt above belongs to job 3.
+3. Open [an existing standalone shop](https://worldworks.vercel.app/m/shop-ab044e8b-c83a2d2141) to inspect its checkout. **Pay** sends a new testnet order; viewing it does not. Its [recorded payment](https://testnet.near.rocks/tx/EJeyoqAjbMxrArWGt29PvfNfJ35rR9FRNp9B4GwjJ1eE) split NEAR 70/30 between the player and Friend 1 (Bola's demo account standing in for a friend). This shop has no Portal; the cross-chain receipt above belongs to job 3.
 
 **Real:** live publishing, orders and NEAR settlement run on a testnet contract; confirmed Portal payments have Sepolia receipts.<br>
 **Simulated:** Test, factory customer traffic/totals, characters and coin motion; mock mode also simulates all payments and hashes.<br>
@@ -64,7 +64,7 @@ This means “included on Sepolia, seen by two RPCs”, not Ethereum finality or
 ```yaml
 facts:
   product: WORLDWORKS
-  reviewed_head: "80c7418"
+  reviewed_head: "c73585d"  # later commits fix audit findings, see docs/EVIDENCE-game7.md
   network: NEAR testnet
   payout_network: Ethereum Sepolia
   evm_chain_id: 11155111
@@ -77,6 +77,7 @@ facts:
   methods:
     reads: [get_machine, get_order, get_payout, get_limits, get_portal_address, get_vaults, get_unclaimed, explain_order]
     writes: [publish_machine, submit_order, approve, expire, retry_signature, withdraw_vault, withdraw_unclaimed]
+    owner_writes: [set_portal_fees]
   evidence:
     portal_machine: abroad3-2d8d1b47-c83a2d2141
     portal_order: ca740c84-c497-4e56-a311-22e17e155016
@@ -86,7 +87,7 @@ facts:
     shop_publish_tx: yFpyrFesbzucpcZEmpot59jtfMz3pESMchSoNXvAyej
     shop_order_tx: EJeyoqAjbMxrArWGt29PvfNfJ35rR9FRNp9B4GwjJ1eE
     live_expiry_tx: 5oXXGB6oZceCMRjcuZpKxTaTaDWneNNN8pHMyk63LDmp
-    files: [docs/EVIDENCE-game3.md, docs/EVIDENCE-game4.md, docs/EVIDENCE-game5.md, docs/EVIDENCE-game6.md, docs/EVIDENCE-g6.md, docs/EVIDENCE-sepolia.md]
+    files: [docs/EVIDENCE-game3.md, docs/EVIDENCE-game4.md, docs/EVIDENCE-game5.md, docs/EVIDENCE-game6.md, docs/EVIDENCE-g6.md, docs/EVIDENCE-game7.md, docs/EVIDENCE-sepolia.md]
   tests_from_root:
     - CARGO_TARGET_DIR=/opt/ww-target cargo test --manifest-path engine/Cargo.toml
     - cd app && npm run typecheck
@@ -212,7 +213,7 @@ cargo near build non-reproducible-wasm --manifest-path contract/tests/mock-signe
 cargo test --manifest-path contract/Cargo.toml -- --nocapture
 ```
 
-Those contract commands are recorded in [G6 evidence](docs/EVIDENCE-g6.md); they were not rerun for this documentation change. Browser test instructions/results are in [GAME-6 evidence](docs/EVIDENCE-game6.md). Its scripts use machine-specific Playwright/Chromium paths and write evidence/screenshots; `npm ci` alone does not install those browser prerequisites.
+Those contract commands are recorded in [G6 evidence](docs/EVIDENCE-g6.md); they were not rerun for this documentation change. Browser test instructions/results are in [GAME-6](docs/EVIDENCE-game6.md) and [GAME-7 evidence](docs/EVIDENCE-game7.md). Its scripts use machine-specific Playwright/Chromium paths and write evidence/screenshots; `npm ci` alone does not install those browser prerequisites.
 
 ## Honest limitations
 
@@ -224,7 +225,7 @@ Those contract commands are recorded in [G6 evidence](docs/EVIDENCE-g6.md); they
 - **No guaranteed completion/refund:** missing callbacks, low balance, exhausted budgets or a stuck earlier nonce can block progress. No EVM fee replacement/cancellation or on-chain broadcast proof. Changing fees affects future payouts only. Expiry requires a caller after the deadline and follows the graph's fail exit; it is not an automatic universal refund.
 - **RPC trust:** relay/confirmation assume authentic RPC data. Two RPCs and three additional blocks are not Ethereum finality. A NEAR success, signature or broadcast hash alone is not settlement proof. Missing NEAR transfer evidence remains unknown; new live successful/failed recovery cases were not exercised after GAME-5.
 - **Factory customers are simulated.** Sim totals use WASM previews; Real totals only use scoped, confirmed receipts and settled NEAR transfers. Simulation runs while the overview is mounted/visible, not as a background economy. Purchase count is per visit; saved Sim amounts persist. Gate simulation uses delivered previews; Test checks refunds separately. Balance observations can include unrelated activity.
-- **Presentation/test coverage:** factory all-five screenshots use saved-build fixtures, not a fresh full playthrough. Real factory confirmation markers are fixture-tested, not exercised by a new live factory payment. Miniatures simplify editor geometry; scene changes do not share one continuous camera. No real-phone FPS measurement or audio listening test. Sound scheduling was checked. Bundle warning remains.
+- **Presentation/test coverage:** factory all-five screenshots use saved-build fixtures, not a fresh full playthrough. Real factory confirmation markers are fixture-tested, not exercised by a new live factory payment. Miniatures simplify editor geometry; scene changes do not share one continuous camera. No real-phone FPS measurement or audio listening test. Sound scheduling was checked in GAME-6 with a desktop mouse gesture; touch unlock (pointerup/touchend/click) was added after the GAME-7 audit and is not verified on a physical phone. Bundle warning remains.
 - **Storage/recovery:** history is not pruned. The G6 storage bound is derived and measured, not exhaustive, and does not cover legacy machines/orders; legacy graphs were not revalidated. Publish may need more than its recommended deposit. Conservative alternative-Gate admission can reject a route that would fit alone. Ambiguous approval intent has no resend action and can remain checking if it never reached chain. Full multi-Gate orchestration is not verified. Old GAME-2 local progress is not migrated.
 - **Live coverage boundary:** GAME-3 records a desktop production-style local Portal run and Your shop payment; GAME-4 later records real expiry/refund routing. Earlier “expiry missing” evidence is superseded. Live delivery approval, Vault withdrawal/positive unclaimed recovery and deliberately stuck queues are not established by those runs; sandbox/fixture checks are separate evidence.
 
@@ -236,6 +237,6 @@ Built with AI coding agents: Claude and GPT models orchestrated by the author fo
 
 The hackathon window starts **October 19, 2026**, with submission deadline **November 14, 2026 at 23:59 UTC** (author-supplied event dates). Repository history starts **November 12, 2026**; it does not establish October 19 as the first code date. Work described here was built during that window. The initial commit contains a project-starter README and icon; no pre-event WORLDWORKS implementation is claimed.
 
-Reused dependencies include React/React DOM, Three.js, near-api-js, viem, @xyflow/react, d3-sankey, howler and motion; Vite/TypeScript/tsx tooling; Rust near-sdk, omni-transaction, serde/serde_json, sha2, bs58 and wasm-bindgen; near-workspaces, tokio, anyhow, proptest and Playwright for tests. See [app manifest](app/package.json), [engine manifest](engine/Cargo.toml), [contract manifest](contract/Cargo.toml), [WASM manifest](engine-wasm/Cargo.toml) and lockfiles for exact dependencies. Sounds are synthesized ([credits](app/public/sounds/CREDITS.md)); fonts load Bricolage Grotesque, Fredoka, Nunito and JetBrains Mono ([font declarations](app/index.html)). The earlier [Chain Signatures probe](probes/chainsig/) is repository work, separate from the production Portal treasury.
+Runtime dependencies used by the app are React/React DOM, Three.js, near-api-js and viem; @xyflow/react, d3-sankey, howler and motion remain declared in app/package.json but are not imported by the current app; Vite/TypeScript/tsx tooling; Rust near-sdk, omni-transaction, serde/serde_json, sha2, bs58 and wasm-bindgen; near-workspaces, tokio, anyhow, proptest and Playwright for tests. See [app manifest](app/package.json), [engine manifest](engine/Cargo.toml), [contract manifest](contract/Cargo.toml), [WASM manifest](engine-wasm/Cargo.toml) and lockfiles for exact dependencies. Sounds are synthesized ([credits](app/public/sounds/CREDITS.md)); fonts load Bricolage Grotesque, Fredoka, Nunito and JetBrains Mono ([font declarations](app/index.html)). The earlier [Chain Signatures probe](probes/chainsig/) is repository work, separate from the production Portal treasury.
 
 [MIT License](LICENSE). Dependencies retain their own licenses.

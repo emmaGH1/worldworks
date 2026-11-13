@@ -56,7 +56,8 @@ export function createFactoryScene(canvas:HTMLCanvasElement,overlay:HTMLElement,
     box(at.clone().add(V(-2.8,1.1,.85)),V(1.8,.12,.8),'#fff0cd');
     for(let i=0;i<6;i++)box(at.clone().add(V(-3.55+i*.3,1.85,.55)),V(.3,.12,1.25),i%2?'#fff4d4':'#e75d63');
     for(const x of [-3.5,-2.1])box(at.clone().add(V(x,1,.95)),V(.08,1.8,.08),'#795644');
-    if(p.shipped&&realMode) {box(at.clone().add(V(3,1.5,-2)),V(.07,2.2,.07),'#705632');box(at.clone().add(V(3.5,2.4,-2)),V(1,.5,.08),'#ffcf55');}
+    // Gold flag only once a confirmed real receipt exists for this plot; a shipped plot without one gets a neutral flag.
+    if(p.shipped&&realMode) {box(at.clone().add(V(3,1.5,-2)),V(.07,2.2,.07),'#705632');box(at.clone().add(V(3.5,2.4,-2)),V(1,.5,.08),p.confirmed?'#ffcf55':'#cfd6dc');}
     const L=layoutFor(JOBS[p.n-1],p.build,{people:JOBS[p.n-1].people});
     const local=(v:THREE.Vector3)=>at.clone().add(V(v.x*.28,.55,v.z*.52));
     const node=(id:string)=>local(L.nodes[id]??L.keys[id]??V());
@@ -85,7 +86,7 @@ export function createFactoryScene(canvas:HTMLCanvasElement,overlay:HTMLElement,
   }
   for(const [id,pos] of positions)if(id.startsWith('house:')) {const person=id.slice(6) as PersonId;box(pos.clone().setY(.85),V(1.7,1.4,1.5),PEOPLE[person].shirt);roofs.push({p:pos.clone().setY(1.95),s:V(1.5,.9,1.4),c:person==='chi'?'#8b80d1':'#b75b48',ry:Math.PI/4});box(pos.clone().add(V(0,.55,.77)),V(.4,.8,.08),'#493f37');}
   function instances(items:Box[],geo:THREE.BufferGeometry) {
-    const mesh=new THREE.InstancedMesh(own(geo),own(new THREE.MeshStandardMaterial({roughness:.8})),items.length);
+    const mesh=own(new THREE.InstancedMesh(own(geo),own(new THREE.MeshStandardMaterial({roughness:.8})),items.length));
     items.forEach((b,i)=>{dummy.position.copy(b.p);dummy.scale.copy(b.s);dummy.rotation.set(0,b.ry??0,0);if(b.q)dummy.quaternion.copy(b.q);dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix);mesh.setColorAt(i,new THREE.Color(b.c));});scene.add(mesh);return mesh;
   }
   const arrowCanvas=document.createElement('canvas');arrowCanvas.width=32;arrowCanvas.height=64;const ac=arrowCanvas.getContext('2d')!;ac.fillStyle='#56615b';ac.fillRect(0,0,32,64);ac.strokeStyle='#dedbb4';ac.lineWidth=3;for(const y of [12,44]){ac.beginPath();ac.moveTo(6,y+7);ac.lineTo(16,y);ac.lineTo(26,y+7);ac.stroke();}
@@ -93,15 +94,15 @@ export function createFactoryScene(canvas:HTMLCanvasElement,overlay:HTMLElement,
   const beltMesh=instances(beltBoxes,new THREE.BoxGeometry());beltMesh.material=own(new THREE.MeshStandardMaterial({map:beltTexture,roughness:.95}));
   const houseBoxIndices=boxes.map((b,i)=>positions.has(`house:ada`) && b.s.x===1.7?i:-1).filter(i=>i>=0);
   const boxMesh=instances(boxes,new THREE.BoxGeometry());const ringMesh=instances(rings,new THREE.TorusGeometry(1,.18,6,18));instances(shadows,new THREE.CylinderGeometry(1,1,1,24));instances(roofs,new THREE.ConeGeometry(1,1,4));instances(spheres,new THREE.CylinderGeometry(1,1,1,12));
-  const coinCount=paths.length*2, coins=new THREE.InstancedMesh(own(new THREE.SphereGeometry(.13,8,6)),own(new THREE.MeshStandardMaterial({color:'#ffe06a',metalness:.3,roughness:.4})),coinCount);scene.add(coins);
+  const coinCount=Math.min(paths.length*2,160), coins=own(new THREE.InstancedMesh(own(new THREE.SphereGeometry(.13,8,6)),own(new THREE.MeshStandardMaterial({color:'#ffe06a',metalness:.3,roughness:.4})),coinCount));scene.add(coins);
   const count=plots.filter(p=>p.state==='solved').length*2;
-  const customers=new THREE.InstancedMesh(own(new THREE.CapsuleGeometry(.16,.3,3,6)),own(new THREE.MeshStandardMaterial({color:'#f9d1a2'})),count);scene.add(customers);
-  const heads=new THREE.InstancedMesh(own(new THREE.SphereGeometry(.15,8,6)),own(new THREE.MeshStandardMaterial({color:'#d6a078'})),count);scene.add(heads);
+  const customers=own(new THREE.InstancedMesh(own(new THREE.CapsuleGeometry(.16,.3,3,6)),own(new THREE.MeshStandardMaterial({color:'#f9d1a2'})),count));scene.add(customers);
+  const heads=own(new THREE.InstancedMesh(own(new THREE.SphereGeometry(.15,8,6)),own(new THREE.MeshStandardMaterial({color:'#d6a078'})),count));scene.add(heads);
   customers.material.color.set('#df8a66');
   const houseIds=[...positions.keys()].filter(k=>k.startsWith('house:'));
   let savedTotals:HouseTotals={};const arrivals=new Map<PersonId,number>();
-  const piles=new THREE.InstancedMesh(own(new THREE.CylinderGeometry(.19,.19,.09,10)),own(new THREE.MeshStandardMaterial({color:'#ffda55',metalness:.35,roughness:.5})),houseIds.length*18);scene.add(piles);
-  const arrows=new THREE.InstancedMesh(own(new THREE.ConeGeometry(.10,.24,3)),own(new THREE.MeshBasicMaterial({color:'#e5e2c2'})),paths.length*3);scene.add(arrows);
+  const piles=own(new THREE.InstancedMesh(own(new THREE.CylinderGeometry(.19,.19,.09,10)),own(new THREE.MeshStandardMaterial({color:'#ffda55',metalness:.35,roughness:.5})),houseIds.length*18));scene.add(piles);
+  const arrows=own(new THREE.InstancedMesh(own(new THREE.ConeGeometry(.10,.24,3)),own(new THREE.MeshBasicMaterial({color:'#e5e2c2'})),paths.length*3));scene.add(arrows);
   let t=1.7,raf=0,disposed=false,flyTo:THREE.Vector3|undefined,flyStart=0,flyResolve:(()=>void)|undefined;
   const origin=camera.position.clone(),target=phone()?V():V(3,0,0);
   const opened=performance.now();

@@ -52,6 +52,9 @@ function loadProgress(): Progress {
   return p;
 }
 const saveProgress = (p: Progress) => { try { localStorage.setItem(PKEY(), JSON.stringify(p)); } catch { /* storage off */ } };
+/** Storage can throw (blocked site data, some private windows); never let that crash the game. */
+const lsGet = (k: string): string | null => { try { return localStorage.getItem(k); } catch { return null; } };
+const lsSet = (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* storage unavailable */ } };
 function loadRun(): Run | null { try { return JSON.parse(localStorage.getItem(RKEY()) ?? 'null'); } catch { return null; } }
 const saveRun = (r: Run | null) => { try { if (r) localStorage.setItem(RKEY(), JSON.stringify(r)); else localStorage.removeItem(RKEY()); } catch { /* storage off */ } };
 const unlocked = (p: Progress, n: number) => n === 1 || (n === 5 ? !!p.solved[1] : !!p.solved[n - 1]);
@@ -142,19 +145,20 @@ export function JobsGame() {
   const [cardOpen, setCardOpen] = useState(() => !loadProgress().seen[loadProgress().at]);
   const [restarting,setRestarting] = useState(false);
   const [help, setHelp] = useState(false);
-  const [guide, setGuide] = useState(() => !loadProgress().intro && localStorage.getItem(`ww-guide4-${scope()}`) !== 'done');
+  const [guide, setGuide] = useState(() => !loadProgress().intro && lsGet(`ww-guide4-${scope()}`) !== 'done');
   const [tutorialReplay, setTutorialReplay] = useState(false);
   const [reviewedFail, setReviewedFail] = useState(false);
   const [hint, setHint] = useState(0);
   const dismissGuide = () => { setGuide(false); setTutorialReplay(false); try { localStorage.setItem(`ww-guide4-${scope()}`, 'done'); } catch { /* storage off */ } };
-  useEffect(() => { if (job.n > 1 && !localStorage.getItem(`ww-hint4-${scope()}-${job.n}`)) setHint(job.n); }, [job.n]);
+  useEffect(() => { if (job.n > 1 && !lsGet(`ww-hint4-${scope()}-${job.n}`)) setHint(job.n); }, [job.n]);
 
   const [audio, setAudio] = useState(sound.settings);
   const [soundOpen, setSoundOpen] = useState(false);
   const [menu, setMenu] = useState(false);
   const [title, setTitle] = useState(false);
   const configureAudio = (patch: Partial<typeof audio>) => { sound.configure(patch); setAudio(sound.settings); };
-  useEffect(() => { const unlock = () => sound.unlock(); window.addEventListener('pointerdown', unlock); window.addEventListener('keydown', unlock); return () => { window.removeEventListener('pointerdown', unlock); window.removeEventListener('keydown', unlock); sound.stop(); }; }, []);
+  // Touch pointerdown is not a user activation on mobile browsers; pointerup/touchend/click are.
+  useEffect(() => { const unlock = () => sound.unlock(); const evs = ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown'] as const; evs.forEach(e => window.addEventListener(e, unlock)); return () => { evs.forEach(e => window.removeEventListener(e, unlock)); sound.stop(); }; }, []);
   const [levels, setLevels] = useState(false);
   const [ledger, setLedger] = useState(false);
   const [test, setTest] = useState<{ running: boolean; sale: number; result: TestResult | null; caption: string; shown: number; revealed: string[]; waitTap?: 'approve' | null; fix?: string | null; dirty: boolean }>({ running: false, sale: 0, result: null, caption: '', shown: 0, revealed: [], dirty: true });
@@ -201,7 +205,9 @@ export function JobsGame() {
     return c;
   }, [job.n, limits?.rate, session?.accountId, friends.f1, friends.f2]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const factoryCtx = useMemo<Ctx>(()=>({...ctx,accounts:{...ctx.accounts,you:session?.accountId??'you.testnet',...Object.fromEntries(friendIds.filter(f=>friendKind(friends[f])==='near').map(f=>[f,friends[f].trim()]))},evm:Object.fromEntries(friendIds.filter(f=>friendKind(friends[f])==='evm').map(f=>[f,friends[f].trim()])),friends:friendIds}),[ctx,session?.accountId,friends]);
+  // Remember the player's own account so the You house's Real total survives a reload (it is only a lookup key; Real still needs confirmed receipts).
+  useEffect(() => { if (session?.accountId) lsSet(`ww-you-account-${scope()}`, session.accountId); }, [session?.accountId]);
+  const factoryCtx = useMemo<Ctx>(()=>({...ctx,accounts:{...ctx.accounts,you:session?.accountId??lsGet(`ww-you-account-${scope()}`)??'you.testnet',...Object.fromEntries(friendIds.filter(f=>friendKind(friends[f])==='near').map(f=>[f,friends[f].trim()]))},evm:Object.fromEntries(friendIds.filter(f=>friendKind(friends[f])==='evm').map(f=>[f,friends[f].trim()])),friends:friendIds}),[ctx,session?.accountId,friends]);
   // ---------- scene lifecycle ----------
   useEffect(() => {
     mounted.current = true;
@@ -888,7 +894,7 @@ export function JobsGame() {
       {momentOn && runHere && <PortalMoment run={runHere} job={job} who={who} abroad={abroad} next={isNext('moment')} onContinue={job.n<5?continueBuilding:undefined} onClose={() => { setMomentClosed(true); setReceiptsOpen(true); }} />}
 
       {factoryOn && <div className="j-factory" data-testid="factory-counter"><b>SIMULATED factory</b> · {factory.customers} customers{Object.entries(factory.totals).map(([p,n])=><span key={p}>{who(p as PersonId)} {fmtN(n!)} NEAR</span>)}{Object.entries(factory.ethTotals).map(([p,n])=><span key={p}>{who(p as PersonId)} {fmtE(n!)} ETH</span>)}</div>}
-      {hint===job.n && !cardOpen && !momentOn && !shipping && !shopEdit && <aside className="j-new-hint" data-testid="job-hint">{job.n===2?'Chain Splitters: a belt can feed another Splitter.':job.n===3?'Portal: send from NEAR to someone on Ethereum.':job.n===4?'Gate: delivery opens one exit; expiry opens the refund.':'Your own shop pays you. Add friends before building.'}<button type="button" onClick={()=>{setHint(0);localStorage.setItem(`ww-hint4-${scope()}-${job.n}`,'done');}}>Got it</button></aside>}
+      {hint===job.n && !cardOpen && !momentOn && !shipping && !shopEdit && <aside className="j-new-hint" data-testid="job-hint">{job.n===2?'Chain Splitters: a belt can feed another Splitter.':job.n===3?'Portal: send from NEAR to someone on Ethereum.':job.n===4?'Gate: delivery opens one exit; expiry opens the refund.':'Your own shop pays you. Add friends before building.'}<button type="button" onClick={()=>{setHint(0);lsSet(`ww-hint4-${scope()}-${job.n}`,'done');}}>Got it</button></aside>}
       {run && run.job!==job.n && (run.phase!=='done' || run.backgrounded) && <button type="button" className={`j-background-run ${run.phase==='done'?'confirmed':''}`} data-testid="background-run" onClick={()=>{step({backgrounded:false});openJob(run.job);}}>Job {run.job} · {run.phase==='done'?(payout?.status==='confirmed'?'Ethereum confirmed — receipts':'Order complete — check receipts'):payout?.readFailed?'Status unavailable — check':payout?.status??run.phase}</button>}
       {shipping && !momentOn && !runClosed && runHere && !['approve','error','unknown'].includes(runHere.phase) && <section className="j-inside g-card" data-testid="inside-machine"><h2>Inside the machine</h2><InsideMachine run={runHere} />{job.n<5 && <button type="button" className="j-mini" data-testid="continue-building" onClick={continueBuilding}>Start the next job while this finishes</button>}</section>}
       {/* ship panel */}

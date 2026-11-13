@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../../api';
 import { useApp } from '../../lib/store';
 import { JOBS, PEOPLE, fmtN, fmtE, type Ctx, type PersonId } from './jobs';
-import { addTotals, plotsFor, realTotals, simulatedSale, type FactoryProgress, type HouseTotals } from './factory';
+import { addTotals, confirmedPlots, plotsFor, realTotals, simulatedSale, type FactoryProgress, type HouseTotals } from './factory';
 import { createFactoryScene } from './factoryScene';
 import { Face } from './Face';
 import { simClock } from './simClock';
@@ -12,10 +12,13 @@ export function FactoryView({progress,ctx,onOpen,caption,balance,storageKey,fast
   const canvas=useRef<HTMLCanvasElement>(null), overlay=useRef<HTMLDivElement>(null);
   const contextRef=useRef(ctx);contextRef.current=ctx;
   const scene=useRef<ReturnType<typeof createFactoryScene>|null>(null);
-  const plots=useMemo(()=>plotsFor(progress),[progress]);
+  const ledgerRows=useApp(s=>s.ledger);
+  const confirmedKey=useMemo(()=>[...confirmedPlots(ledgerRows,progress)].sort().join(','),[ledgerRows,progress]);
+  const plots=useMemo(()=>{const ok=new Set(confirmedKey.split(',').filter(Boolean).map(Number));return plotsFor(progress).map(p=>({...p,confirmed:ok.has(p.n)}));},[progress,confirmedKey]);
   const [totals,setTotals]=useState<HouseTotals>(()=>{try {return JSON.parse(localStorage.getItem(storageKey)??'{}',(_k,v)=>typeof v==='string'&&/^\d+n$/.test(v)?BigInt(v.slice(0,-1)):v);}catch{return {};}});
   useEffect(()=>{try{localStorage.setItem(storageKey,JSON.stringify(totals,(_k,v)=>typeof v==='bigint'?`${v}n`:v));}catch{/* storage unavailable */}},[totals,storageKey]);
   const [intro,setIntro]=useState(()=>{try{return !localStorage.getItem(storageKey+'-meaning');}catch{return true;}});
+  const totalsRef=useRef(totals);totalsRef.current=totals;
   const [shownTotals,setShownTotals]=useState(totals);
   const shownRef=useRef(totals);
   useEffect(()=>{const from=shownRef.current;let step=0;const timer=setInterval(()=>{step++;const next:HouseTotals={};for(const id of Object.keys(totals) as PersonId[]){const a=from[id]??{near:0n,wei:0n},b=totals[id]!;next[id]={near:a.near+(b.near-a.near)*BigInt(step)/4n,wei:a.wei+(b.wei-a.wei)*BigInt(step)/4n};}shownRef.current=next;setShownTotals(next);if(step===4)clearInterval(timer);},45);return()=>clearInterval(timer);},[totals]);
@@ -25,7 +28,7 @@ export function FactoryView({progress,ctx,onOpen,caption,balance,storageKey,fast
   const houses=[...new Set<PersonId>(['ada','bola','chi','dayo','you',...(ctx.friends??[])])];
   const abroad=ctx.friends?.find(f=>!!ctx.evm?.[f]);
   useEffect(()=>{
-    const sc=createFactoryScene(canvas.current!,overlay.current!,plots,abroad,api.mode!=='mock',()=>contextRef.current);scene.current=sc;
+    const sc=createFactoryScene(canvas.current!,overlay.current!,plots,abroad,api.mode!=='mock',()=>contextRef.current);scene.current=sc;sc.setTotals(totalsRef.current); // keep coin piles across rebuilds
     sound.ambience(true);
     return ()=>{sc.dispose();scene.current=null;sound.ambience(false);};
   },[plots,abroad]);

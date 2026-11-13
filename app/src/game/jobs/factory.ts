@@ -3,7 +3,7 @@ import { JOBS, PEOPLE, runTest, type Build, type Ctx, type Engine, type PersonId
 import type { LedgerRow } from '../../lib/store.js';
 export const FACTORY_ENABLED = true;
 export type FactoryProgress = { factoryHistory?:Record<number,{machineId:string;payoutId?:string}[]>; solved: Record<number,number>; builds: Record<number,Build>; shipped: Record<number,{machineId:string;link?:string;payoutId?:string}> };
-export type Plot = { n:number; state:'solved'|'next'|'open'|'locked'; stars:number; build:Build; shipped?:FactoryProgress['shipped'][number] };
+export type Plot = { n:number; state:'solved'|'next'|'open'|'locked'; stars:number; build:Build; shipped?:FactoryProgress['shipped'][number]; confirmed?:boolean };
 export type HouseTotals = Partial<Record<PersonId,{near:bigint;wei:bigint}>>;
 export function plotsFor(p:FactoryProgress):Plot[] {
   const next=JOBS.find(j=>!p.solved[j.n])?.n;
@@ -25,6 +25,16 @@ export function simulatedSale(n:number,build:Build,engine:Engine,ctx:Ctx):HouseT
   return out;
 }
 function decimal(value:string,decimals:number) { if(!/^\d+(\.\d+)?$/.test(value))return 0n;const [whole,frac='']=value.split('.');return BigInt(whole)*10n**BigInt(decimals)+BigInt(frac.padEnd(decimals,'0').slice(0,decimals)); }
+/** Plots with at least one settled, confirmed, non-mock receipt from one of their shipped machines. */
+export function confirmedPlots(rows:LedgerRow[],p:FactoryProgress):Set<number> {
+  const out=new Set<number>();
+  const ships=[...Object.entries(p.shipped),...Object.entries(p.factoryHistory??{}).flatMap(([n,ss])=>ss.map(s=>[n,s] as const))];
+  for(const [n,s] of ships) {
+    const orders=new Set(rows.filter(r=>r.kind==='order'&&r.detail?.includes(`machine ${s.machineId}`)).map(r=>r.orderId));
+    if(rows.some(r=>!r.mock&&r.status==='confirmed'&&r.kind==='payout'&&!!r.tx?.hash&&((r.unit==='ETH'&&!!s.payoutId&&r.payoutId===s.payoutId)||(r.statusText==='sent'&&!!r.orderId&&orders.has(r.orderId)))))out.add(Number(n));
+  }
+  return out;
+}
 /** Only settled, confirmed, non-mock ledger receipts belonging to this factory scope count. */
 export function realTotals(rows:LedgerRow[],p:FactoryProgress,ctx:Ctx):HouseTotals {
   const out:HouseTotals={}, seen=new Set<string>();
