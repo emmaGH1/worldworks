@@ -13,3 +13,4 @@ node_modules/
 # third-party reference images: local only, not ours to publish
 docs/design/refs/
 dist/
+!.env.example

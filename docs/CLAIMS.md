@@ -23,5 +23,5 @@ Must not claim:
 - A signature, NEAR success, broadcast hash, or shallow receipt proves confirmed payment or Ethereum finality.
 - Distributed/durable abuse protection: in-memory quotas reset on cold starts and are not shared across server instances.
 - That the G6 storage bound covers machines or orders created before the G6 migration, or that every publish fits in the 0.40 NEAR recommended deposit.
-- High Portal throughput: with the deployed 0.01 ETH per 1,000-block epoch budget and 100 gwei snapshot max fee, each 0.001 ETH payout reserves 0.0031 ETH, so about three such payouts fit per epoch (count cap 20).
+- High Portal throughput: the epoch budget is 0.01 ETH per 1,000 blocks with at most 20 payouts; at the current 3 gwei fee cap a 0.0001 ETH template payout reserves 0.000163 ETH, so the 20-payout cap is the binding limit. Larger payouts fit fewer per epoch.
 - Storage/history pruning or arbitrary contract-recipient support with the fixed 21,000 gas transfer.
