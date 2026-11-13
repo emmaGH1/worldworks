@@ -21,7 +21,7 @@ export async function view(method: string, args: unknown): Promise<any> {
   const data = await rpc('query',{request_type:'call_function',finality:'final',account_id:CONTRACT,method_name:method,args_base64:btoa(String.fromCharCode(...bytes))});
   return JSON.parse(new TextDecoder().decode(Uint8Array.from(data.result)));
 }
-export const txRef = (hash: string): TxRef => ({hash,explorerUrl:`https://explorer.testnet.near.org/transactions/${hash}`});
+export const txRef = (hash: string): TxRef => ({hash,explorerUrl:`https://testnet.near.rocks/tx/${hash}`});
 export async function send(who: Account, method: string, args: object, deposit = 0n) {
   const result = await who.signAndSendTransaction({receiverId:CONTRACT,actions:[actions.functionCall(method,args,GAS,deposit)],waitUntil:'FINAL'});
   return {result, tx:txRef(result.transaction.hash)};

@@ -14,8 +14,8 @@ Rules every version follows:
 |---|---|
 | `{{HOSTED_URL}}` | hosted app (must stay up until at least 2026-11-18) |
 | `{{REPO_URL}}` | public GitHub repo (must be public before 2026-11-14 23:59 UTC) |
-| `{{NEAR_TX_URL}}` | `links.near` in the recording's `marks.json` (the order shown in the video). Fallback: [order for payout 0](https://explorer.testnet.near.org/transactions/5gVpK4eFaaFFfmEJsj1UWb3oEWmGVjLmXBqzysiPkQJN) |
-| `{{SEPOLIA_TX_URL}}` | `links.sepolia` in `marks.json`. Fallback: [payout 0 receipt](https://sepolia.etherscan.io/tx/0xbf2a7ae14ef28044ce775f9c18ed0c6294ffe916aac1f84653253b51f9d0a3e6) |
+| `https://testnet.near.rocks/tx/Gah48XxvFzjks1uDVrN5Poi3DYMc8XPp7KzRyL4csGBe` | `links.near` in the recording's `marks.json` (the order shown in the video). Fallback: [order for payout 0](https://explorer.testnet.near.org/transactions/5gVpK4eFaaFFfmEJsj1UWb3oEWmGVjLmXBqzysiPkQJN) |
+| `https://eth-sepolia.blockscout.com/tx/0xe1037289c605bd67737874942182d66a755ea3b1c74aaa601e818f46614f5eb5` | `links.sepolia` in `marks.json`. Fallback: [payout 0 receipt](https://sepolia.etherscan.io/tx/0xbf2a7ae14ef28044ce775f9c18ed0c6294ffe916aac1f84653253b51f9d0a3e6) |
 
 Use the links from the video's own take if you can, so a judge who clicks sees the same transaction the video shows. **Check the numbers** (0.10 NEAR price, 70/30 split, 0.07/0.03, 0.001 ETH) against that take; G6 changed the fee configuration, and the numbers in the posts must match the screen.
 
@@ -47,8 +47,8 @@ NEAR does the cross-chain part. Our NEAR contract writes the Ethereum transactio
 **4/ (226)**
 ```
 Don't take the UI's word for it.
-NEAR order: {{NEAR_TX_URL}}
-Sepolia receipt: {{SEPOLIA_TX_URL}}
+NEAR order: https://testnet.near.rocks/tx/Gah48XxvFzjks1uDVrN5Poi3DYMc8XPp7KzRyL4csGBe
+Sepolia receipt: https://eth-sepolia.blockscout.com/tx/0xe1037289c605bd67737874942182d66a755ea3b1c74aaa601e818f46614f5eb5
 
 Testnet prototype, not audited. The customer is seeded. What is real and what is simulated: {{HOSTED_URL}}/verify
 ```
@@ -89,8 +89,8 @@ What NEAR does here: the NEAR contract builds the Sepolia transfer and NEAR Chai
 **4/ (201)**
 ```
 Check both chains yourself:
-{{NEAR_TX_URL}}
-{{SEPOLIA_TX_URL}}
+https://testnet.near.rocks/tx/Gah48XxvFzjks1uDVrN5Poi3DYMc8XPp7KzRyL4csGBe
+https://eth-sepolia.blockscout.com/tx/0xe1037289c605bd67737874942182d66a755ea3b1c74aaa601e818f46614f5eb5
 
 It's a testnet prototype, not audited. Customer demand is seeded. The /verify page lists what is real and what is simulated.
 ```
@@ -125,8 +125,8 @@ The video is one live run on NEAR testnet: I fix a broken Lemonade machine with 
 ```
 "Confirmed" only appears once two separate Sepolia RPCs return the same successful receipt, three blocks deep. A signature alone never counts.
 
-NEAR order: {{NEAR_TX_URL}}
-Sepolia receipt: {{SEPOLIA_TX_URL}}
+NEAR order: https://testnet.near.rocks/tx/Gah48XxvFzjks1uDVrN5Poi3DYMc8XPp7KzRyL4csGBe
+Sepolia receipt: https://eth-sepolia.blockscout.com/tx/0xe1037289c605bd67737874942182d66a755ea3b1c74aaa601e818f46614f5eb5
 ```
 
 **4/ (278)**

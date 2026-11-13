@@ -4,7 +4,7 @@ Wire money machines from parts in a browser game; each machine runs on a NEAR te
 
 ![Live testnet run: a Splitter sends 30% of a 0.10 NEAR sale to the Portal and 70% to a reserve Vault; the Portal panel shows the NEAR signature request, the MPC signature, the Sepolia broadcast and receipts on both chains](docs/design/screens/live-04-confirmed.png)
 
-*Live NEAR testnet + Sepolia run, 2026-11-12 ([evidence](docs/EVIDENCE-ui-live.md)). This capture predates the G6 update: it shows the old 0.77 NEAR order storage fee and a 0.001 ETH payout. Current values are 1.32 NEAR and 0.0001 ETH, and the last step now reads "included on Sepolia, seen by two RPCs" ([code](app/src/components/PortalSteps.tsx)).*
+*Live NEAR testnet + Sepolia run, 2026-11-13, recorded with the current configuration: 1.32 NEAR order storage fee, 0.0001 ETH payout, "included on Sepolia, seen by two RPCs" ([recording log](docs/demo/RECORDING-LOG.md), [earlier evidence](docs/EVIDENCE-ui-live.md)).*
 
 **What and why.** Most payment rules live in application code that the payer cannot read. In WORLDWORKS a payment rule is a machine built from seven parts (Coin Slot, Splitter, Vault, Gate, Worker, Payout, Portal), and the machine you publish is the graph that one shared NEAR contract executes for every order. A Portal part pays Sepolia ETH from a treasury address controlled by that contract through Chain Signatures, and the relayer that broadcasts the signed transaction holds no EVM key.
 
@@ -30,11 +30,11 @@ The hosted app runs in live mode: your browser gets a new sponsored NEAR testnet
 
 | Event | NEAR testnet | Sepolia |
 |---|---|---|
-| Workshop order → payout 13 (G6 live UI run) | [8fenUDQh…](https://explorer.testnet.near.org/transactions/8fenUDQhqDSP3nj5tm1QMP1o2zQE4L4jpWecrrDNMmfv) | [0x0774069a…](https://sepolia.etherscan.io/tx/0x0774069a6dc5de2e07954679d84b661f1b2903b73022827a3228f52e9cf6f69a) |
-| Standalone app order → payout 14 | [EPRjxQrk…](https://explorer.testnet.near.org/transactions/EPRjxQrkWcFVPvkTkMgwHhvdppRDSUr6spNCxr2wvuoe) | [0x1939226a…](https://sepolia.etherscan.io/tx/0x1939226aaa336cd2eec0963f92b6e521ebd71e038240be9666f67c2f3d67358a) |
-| First contract-built payout (payout 0) | [5gVpK4eF…](https://explorer.testnet.near.org/transactions/5gVpK4eFaaFFfmEJsj1UWb3oEWmGVjLmXBqzysiPkQJN) | [0xbf2a7ae1…](https://sepolia.etherscan.io/tx/0xbf2a7ae14ef28044ce775f9c18ed0c6294ffe916aac1f84653253b51f9d0a3e6) |
-| G6 deploy + migration (same transaction) | [8oq6PwTe…](https://explorer.testnet.near.org/transactions/8oq6PwTecJNV8NzEMH4nEWjsiARzhUQzejH3BGj1w9GN) | — |
-| Owner sets Portal fee cap to 3 gwei | [HCVpGfes…](https://explorer.testnet.near.org/transactions/HCVpGfesqzDKvpFn5aAoc74RZGYR7ck3sin5fpBT5pa7) | — |
+| Workshop order → payout 13 (G6 live UI run) | [8fenUDQh…](https://testnet.near.rocks/tx/8fenUDQhqDSP3nj5tm1QMP1o2zQE4L4jpWecrrDNMmfv) | [0x0774069a…](https://sepolia.etherscan.io/tx/0x0774069a6dc5de2e07954679d84b661f1b2903b73022827a3228f52e9cf6f69a) |
+| Standalone app order → payout 14 | [EPRjxQrk…](https://testnet.near.rocks/tx/EPRjxQrkWcFVPvkTkMgwHhvdppRDSUr6spNCxr2wvuoe) | [0x1939226a…](https://sepolia.etherscan.io/tx/0x1939226aaa336cd2eec0963f92b6e521ebd71e038240be9666f67c2f3d67358a) |
+| First contract-built payout (payout 0) | [5gVpK4eF…](https://testnet.near.rocks/tx/5gVpK4eFaaFFfmEJsj1UWb3oEWmGVjLmXBqzysiPkQJN) | [0xbf2a7ae1…](https://sepolia.etherscan.io/tx/0xbf2a7ae14ef28044ce775f9c18ed0c6294ffe916aac1f84653253b51f9d0a3e6) |
+| G6 deploy + migration (same transaction) | [8oq6PwTe…](https://testnet.near.rocks/tx/8oq6PwTecJNV8NzEMH4nEWjsiARzhUQzejH3BGj1w9GN) | — |
+| Owner sets Portal fee cap to 3 gwei | [HCVpGfes…](https://testnet.near.rocks/tx/HCVpGfesqzDKvpFn5aAoc74RZGYR7ck3sin5fpBT5pa7) | — |
 
 Every command below only reads state; none sends a transaction. Needs Node 22, npm and `jq`.
 
@@ -65,7 +65,7 @@ Source: [G6 evidence](docs/EVIDENCE-g6.md) and [contract usage](contract/USAGE.m
 | "Confirmed" in the UI | matching successful transaction and receipt on two independent Sepolia RPC hosts, plus at least 3 blocks on top on both |
 | Server funding caps | 35 test NEAR/h sponsor, 20 test NEAR/h customer, per server process |
 
-Payouts 0–14 above were 0.001 ETH under the earlier 100 gwei fee snapshot. No live payout has yet been made at the 3 gwei / 0.0001 ETH settings (the contract's next Portal nonce read 15 on 2026-11-13); after that change only the mock UI flow was re-run. If the Sepolia base fee rises above 3 gwei, payouts signed with this cap wait in the mempool until the owner raises the cap for later payouts.
+Payouts 0–14 above were 0.001 ETH under the earlier 100 gwei fee snapshot. Payouts 15 and 16 were made at the 3 gwei / 0.0001 ETH settings during the demo recording, e.g. payout 15: [NEAR order](https://testnet.near.rocks/tx/Gah48XxvFzjks1uDVrN5Poi3DYMc8XPp7KzRyL4csGBe), [Sepolia](https://eth-sepolia.blockscout.com/tx/0xe1037289c605bd67737874942182d66a755ea3b1c74aaa601e818f46614f5eb5) (see docs/demo/RECORDING-LOG.md). If the Sepolia base fee rises above 3 gwei, payouts signed with this cap wait in the mempool until the owner raises the cap for later payouts.
 
 ## How NEAR is used
 

@@ -1,6 +1,6 @@
 # WORLDWORKS demo video: storyboard
 
-Planning doc. Nothing here has been recorded or rendered yet. Two deliverables:
+Planning doc, updated after the recording on 2026-11-13 (take 1, see [RECORDING-LOG.md](RECORDING-LOG.md)). Two deliverables:
 
 - **Main cut:** 76 s, 1920×1080, 30 fps, H.264 + AAC. For the X post and the submission `demoUrl`.
 - **Autoplay cut:** 15 s, same format, silent-safe. It autoplays muted in the X timeline, so every idea must be readable from the captions alone.
@@ -9,15 +9,15 @@ Every pixel of product footage is the **real live UI on NEAR testnet + Sepolia**
 
 Binding rules: [docs/CLAIMS.md](../CLAIMS.md) (the **G6 version**, "Claims after G6") and the official "The demo post" guidance (lead with the user problem; show one complete moment from a real action to a visible result; say concretely what NEAR does; give a next step). Section 7 checks every caption against CLAIMS.
 
-> **G6 note (2026-11-13):** G6 changed the fee configuration and the confirmation rule (Sepolia inclusion now needs matching receipts on two RPC hosts **plus three more blocks on both**). Prices, fees and wait times quoted from the INT-1 evidence (0.10 NEAR price, 0.77 NEAR storage fee, 0.87 total, 5–23 s steps) are **historical**. Captions below avoid fee numbers. Read the real numbers off the UI in the take and use those. Re-check this doc against `docs/CLAIMS.md` and `docs/EVIDENCE-g6.md` before recording.
+> **Current configuration (README "Current configuration", G6):** price 0.10 test NEAR + **1.32 NEAR order storage fee** = 1.42 NEAR per order; template Portal payout **0.0001 Sepolia ETH**; "Confirmed" in the UI = matching successful receipts on **two independent Sepolia RPC hosts plus 3 more blocks on both**; the Portal admits **at most 20 payouts per epoch** (one take uses 2). The INT-1 values (0.77 NEAR fee, 0.87 total, 0.001 ETH) are historical and appear nowhere in the video. All numbers below were read off the UI in take 1 and match these values.
 
 ---
 
 ## 1. The story in one breath
 
-A lemonade machine is losing money because its payment rule is wrong. One drag fixes the rule. A customer pays, 70% stays in an on-chain reserve, and the NEAR contract sends 0.001 ETH on Sepolia using Chain Signatures. Both explorers show it. Then the same machine opens as its own payment page.
+A lemonade machine is losing money because its payment rule is wrong. One drag fixes the rule. A customer pays, 70% stays in an on-chain reserve, and the NEAR contract sends 0.0001 ETH on Sepolia using Chain Signatures. Both explorers show it. Then the same machine opens as its own payment page.
 
-**The complete moment** (the official guidance asks for one): *drag Splitter → serve a customer → Portal goes from Signing to Confirmed → Sepolia receipt on Etherscan.* The main cut shows this unbroken except for one labeled speed-up. The 15 s cut shows it compressed.
+**The complete moment** (the official guidance asks for one): *drag Splitter → serve a customer → Portal goes from Signing to Confirmed → Sepolia receipt on Etherscan.* The main cut shows this unbroken except for labeled constant-speed stretches (4×, 2×, 8×). The 15 s cut shows it compressed.
 
 ---
 
@@ -32,15 +32,15 @@ Source names refer to the recordings from §4 (`ws.mp4`, `app.mp4`, `near.mp4`, 
 | S0 | 0:00.0–0:03.5 | **Title card** (drawn). Ground `#F4EEE3`. Line 1 appears word by word (blur 6px→0, 0.067 s apart): **"Payment rules hide inside app code."** At 1.6 s line 2 fades from light grey to ink: **"So you can't see where the money goes."** Small WORLDWORKS logo mark bottom-left. | (the title is the caption) | "Payment rules hide inside app code. So you can't see where your money goes." |
 | S1 | 0:03.5–0:09.0 | `ws.mp4` at 1×, from `ready` for 5.5 s. Lemonade Machine, **BROKE** stamp, headline "Your machine is losing money." Slow move 1.00→1.06 toward the pipe and the "drop a Splitter here" hint (power2.inOut, the whole shot). | **This machine pays every coin straight out. Nothing is kept.** | "This lemonade machine has a visible bug: every coin goes straight out. Nothing refills the reserve." |
 | S2 | 0:09.0–0:15.0 | `ws.mp4` at 1×, from `drag-start − 0.4 s` to `splitter-in + 3.0 s`. The demo cursor picks up **Splitter** from the parts bin, glides along the pipe and drops it on the **+** socket. Stamp flips to **RUNNING**, headline becomes "Now it keeps 70% of every sale.", toast confirms. Punch-in 1.0→1.18 on the canvas centre during the drag, back to 1.0 as the headline changes. | **Drop a Splitter on the pipe. Now 70% stays in a reserve.** | "One drag. A Splitter keeps 70% of every sale in a reserve vault." |
-| S3 | 0:15.0–0:23.0 | `ws.mp4`: (a) 1×, 1.5 s: cursor clicks **Serve a customer**; the seeded customer walks in. (b) `serve-click → order-done` at **4×** with the speed tag (§3). (c) 1×, 2.5 s after `order-done`: Reserve ring shows 70% and "vault on chain 0.07 NEAR"; punch-in 1.0→1.3 on the Reserve card (bbox `reserve` in marks). | (a–b) **A seeded test customer pays 0.10 NEAR on NEAR testnet.** (c) **0.07 NEAR is now in the reserve, on chain.** | "A test customer pays. The machine is published to a NEAR contract, and 0.07 NEAR lands in the on-chain reserve." |
-| S4 | 0:23.0–0:37.0 | `ws.mp4`: `portal-visible → portal-confirmed` at **4×** with the speed tag and the real-time counter. The Portal card walks *Signing on NEAR → Signed → Broadcast to Sepolia → Confirmed*. Then 1×, 3.0 s on the confirmed card; punch-in 1.0→1.4 onto the two receipt boxes (bbox `receipts`). | During signing: **The NEAR contract writes an Ethereum payment.** At `signed`: **NEAR Chain Signatures signs it. The relayer only broadcasts.** At confirmed: **Included on Sepolia, seen by two RPCs.** | "The contract builds the Sepolia transaction itself and asks NEAR Chain Signatures to sign it. Our relayer just broadcasts the signed bytes. It only shows Confirmed once two separate RPCs return the same successful receipt, three blocks deep." |
-| S5 | 0:37.0–0:47.0 | **Proof.** (a) `near.mp4`, 4.0 s: the order transaction on the NEAR testnet explorer (the URL captured from the Portal card's NEAR receipt link), with a slow push toward the status. (b) `sepolia.mp4`, 6.0 s: the Sepolia transaction on **sepolia.etherscan.io**. Punch-in to **Status: Success** (bbox `sepolia-success`), then pan to **From: 0x694A…8b7** (bbox `sepolia-from`). A drawn browser bar above each shows the **real URL** in mono, plus a corner tag **"live explorer page · recorded {{RECORD_DATE}}"**. | (a) **NEAR testnet: the order on the explorer.** (b) **Sepolia: Success. Sent from the address NEAR derived for our contract.** | "Don't take the app's word for it. Here's the order on NEAR, and here's the payment on Sepolia: success, sent from the address Chain Signatures derives for our contract." |
+| S3 | 0:15.0–0:23.0 | `ws.mp4`: (a) 1×, 1.5 s: cursor clicks **Serve a customer**; the seeded customer walks in. (b) `serve-click → order-done` at **4×** with the speed tag (§3). (c) 1×, 2.5 s after `order-done`: Reserve ring shows 70% and "vault on chain 0.07 NEAR"; punch-in 1.0→1.3 on the Reserve card (bbox `reserve` in marks). | (a–b) **A seeded test customer pays 0.10 NEAR (+1.32 NEAR storage fee).** (c) **0.07 NEAR is now in the reserve, on chain.** | "A test customer pays. The machine is published to a NEAR contract, and 0.07 NEAR lands in the on-chain reserve." |
+| S4 | 0:23.0–0:37.0 | `ws.mp4`: `portal-visible → portal-confirmed` at **4×** with the speed tag and the real-time counter. The Portal card walks *Signing on NEAR → Signed → Broadcast to Sepolia → Confirmed*. Then 1×, 3.0 s on the confirmed card; punch-in 1.0→1.4 onto the two receipt boxes (bbox `receipts`). | During signing: **The NEAR contract writes an Ethereum payment.** At `signed`: **NEAR Chain Signatures signs it. The relayer only broadcasts.** During the block wait: **Then it waits for 3 more Sepolia blocks on two RPCs.** At confirmed: **0.0001 ETH included on Sepolia, seen by two RPCs.** | "The contract builds the Sepolia transaction itself and asks NEAR Chain Signatures to sign it. Our relayer just broadcasts the signed bytes. It only shows Confirmed once two separate RPCs return the same successful receipt, three blocks deep." |
+| S5 | 0:36.3–0:49.5 | **Proof.** (a) `near.mp4`, 6.2 s: the order transaction from the Portal card's NEAR receipt link. That link (explorer.testnet.near.org) is now an explorer *selector* page, so the shot opens the same hash on the selector's recommended explorer, **testnet.near.rocks**, and scrolls to the receipt where `ww-portal-261112.testnet` calls `sign` on `v1.signer-prod.testnet`. (b) `sepolia.mp4`, 7.0 s: the Sepolia transaction; Etherscan served a Cloudflare bot check to the headless recorder, so the planned fallback **eth-sepolia.blockscout.com** is shown (third-party ad requests blocked). Punch-in to **Status: Success** (bbox `sepolia-success`), then pan to **From: 0x694A…8b7** (bbox `sepolia-from`). A drawn browser bar above each shows the **real URL** in mono, plus a corner tag **"live explorer page · … · recorded 2026-11-13"**. | (a) **NEAR testnet: the order, then the contract's signing request.** (b) **Sepolia: Success, from the address NEAR derived for our contract.** | "Don't take the app's word for it. Here's the order on NEAR, and here's the payment on Sepolia: success, sent from the address Chain Signatures derives for our contract." |
 | S6 | 0:47.0–0:51.0 | `ws.mp4` at 1×, from `ledger-open`, 4.0 s: the Ledger drawer slides in with Portal → Sepolia, Seeded customer bought one, Published "Lemonade Machine", Sponsored testnet session, all with explorer links. | **Every step has an explorer link.** | "Every step is in the ledger, with its explorer link." |
-| S7 | 0:51.0–1:03.0 | (a) `ws.mp4` 1×, 1.0 s: cursor clicks **Open as app**. Match cut on the click into (b) `app.mp4` 1×, from `app-loaded`, 2.5 s: standalone **Lemonade Machine** payment page, checkout card. (c) 1×, 2.0 s: the address is typed into "Your Ethereum address"; cursor clicks the **Pay** button (label shows the current total). (d) **Cut card**, 0.8 s, full stage ground colour: **"⏭ {{APP_WAIT_S}} s later · cut"**. (e) `app.mp4` 1×, from `app-portal-confirmed`, 3.5 s: page scrolled to **Your receipts**, all four steps green, NEAR receipt + Sepolia receipt. | (a–b) **"Open as app": the same machine is now a payment page with its own URL.** (c–e) **Paid from its own page. Same contract, same rules.** | "Open as app turns the same published machine into a payment page with its own URL. Same contract, same rules." |
+| S7 | 0:51.0–1:03.0 | (a) `ws.mp4` 1×, 1.0 s: cursor clicks **Open as app**. Match cut on the click into (b) `app.mp4` 1×, from `app-loaded`, 2.5 s: standalone **Lemonade Machine** payment page, checkout card. (c) 1×, 2.0 s: the address is typed into "Your Ethereum address"; cursor clicks the **Pay** button (label shows the current total). (d) **Cut card**, 1.5 s, full stage ground colour: **"⏭ 66 s later · cut · same steps as above"**. (e) `app.mp4` 1×, from `app-portal-confirmed`, 3.5 s: page scrolled to **Your receipts**, all four steps green, NEAR receipt + Sepolia receipt. | (a–b) **Open as app: same machine, now a payment page with its own URL.** (c–e) **Paid from its own page. Same contract, same rules.** | "Open as app turns the same published machine into a payment page with its own URL. Same contract, same rules." |
 | S8 | 1:03.0–1:08.0 | `app.mp4` 1×, from `verify-loaded`, 5.0 s: the **/verify** page ("what's real?"), smooth scroll of ~600 px. | **Testnet only. The app lists what is real and what is simulated.** | "It's a testnet prototype, and the app says exactly what is real and what is simulated." |
-| S9 | 1:08.0–1:16.0 | **End card** (drawn). Wordmark **WORLDWORKS**; line **"See your payment rules. Run them on NEAR."**; two rows in mono: **Try it → {{HOSTED_URL}}**, **Code → {{REPO_URL}}**; footer **"Built at NEAR HACKATHON · testnet prototype"**; question chip **"What would you wire first?"**. Behind it, a still of the RUNNING machine (`still-confirmed.png`) at 12% opacity. Hold dead still from 1:10.5. | (the card is the caption) | "Try it in your browser, no wallet needed, and tell us what you'd wire first." |
+| S9 | 1:08.0–1:16.0 | **End card** (drawn). Wordmark **WORLDWORKS**; line **"See your payment rules. Run them on NEAR."**; two rows in mono: **Code → https://github.com/emmaGH1/worldworks** and **Live demo link in the post** (the hosted URL is not known yet; no placeholder is rendered); footer **"Built at NEAR HACKATHON · testnet prototype"**; question chip **"What would you wire first?"**. Behind it, a still of the RUNNING machine (`still-confirmed.png`) at 12% opacity. Hold dead still from 1:10.5. | (the card is the caption) | "Try it in your browser, no wallet needed, and tell us what you'd wire first." |
 
-Total: **76.0 s**. If the real waits run long, S4 is the shot that grows (up to 0:40) and S8 shrinks to 3 s. Never shorten S5 below 8 s; it is the proof.
+Total: **76.0 s**. Times above are the planned slots; the as-built edit (exact root times of every clip and caption) is in [RECORDING-LOG.md](RECORDING-LOG.md): S4 ends 0:36.3, S5 0:36.3–0:49.5, S6 0:49.5–0:53.5, S7 0:53.5–1:06.9, S8 1:06.9–1:10.9, S9 1:10.9–1:16. Never shorten S5 below 8 s; it is the proof.
 
 ### Timing rules
 
@@ -52,12 +52,12 @@ Total: **76.0 s**. If the real waits run long, S4 is the shot that grows (up to 
 
 ## 3. The signing wait: how it is handled honestly
 
-The Portal step has real network waits: NEAR order + publish (~10–20 s), MPC signing (shown in the UI as "usually ~15 s"; ~14 s in rehearsal, 5 s in the INT-1 take), Sepolia mining (10–23 s in the INT-1 takes), and since G6 **three more Sepolia blocks on both RPCs** before Confirmed (~36 s more at 12 s blocks). Expect 60–90 s from Serve to Confirmed. Watching that at 1× kills the video. Rules:
+The Portal step has real network waits. Measured in take 1: Serve → order done **19.2 s** (publish + order), Signing → Signed **5.3 s**, Signed → Broadcast **5.3 s**, Broadcast → Confirmed **40.2 s** (Sepolia block plus **three more blocks on both RPCs**), so Signing → Confirmed **50.8 s**; the standalone payment took **66.7 s** from Pay to Confirmed. Watching that at 1× kills the video. Rules:
 
 1. **Speed-up, labelled (main method).** Each waiting stretch is its own `<video>` clip with a **constant** `data-playback-rate="4"`. Do not use a `rate` automation ramp: during a ramp the true speed is neither 1× nor 4×, so a "4×" label would be wrong for part of the clip. Constant clips make the label exactly true for its whole length.
-2. **Speed tag**, visible for exactly the length of each 4× clip, top-right of the stage: pill, ink background, white mono text **"▶▶ 4× speed · real time 0:14"**. The real-time counter runs from 0 to the measured wait, computed from timeline time: `real = (t − clipStart) × 4`. It must end on the number in `marks.json` (`portal-confirmed − portal-visible`), not on a rounded guess.
+2. **Speed tag**, visible for exactly the length of each sped-up clip, top-centre of the stage: pill, ink background, white mono text **"▶▶ 4× speed · real time 7.0 s"**. As built: order 4× (counter 0.1 → 19.2 s since Serve), signing 2× (2.0 → 10.6 s since Signing started), block wait 8× with "· 3 more blocks on 2 RPCs" (10.6 → 50.8 s). The real-time counter runs from 0 to the measured wait, computed from timeline time: `real = (t − clipStart) × 4`. It must end on the number in `marks.json` (`portal-confirmed − portal-visible`), not on a rounded guess.
 3. **Ceiling.** If a wait at 4× would last more than 8 s on screen, raise the constant rate (6×, 8×, at most 10×) and change the tag to match. If the wait from `portal-broadcast` to `portal-confirmed` is long (the three-block wait), it may be a separate clip at a higher rate with its own tag, e.g. "▶▶ 10× speed · waiting for 3 more blocks". Never hide a wait without a tag or a cut card.
-4. **Cut, labelled (second method, S7 only).** The standalone payment repeats a step the viewer has just seen, so it is cut, not sped up: a 0.8 s card **"⏭ {{APP_WAIT_S}} s later · cut"**, where `APP_WAIT_S = app-portal-confirmed − app-pay-click`, rounded down to whole seconds.
+4. **Cut, labelled (second method, S7 only).** The standalone payment repeats a step the viewer has just seen, so it is cut, not sped up: a 1.5 s card **"⏭ 66 s later · cut"**, where 66 = `app-portal-confirmed − app-pay-click` (66.7 s) rounded down to whole seconds.
 5. Never cut inside the workshop Portal sequence in the main cut. The viewer must see Signing → Signed → Broadcast → Confirmed happen in order.
 
 ---
@@ -68,261 +68,30 @@ The Portal step has real network waits: NEAR order + publish (~10–20 s), MPC s
 
 - Live API + live frontend, exactly as in [EVIDENCE-ui-live.md § Reproduce](../EVIDENCE-ui-live.md), or the hosted deployment once it exists (preferred: then the footage is the thing judges will open). `UI_BASE` points at it.
 - `playwright-core` and Chromium as pinned in `app/ui-tests/common.mjs`. `ffmpeg` on PATH.
-- **Funds per take** (this script sends real testnet transactions): one publish deposit + 2 orders (price + storage fee, current values per `EVIDENCE-g6.md`; INT-1 historical: 0.40 deposit, 0.87 NEAR per order) from the sponsored session, and 2 Sepolia payouts × (0.001 ETH + gas) from the shared treasury `0x694A…8b7`. G6 adds per-client session quotas and an epoch payout policy (max 20 payouts per epoch): one take uses 2. Check the sponsor and treasury before each take; budget 3 takes.
+- **Funds per take** (this script sends real testnet transactions): a new sponsored session (9 NEAR from the sponsor), one publish deposit (0.40 NEAR, unused part refunded) + 2 orders × 1.42 NEAR (0.10 price + 1.32 storage fee) from that session, and 2 Sepolia payouts × (0.0001 ETH + ≤ 21,000 × 3 gwei gas) from the shared treasury `0x694A…8b7`. The epoch admits at most 20 payouts; one take uses 2. Before take 1: sponsor 11.74 NEAR, treasury 0.514 Sepolia ETH, Sepolia base fee 15 wei (below the 3 gwei cap).
 - Network fonts must load (Bricolage Grotesque, Nunito, JetBrains Mono from Google Fonts). The script waits for `document.fonts.ready`.
 - The script refuses to record if the **MOCK DATA** badge is present. Mock footage must never appear in the video.
 
-### Capture method
+### Capture method (as built)
 
-Two captures run at once:
+The script is [`app/ui-tests/record-demo.mjs`](../../app/ui-tests/record-demo.mjs). Differences from the first plan, all forced by the machine or by what the take showed:
 
-- **Master:** Chrome DevTools `Page.startScreencast` JPEG frames (quality 92) at exactly 1920×1080, with Chrome's own frame timestamps. Turned into a constant-30 fps MP4 with ffmpeg. Text stays sharp.
-- **Backup:** Playwright `recordVideo` (1920×1080 WebM). Lower bitrate and softer text; use only if the screencast fails.
-
-Headless is fine (`INSTABOX_HEADLESS=1`); the cursor is drawn in the page by the script, because headless video has no system cursor. Watch it live on the desktop instead by leaving `INSTABOX_HEADLESS` unset.
-
-### `app/ui-tests/record-demo.mjs` (builder creates this file)
-
-Selectors come from `flow-live.mjs`, `app-live.mjs`, `live-common.mjs`, `common.mjs` and the app source (`data-testid`s listed there). The drag uses the same palette and socket selectors as `dropSplitterOnPipe`, but moves the real mouse in 40 steps so the drag is visible. If the native drag does not register, it falls back to `page.dragAndDrop` and records `drag-fallback` (re-take in that case, because the fallback drag is instant on screen).
-
-```js
-// Records the WORLDWORKS demo footage against a LIVE deployment. Sends real testnet transactions.
-// UI_BASE=<url> [DEMO_RECIPIENT=0x...] [DEMO_OUT=/data/workspace/ww-demo/take-N] node ui-tests/record-demo.mjs
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { chromium, CHROME, BASE, SOCKET } from './common.mjs';
-import { observe } from './live-common.mjs';
-
-const OUT = process.env.DEMO_OUT ?? '/data/workspace/ww-demo/take-' + new Date().toISOString().replace(/[:.]/g, '-');
-const RECIPIENT = process.env.DEMO_RECIPIENT ?? '0x000000000000000000000000000000000000dEaD';
-mkdirSync(OUT + '/frames', { recursive: true });
-
-const marks = [];
-const mark = (name, extra = {}) => { const m = { name, epoch: Date.now() / 1000, ...extra }; marks.push(m); console.log('mark', name, JSON.stringify(extra)); };
-const bbox = async (page, sel) => (await page.locator(sel).first().boundingBox()) ?? null;
-const hold = (page, ms) => page.waitForTimeout(ms);
-const save = (extra = {}) => writeFileSync(OUT + '/marks.json', JSON.stringify({ base: BASE, recipient: RECIPIENT, marks, ...extra }, null, 1));
-
-// Master capture: CDP screencast, one JPEG per frame change, with Chrome's epoch timestamps.
-async function screencast(context, page, label) {
-  const cdp = await context.newCDPSession(page);
-  const index = []; let n = 0;
-  cdp.on('Page.screencastFrame', async f => {
-    const file = `${label}-${String(n++).padStart(6, '0')}.jpg`;
-    writeFileSync(`${OUT}/frames/${file}`, Buffer.from(f.data, 'base64'));
-    index.push({ file, ts: f.metadata.timestamp });
-    try { await cdp.send('Page.screencastFrameAck', { sessionId: f.sessionId }); } catch {}
-  });
-  await cdp.send('Page.startScreencast', { format: 'jpeg', quality: 92, maxWidth: 1920, maxHeight: 1080, everyNthFrame: 1 });
-  return async () => { try { await cdp.send('Page.stopScreencast'); } catch {} index.push({ end: Date.now() / 1000 }); writeFileSync(`${OUT}/frames/${label}.json`, JSON.stringify(index)); };
-}
-
-// A visible cursor drawn in the page (headless video has none). Follows mouse AND HTML5 drag events.
-const CURSOR = () => {
-  const add = () => {
-    if (document.getElementById('__demo_cursor')) return;
-    const c = document.createElement('div'); c.id = '__demo_cursor';
-    c.innerHTML = '<svg width="28" height="34" viewBox="0 0 28 34"><path d="M3 2l20 18-9 1.5 5 10-4 2-5-10-7 6z" fill="#24203A" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/></svg>';
-    c.style.cssText = 'position:fixed;left:0;top:0;z-index:2147483647;pointer-events:none;transform:translate(-200px,-200px);transition:scale .08s';
-    document.documentElement.appendChild(c);
-    const move = e => { if (e.clientX || e.clientY) c.style.transform = `translate(${e.clientX - 3}px,${e.clientY - 2}px)`; };
-    for (const t of ['mousemove', 'dragover', 'drag']) addEventListener(t, move, true);
-    addEventListener('mousedown', () => (c.style.scale = '0.86'), true);
-    addEventListener('mouseup', () => (c.style.scale = '1'), true);
-    addEventListener('drop', () => (c.style.scale = '1'), true);
-  };
-  if (document.readyState === 'loading') addEventListener('DOMContentLoaded', add); else add();
-};
-
-async function glideTo(page, sel, steps = 28) {
-  const b = await page.locator(sel).first().boundingBox();
-  if (!b) throw Error('no bbox for ' + sel);
-  const x = b.x + b.width / 2, y = b.y + b.height / 2;
-  await page.mouse.move(x, y, { steps });
-  return { x, y };
-}
-async function clickVisible(page, sel) { await glideTo(page, sel); await hold(page, 250); await page.click(sel); }
-
-// Mirrors live-common.confirmed(), but marks every status change for the edit.
-async function portalMarks(page, prefix, proofs) {
-  await page.waitForSelector('[data-testid="portal-steps"]', { timeout: 90000 });
-  mark(prefix + 'portal-visible');
-  let prev; const end = Date.now() + 180000;
-  while (Date.now() < end) {
-    const s = await page.getAttribute('[data-testid="portal-steps"]', 'data-status');
-    if (s !== prev) { mark(prefix + 'portal-' + s); prev = s; }
-    if (s === 'confirmed') {
-      if (proofs.size === 0) throw Error('UI confirmed before API confirmation was observed');
-      return;
-    }
-    await hold(page, 200);
-  }
-  throw Error('Portal confirmation timeout');
-}
-
-const browser = await chromium.launch({ executablePath: CHROME, headless: process.env.INSTABOX_HEADLESS !== '0', args: ['--no-sandbox'] });
-const context = await browser.newContext({
-  viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1,
-  recordVideo: { dir: OUT + '/backup', size: { width: 1920, height: 1080 } },
-});
-await context.addInitScript(CURSOR);
-const page = await context.newPage();
-const proofs = observe(page);
-const links = {};
-const stopWs = await screencast(context, page, 'ws');
-
-try {
-  // ---- S1: the broken machine ------------------------------------------------
-  await page.goto(BASE);
-  await page.waitForSelector('[data-testid="part-slot"]');
-  await page.waitForFunction(() => !document.querySelector('[data-testid="serve"]')?.disabled, null, { timeout: 90000 });
-  await page.evaluate(() => document.fonts.ready);
-  if (await page.locator('[data-testid="mock-badge"]').count()) throw Error('MOCK DATA badge present: refusing to record');
-  if ((await page.locator('[data-testid="stamp"]').innerText()) !== 'BROKE') throw Error('machine did not open broken');
-  await page.mouse.move(960, 700);
-  mark('ready', { stamp: await bbox(page, '[data-testid="stamp"]'), socket: await bbox(page, SOCKET) });
-  await page.screenshot({ path: OUT + '/still-broken.png' });
-  await hold(page, 6000);
-
-  // ---- S2: drag the Splitter onto the pipe ------------------------------------
-  await page.waitForSelector(SOCKET);
-  mark('drag-start');
-  await glideTo(page, '[data-testid="palette-Splitter"]', 30);
-  await hold(page, 350);
-  await page.mouse.down();
-  const s = await bbox(page, SOCKET);
-  await page.mouse.move(s.x + s.width / 2, s.y + s.height / 2, { steps: 40 });
-  await hold(page, 250);
-  await page.mouse.up();
-  try { await page.waitForSelector('[data-part-type="Splitter"]', { timeout: 3000 }); }
-  catch { mark('drag-fallback'); await page.dragAndDrop('[data-testid="palette-Splitter"]', SOCKET); await page.waitForSelector('[data-part-type="Splitter"]'); }
-  await hold(page, 700);
-  if ((await page.locator('[data-testid="stamp"]').innerText()) !== 'RUNNING') throw Error('Splitter did not validate');
-  mark('splitter-in');
-  await page.mouse.move(1200, 640, { steps: 20 });
-  await hold(page, 3500);
-
-  // ---- S3: serve a customer ---------------------------------------------------
-  await clickVisible(page, '[data-testid="serve"]');
-  mark('serve-click');
-  await page.waitForSelector('[data-testid="goal-1"][data-state="done"]', { timeout: 90000 });
-  if (!(Number(await page.locator('[data-testid="kept-total"]').innerText()) > 0)) throw Error('no real reserve after sale');
-  mark('order-done', { reserve: await bbox(page, '[data-testid="reserve"]') });
-
-  // ---- S4: the Portal walks to Confirmed --------------------------------------
-  await portalMarks(page, '', proofs);
-  mark('portal-confirmed-boxes', { card: await bbox(page, '[data-testid="portal-card"]'), receipts: await bbox(page, '[data-testid="receipts"]') });
-  links.near = await page.locator('[data-testid="receipts"] .receipt.near a').first().getAttribute('href');
-  links.sepolia = await page.locator('[data-testid="receipts"] a[href^="https://sepolia.etherscan.io/tx/0x"]').first().getAttribute('href');
-  await page.screenshot({ path: OUT + '/still-confirmed.png' });
-  await hold(page, 4000);
-
-  // ---- S6: the ledger ---------------------------------------------------------
-  await clickVisible(page, '[data-testid="ledger-button"]');
-  await page.waitForSelector('[data-testid="ledger-drawer"] [data-testid="ledger-payout"]');
-  mark('ledger-open');
-  await page.screenshot({ path: OUT + '/still-ledger.png' });
-  await hold(page, 4500);
-  await page.click('[aria-label="Close ledger"]');
-  await hold(page, 600);
-
-  // ---- S7: open as app, pay from the standalone page --------------------------
-  await clickVisible(page, '[data-testid="open-app"]');
-  mark('open-app-click');
-  await page.waitForURL('**/m/**');
-  await page.waitForSelector('[data-testid="checkout"]', { timeout: 45000 });
-  await page.evaluate(() => document.fonts.ready);
-  links.app = page.url();
-  mark('app-loaded', { checkout: await bbox(page, '[data-testid="checkout"]') });
-  await hold(page, 3000);
-  await clickVisible(page, '[data-testid="app-recipient"]');
-  await page.locator('[data-testid="app-recipient"]').fill('');
-  await page.locator('[data-testid="app-recipient"]').pressSequentially(RECIPIENT, { delay: 28 });
-  await page.waitForFunction(() => !document.querySelector('[data-testid="app-pay"]')?.disabled, null, { timeout: 60000 });
-  if (await page.locator('[data-testid="mock-badge"]').count()) throw Error('MOCK DATA on standalone page');
-  await hold(page, 500);
-  await clickVisible(page, '[data-testid="app-pay"]');
-  mark('app-pay-click');
-  await page.waitForSelector('[data-testid="app-receipts"]', { timeout: 90000 });
-  links.appNear = await page.locator('[data-testid="app-receipts"] a').first().getAttribute('href');
-  await page.locator('[data-testid="app-receipts"]').evaluate(el => el.scrollIntoView({ behavior: 'smooth', block: 'center' }));
-  await portalMarks(page, 'app-', proofs);
-  await page.locator('[data-testid="app-receipts"]').evaluate(el => el.scrollIntoView({ behavior: 'smooth', block: 'center' }));
-  await hold(page, 800);
-  mark('app-receipts-boxes', { receipts: await bbox(page, '[data-testid="app-receipts"]') });
-  await page.screenshot({ path: OUT + '/still-app-paid.png' });
-  await hold(page, 4500);
-
-  // ---- S8: what's real ----------------------------------------------------------
-  await page.goto(BASE + '/verify');
-  await page.waitForSelector('[data-testid="verify-page"]');
-  await page.evaluate(() => document.fonts.ready);
-  mark('verify-loaded');
-  await hold(page, 2000);
-  await page.evaluate(() => window.scrollTo({ top: 600, behavior: 'smooth' }));
-  await hold(page, 4000);
-  await stopWs();
-
-  // ---- S5: the real explorers (recorded last, placed after S4 in the edit) -----
-  for (const [label, url, fallback, focus] of [
-    ['near', links.near, links.near?.replace('https://explorer.testnet.near.org/transactions/', 'https://testnet.nearblocks.io/txns/'), /success/i],
-    ['sepolia', links.sepolia, links.sepolia?.replace('https://sepolia.etherscan.io/tx/', 'https://eth-sepolia.blockscout.com/tx/'), /success/i],
-  ]) {
-    const p = await context.newPage();
-    const stop = await screencast(context, p, label);
-    await p.goto(url, { waitUntil: 'load', timeout: 45000 }).catch(() => {});
-    await hold(p, 4000);
-    let shown = url;
-    if (/just a moment|attention required/i.test(await p.title())) {   // bot challenge: wait once, then fall back
-      await hold(p, 15000);
-      if (/just a moment|attention required/i.test(await p.title())) { mark(label + '-fallback', { url: fallback }); await p.goto(fallback, { waitUntil: 'load', timeout: 45000 }); shown = fallback; await hold(p, 4000); }
-    }
-    mark(label + '-loaded', {
-      url: shown,
-      success: await p.getByText(focus).first().boundingBox().catch(() => null),
-      from: await p.getByText(/0x694a/i).first().boundingBox().catch(() => null),
-    });
-    await p.screenshot({ path: `${OUT}/still-${label}.png` });
-    await p.mouse.move(700, 500, { steps: 20 });
-    await hold(p, 6000);
-    await stop();
-    await p.close();
-  }
-  save({ links });
-  console.log('RECORDED', OUT, JSON.stringify(links));
-} catch (e) {
-  console.error(e); save({ links, error: String(e) }); process.exitCode = 1;
-} finally {
-  await context.close();   // finalises the backup WebM
-  await browser.close();
-}
-```
-
-Notes on the script:
-
-- The order of recording is S1→S2→S3→S4→S6→S7→S8→S5. The edit puts S5 (explorers) right after S4.
-- `portalMarks` keeps the honesty checks of `live-common.confirmed()`: it refuses a UI "confirmed" unless the `/api/payout` confirmation response was seen. Run `flow-live.mjs` separately when you need the full two-RPC assertions on record.
-- Status names are taken from `data-status` as the app sets them (`awaiting_signature`, `signed`, `broadcast`, `confirmed` in the INT-1 takes). Since G6 the stretch between `broadcast` and `confirmed` includes the three-block wait; the Confirmed step's subtitle reads "requires success and three more blocks on both RPCs" while waiting. Any other status (a queue or retry state) is marked too. If one appears, check that take before using it.
-- `DEMO_RECIPIENT` defaults to the same demo address used in all evidence (`0x…dEaD`). If you set your own Sepolia address, the caption in S7 stays the same.
-
-### Frames → MP4 (per label: `ws`, `near`, `sepolia`)
-
-Screencast frames only arrive when the page changes, so each frame lasts until the next one:
+- **Viewport 1440×810 CSS px at device scale 4/3**, so the screencast is exactly 1920×1080 but UI text is a third larger than at a 1920 px viewport (legible at 78% stage scale on a phone). Bounding boxes in `marks.json` are CSS px; multiply by 4/3 for video px.
+- **No JPEG frames on disk.** CDP `Page.startScreencast` JPEG frames (quality 92) are piped straight into ffmpeg as constant 30 fps H.264 (CRF 17), each frame held until Chrome's next frame timestamp. The root disk had ~300 MB free when work started; one take is ~37 MB. No Playwright WebM backup is recorded.
+- The screencast starts only after the workshop has loaded in live mode. **Mock guard:** before recording and at every Portal status change, the script checks for the `mock-badge` and for "MOCK DATA" / "simulated by the mock" in the page text; on a hit it throws, stops, and deletes the partial video.
+- A drawn cursor (headless has none) plus a drag image that clones the dragged palette chip, because headless screencasts do not paint the browser's own drag image. It appears in the stills too.
+- Explorer pages are recorded last, in a second context with a normal desktop user agent and third-party ad hosts blocked. NEAR: `testnet.near.rocks/tx/<hash>` (the app's explorer.testnet.near.org link is a selector page), NearBlocks as fallback. Sepolia: Etherscan, wait + one retry on a bot check, then Blockscout. `DEMO_EXPLORERS_FROM=<take dir>` re-records only these pages for an existing take, without new transactions.
+- Viewport-only stills `stills/live-0*.png` (no fullPage screenshots, which would resize the viewport inside the recording) feed `docs/design/screens/live-*.png`.
 
 ```sh
-cd "$DEMO_OUT"
-for L in ws near sepolia; do
-node -e '
-const L=process.argv[1], idx=require("./frames/"+L+".json"); const end=idx.pop().end;
-const lines=[]; idx.forEach((f,i)=>{const next=i+1<idx.length?idx[i+1].ts:end; lines.push(`file frames/${f.file}`,`duration ${Math.max(next-f.ts,1/30).toFixed(4)}`);});
-lines.push(`file frames/${idx.at(-1).file}`); require("fs").writeFileSync(L+".txt",lines.join("\n"));
-console.log(L,"firstTs",idx[0].ts);' $L
-ffmpeg -y -f concat -safe 0 -i $L.txt -vf "fps=30,scale=1920:1080:flags=lanczos,format=yuv420p" -c:v libx264 -crf 14 -preset slow -movflags +faststart $L.mp4
-done
+# from app/: live API + live build (VITE_CONTRACT_ID set), as in flow-live.mjs / EVIDENCE-ui-live.md
+API_PORT=3009 node --env-file=/opt/ww-secrets/live.env --import tsx scripts/dev-api.ts
+VITE_CONTRACT_ID=ww-portal-261112.testnet VITE_RELAYER_URL=http://127.0.0.1:3009 npx vite build --outDir /data/tmp/ww-demo/dist-live
+npx vite preview --outDir /data/tmp/ww-demo/dist-live --host 127.0.0.1 --port 4202 --strictPort
+UI_BASE=http://127.0.0.1:4202 INSTABOX_HEADLESS=1 DEMO_OUT=/opt/ww-video/take-1 node ui-tests/record-demo.mjs
 ```
 
-`ws.mp4` covers the workshop **and** the standalone page and /verify (same tab); in the edit, `app.mp4` is simply `ws.mp4` from `open-app-click` onwards. **Source time of a mark** = `mark.epoch − firstTs` of that label. Write these numbers into the shot table before building.
-
-Check each MP4: `ffprobe` duration ≈ last mark + hold, and look at one frame per shot. Hard-to-read text means the screencast missed frames; use `backup/*.webm` for that shot.
+**Source time of a mark** = `mark.epoch − clips[label].t0` from `marks.json`.
 
 ---
 
@@ -333,7 +102,7 @@ Use the installed skills: `/hyperframes` (contract), `/hyperframes-core` (clips,
 ### Project layout
 
 ```
-ww-demo-video/                      # outside the repo, e.g. /data/workspace/ww-demo-video
+ww-demo-76/                         # outside the repo: /opt/ww-video/ww-demo-76 (and ww-demo-15)
   index.html                        # root: 1920x1080, data-fps 30, data-duration 76; scene hosts + audio only
   compositions/
     title.html      # S0
@@ -353,8 +122,7 @@ Start with `npx hyperframes init ww-demo-video --skip-skills --skill=hyperframes
 
 | Variable | Used in | Value |
 |---|---|---|
-| `hosted_url` | end card, S7 caption bar | `{{HOSTED_URL}}` until hosting exists |
-| `repo_url` | end card | `{{REPO_URL}}` |
+| end card rows | end card | `https://github.com/emmaGH1/worldworks` and "Live demo link in the post" (no hosted URL yet; never a placeholder) |
 | `record_date` | S5 corner tag | the take's date, e.g. `2026-11-14` |
 | `app_wait_s` | S7 cut card | `app-portal-confirmed − app-pay-click`, whole seconds, rounded down |
 | `sign_wait_s` | S4 speed tag end value | `portal-confirmed − portal-visible` |
@@ -417,9 +185,9 @@ Separate HyperFrames project `ww-demo-15/` that reuses the same `assets/`, capti
 | 0.0–2.0 | S1 footage, BROKE stamp, slight push-in | **This machine loses every coin.** |
 | 2.0–4.6 | S2 drag → RUNNING (1×, trimmed to the drag and the stamp flip) | **One drag: 70% now stays in a reserve.** |
 | 4.6–5.3 | Cursor clicks Serve a customer (1×) | **A test customer pays on NEAR.** |
-| 5.3–9.3 | Portal card Signing → Confirmed. With the G6 three-block wait (60–90 s real), this will almost always be the cut version: Signing → Signed → Broadcast at a constant **10×** with tag "▶▶ 10× speed" for ~2.5 s, then a 0.4 s chip "⏭ {{N}} s later · cut", then the Confirmed card for 1.1 s. Only if the whole wait is ≤ 40 s, play it at a constant 10× with no cut. | **NEAR signs an Ethereum payment.** |
+| 4.8–9.8 | As built: order + Signing → Signed → Broadcast at a constant **10×** (29.8 s real → 3.0 s, tag "▶▶ 10× speed · real time"), then a 1.1 s card "⏭ 40 s later · cut" (the three-block wait), then the Confirmed card for 0.9 s with a punch-in on the receipts. | **NEAR signs an Ethereum payment.** |
 | 9.3–12.5 | `sepolia.mp4`: punch-in to Status **Success** and From **0x694A…8b7** | **Included on Sepolia: Success.** |
-| 12.5–15.0 | Standalone payment page (`still-app-paid.png` or 1× footage), then a bottom strip: **WORLDWORKS · testnet · {{HOSTED_URL}}** | **Same machine, now its own payment page.** |
+| 12.5–15.0 | Standalone payment page (1× footage of the confirmed receipts) with a bottom strip: **WORLDWORKS · testnet · github.com/emmaGH1/worldworks** | **Same machine, now its own payment page.** |
 
 Render: `npx hyperframes render --quality delivery -o worldworks-demo-15s.mp4`, expect 15.0 s. Attach the **15 s cut to the first post** (it autoplays) and the 76 s cut in the thread, or attach only the 76 s cut if the user prefers one video; both are valid.
 
@@ -429,13 +197,15 @@ Render: `npx hyperframes render --quality delivery -o worldworks-demo-15s.mp4`, 
 
 | Caption / line | Why it is allowed |
 |---|---|
-| "A seeded test customer pays 0.10 NEAR on NEAR testnet." | Customer is seeded and labelled (README "Real versus simulated"); NEAR order is real testnet state. Check the price in the take. |
+| "A seeded test customer pays 0.10 NEAR (+1.32 NEAR storage fee)." | Customer is seeded and labelled (README "Real versus simulated"); NEAR order is real testnet state. 1.32 NEAR is the retained order fee in CLAIMS and README; the take's Serve button reads "0.10 NEAR + 1.32 storage fee". |
 | "0.07 NEAR is now in the reserve, on chain." | UI reads it from chain ("vault on chain 0.07 NEAR"). G6 allows "vault owners can withdraw", but the video does not show withdrawal, so it does not say it. |
 | "The NEAR contract writes an Ethereum payment." | CLAIMS: the contract constructs the Sepolia EIP-1559 transfers itself. |
 | "NEAR Chain Signatures signs it. The relayer only broadcasts." | CLAIMS: keyless relayer that checks bytes and recovered sender and holds no keys. We do **not** say "trustless" or "only possible signing authority". |
-| "Included on Sepolia, seen by two RPCs." | G6 CLAIMS: "Included on Sepolia, seen by two RPCs" is the accurate description. Not "confirmed payment", not "final"/"finality". |
-| "Sepolia: Success. Sent from the address NEAR derived for our contract." | EVIDENCE-sepolia: treasury is the Chain Signatures address derived for `ww-portal-261112.testnet`. It is a **shared** treasury, not per machine; we don't say "the machine's own wallet". |
-| "Open as app: the same machine is now a payment page with its own URL." | README: "own address" means a machine id + URL, not an account. |
+| "Then it waits for 3 more Sepolia blocks on two RPCs." | CLAIMS: inclusion is reported only after matching receipts on two RPC hosts and three additional blocks on both. |
+| "0.0001 ETH included on Sepolia, seen by two RPCs." | G6 CLAIMS: "Included on Sepolia, seen by two RPCs" is the accurate description; 0.0001 ETH is the template payout (README). Not "confirmed payment", not "final"/"finality". |
+| "NEAR testnet: the order, then the contract's signing request." | The NEAR Rocks page shows `submit_order` (1.42 Ⓝ) and the receipt where `ww-portal-261112.testnet` calls `sign` on `v1.signer-prod.testnet` (CLAIMS: Chain Signatures). |
+| "Sepolia: Success, from the address NEAR derived for our contract." | EVIDENCE-sepolia: treasury is the Chain Signatures address derived for `ww-portal-261112.testnet`. It is a **shared** treasury, not per machine; we don't say "the machine's own wallet". |
+| "Open as app: same machine, now a payment page with its own URL." | README: "own address" means a machine id + URL, not an account. |
 | "Testnet only. The app lists what is real and what is simulated." | /verify page wording follows CLAIMS. |
 
 Never on screen or in VO: immutable, no admin can move funds, exclusive signing authority, audited, secure, production(-ready/-safe), safe for mainnet, final/finality, trustless, guaranteed refund or inclusion, "confirmed payment" (use "included on Sepolia, seen by two RPCs"), "AI customer", "lifetime/total spending cap", "the epoch budget caps total spend", "own wallet/account/treasury" for a machine. Don't show or caption the **Withdraw reserve** button being used (not exercised live).
