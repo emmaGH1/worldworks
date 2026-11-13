@@ -961,3 +961,10 @@ Questions for five readers: “Whose problem are you solving?”, “What do the
 ## Limits / honest list
 
 **Live job 2 is blocked by the observed gas mismatch above; its live suite has five HTTP-error console entries and is not an acceptance pass.** Job 4 (rent jar) is optional and not implemented. Jobs use fixed sockets rather than arbitrary graph wiring. Real job 3 shipment is not exercised under the one-live-job constraint. If an approval’s response is completely lost and the read API cannot reconstruct its historical direct payout effect, the UI retains a neutral unknown state and explorer link; it does not infer Dayo was paid or submit another approval. A reload during session/publication exposes a retryable error; an existing publication is checked and reused before a new sale. No deployment is performed, so local new shop links are not claimed to already exist on the production site.
+
+## Live job 2 — PASS after recipient initialization (orchestrator, 2026-11-13)
+Cause of the earlier revert: on current Sepolia a plain transfer to a never-used address estimated ~204,600 gas, while the Portal signs a fixed 21,000. Funding Chi's address once (0.1 Sepolia ETH from the project owner) brought the estimate to 21,000 (`0x5208`). The game's `eth_estimateGas` preflight still blocks sales to fresh addresses.
+
+`UI_BASE=https://worldworks.vercel.app UI_ADVANCE=1 node ui-tests/game2-live.mjs` against **production**: **PASS**, exactly one seeded-customer order, 0 console errors.
+- NEAR order: https://testnet.near.rocks/tx/HPPU7EhYDk28S7Lgt3gbPPQPJqNbdXakpzuh9PjLfHx4
+- Payout 30 to Chi, confirmed by ethpandaops + tenderly at 3 blocks: https://sepolia.etherscan.io/tx/0x91771257110a6009650943f093da26de1e1031147f3e122547b52b78b49cc774
