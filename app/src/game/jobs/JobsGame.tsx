@@ -5,7 +5,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as RPE } from 'react';
 import { api } from '../../api';
 import type { OrderResult, TxRef } from '../../api/types';
-import { addRow, ensureSession, getState, finishOrder, pendingOrder, submitOrder, trackPayout, updateRow, retryRelay, useApp } from '../../lib/store';
+import { approvalIntent, submitApproval, finishApproval } from '../../lib/approvals';
+import { recordNearEffects, nearTransferText, addRow, ensureSession, getState, finishOrder, pendingOrder, submitOrder, trackPayout, updateRow, retryRelay, useApp } from '../../lib/store';
 import { loadLimits, useLimits } from '../../lib/limits';
 import { linkProps } from '../../lib/router';
 import { eth, isEvmAddress, near, shortAddr } from '../../lib/units';
@@ -19,18 +20,21 @@ import { createJobScene, type JobScene, type LaneDest, type Flow, type CoinKind 
 import '../game.css';
 import './jobs.css';
 import { Face } from './Face';
+import { Spotlight } from './Spotlight';
+import { sound } from './sound';
 import { checkPortalGas } from './portalPreflight';
 
 // ------------------------------------------------------------------ persistence (keyed by mode + contract)
 const contractId = () => (api.mode === 'mock' ? 'mock-contract.testnet' : (import.meta.env?.VITE_CONTRACT_ID as string | undefined) ?? 'ww-portal-261112.testnet');
 const scope = () => `${api.mode}:${contractId()}`;
 type Shipped = { machineId: string; orderTx?: TxRef; payoutId?: string; ethConfirmed?: boolean; link?: string };
-type Friends = { f1: string; f2: string; done: boolean };
+type Friends = { f1: string; f2: string; done: boolean; names?: Partial<Record<'f1' | 'f2', string>> };
 type Progress = { intro: boolean; at: number; solved: Record<number, number>; shipped: Record<number, Shipped>; seen: Record<number, boolean>; builds: Record<number, Build>; friends: Friends };
 type RunPhase = 'session' | 'publish' | 'order' | 'approve' | 'paying' | 'portal' | 'done' | 'error' | 'unknown';
 type Run = {
   job: number; phase: RunPhase; machineId?: string; publishTx?: TxRef; orderId?: string; orderTx?: TxRef; customer?: string; recipient?: string;
   effects?: OrderResult['effects']; pending?: boolean; approveTx?: TxRef; payoutId?: string; payoutRow?: string; error?: string; started: number; build?: Build;
+  backgrounded?: boolean; resolution?: 'pending' | 'approved' | 'expired'; gateIntent?: 'approve' | 'expire';
   ctx?: Ctx; balanceBefore?: string; balanceAfter?: string; account?: string; orderEffects?: number;
 };
 const PKEY = () => `ww-jobs3-${scope()}`;
@@ -49,6 +53,15 @@ const unlocked = (p: Progress, n: number) => n === 1 || (n === 5 ? !!p.solved[1]
 const stars = (n: number) => '★'.repeat(n) + '☆'.repeat(3 - n);
 const NEAR_ACCOUNT = /^(?=.{2,64}$)(([a-z\d]+[-_])*[a-z\d]+\.)*([a-z\d]+[-_])*[a-z\d]+$/;
 const friendKind = (s: string): 'near' | 'evm' | 'bad' | 'none' => { const v = s.trim(); return !v ? 'none' : isEvmAddress(v) ? 'evm' : NEAR_ACCOUNT.test(v) ? 'near' : 'bad'; };
+
+function recordRunEffects(r: Run) {
+  if (!r.orderId || !r.effects) return;
+  recordNearEffects({orderId:r.orderId, tx:r.orderTx ?? {hash:'',explorerUrl:''}, pending:!!r.pending, effects:r.effects, trace:[]});
+  if (r.orderEffects !== undefined) for (const row of getState().ledger) {
+    const i = Number(row.detail?.find(d => d.startsWith('effect '))?.slice(7));
+    if (row.orderId === r.orderId && Number.isFinite(i) && i >= r.orderEffects) updateRow(row.id,{tx:r.approveTx});
+  }
+}
 
 // ------------------------------------------------------------------ small pieces
 const PART_ICON: Record<PartKind, string> = { Splitter: '◔', Payout: '✉', Portal: '◎', Vault: '▣', Gate: '⊓', Worker: '⚿' };
@@ -120,12 +133,22 @@ export function JobsGame() {
   const [editing, setEditing] = useState<string | null>(null);  // socket id
   const [cardOpen, setCardOpen] = useState(() => !loadProgress().seen[loadProgress().at]);
   const [help, setHelp] = useState(false);
+  const [guide, setGuide] = useState(() => !loadProgress().intro && localStorage.getItem(`ww-guide4-${scope()}`) !== 'done');
+  const [tutorialReplay, setTutorialReplay] = useState(false);
+  const [reviewedFail, setReviewedFail] = useState(false);
+  const [hint, setHint] = useState(0);
+  const dismissGuide = () => { setGuide(false); setTutorialReplay(false); try { localStorage.setItem(`ww-guide4-${scope()}`, 'done'); } catch { /* storage off */ } };
+  useEffect(() => { if (job.n > 1 && !localStorage.getItem(`ww-hint4-${scope()}-${job.n}`)) setHint(job.n); }, [job.n]);
+
+  const [muted, setMuted] = useState(sound.muted);
+  useEffect(() => { const unlock = () => sound.unlock(); window.addEventListener('pointerdown', unlock); window.addEventListener('keydown', unlock); return () => { window.removeEventListener('pointerdown', unlock); window.removeEventListener('keydown', unlock); sound.stop(); }; }, []);
   const [levels, setLevels] = useState(false);
   const [ledger, setLedger] = useState(false);
   const [test, setTest] = useState<{ running: boolean; sale: number; result: TestResult | null; caption: string; shown: number; revealed: string[]; waitTap?: 'approve' | null; fix?: string | null; dirty: boolean }>({ running: false, sale: 0, result: null, caption: '', shown: 0, revealed: [], dirty: true });
   const [run, setRunState] = useState<Run | null>(() => loadRun());
   const [drag, setDrag] = useState<{ uid: string; kind: PartKind; x: number; y: number; moved: boolean } | null>(null);
   const [runClosed, setRunClosed] = useState(false);
+  const [receiptsOpen, setReceiptsOpen] = useState(false);
   const [momentClosed, setMomentClosed] = useState(false);
   const [copied, setCopied] = useState(false);
   const [shake, setShake] = useState<string | null>(null);
@@ -155,7 +178,7 @@ export function JobsGame() {
   const evmFriend = friendIds.find(f => friendKind(friends[f]) === 'evm');
   const people: PersonId[] = job.n === 5 ? ['you', ...friendIds] : job.people;
   const abroad: PersonId | undefined = job.abroad ?? (job.n === 5 ? evmFriend : undefined);
-  const who = useCallback((p: PersonId) => pname(p), []);
+  const who = useCallback((p: PersonId) => (p === 'f1' || p === 'f2') ? friends.names?.[p]?.trim() || pname(p) : pname(p), [friends.names]);
   const ctx: Ctx = useMemo(() => {
     const c: Ctx = { rate: limits?.rate ?? DEFAULT_RATE, holder: session?.accountId };
     if (job.n === 5) {
@@ -169,9 +192,14 @@ export function JobsGame() {
   useEffect(() => {
     mounted.current = true;
     const s = createJobScene(canvasRef.current!, overlayRef.current!, {
-      margins: (w, h, portrait, mode) => mode === 'portal'
-        ? (portrait ? { t: 190, b: Math.min(300, h * 0.36), l: 10, r: 10 } : { t: 150, b: 190, l: 60, r: 60 })
-        : (portrait ? { t: 112, b: 172, l: 6, r: 6 } : { t: 96, b: 118, l: Math.min(40, w * 0.03), r: 24 }),
+      margins: (w, h, portrait, mode) => {
+        if(mode==='portal') {
+          const top=document.querySelector('.j-moment-top')?.getBoundingClientRect().height ?? (portrait?225:170);
+          const bottom=document.querySelector('.j-moment-bottom')?.getBoundingClientRect().height ?? (portrait?300:240);
+          return {t:top+12,b:bottom+12,l:portrait?10:60,r:portrait?10:60};
+        }
+        return portrait ? {t:112,b:172,l:6,r:6} : {t:104,b:138,l:Math.min(40,w*.03),r:24};
+      },
     });
     sceneRef.current = s; setIs2d(s.is2d);
     void loadLimits();
@@ -185,7 +213,7 @@ export function JobsGame() {
   const testEpoch = useRef(0);
   const freshTest = { running: false, sale: 0, result: null, caption: '', shown: 0, revealed: [], dirty: true };
   const openJob = (n: number) => {
-    testEpoch.current++; tapResolve.current?.(); setRunClosed(false); setMomentClosed(false);
+    testEpoch.current++; tapResolve.current?.(); setReceiptsOpen(false); setRunClosed(false); setMomentClosed(false);
     if (test.running) return;
     const j = jobByN(n);
     setSt(initialState(j)); setSelected(null); setTarget(null); setEditing(null); setLevels(false);
@@ -210,7 +238,7 @@ export function JobsGame() {
     const b = { ...build }; let t = tray.filter(x => x.uid !== uid);
     if (b[socketId]) t = takeOut(b, t, socketId);
     b[socketId] = defaultPlaced(job, item.kind, uid);
-    mutate(b, t); setSelected(null); setTarget(null);
+    setHint(0); mutate(b, t); sound.play('place'); setSelected(null); setTarget(null);
     const placed = b[socketId]!;
     if (placed.kind === 'Payout' || placed.kind === 'Worker' || placed.kind === 'Splitter' || placed.kind === 'Portal') setEditing(socketId);
     return true;
@@ -311,11 +339,13 @@ export function JobsGame() {
     setEditing(null); setSelected(null); setTarget(null); setCardOpen(false);
     const l = limits ?? await loadLimits();
     const r = runTest(job, build, api, { ...ctx, rate: l?.rate ?? DEFAULT_RATE });
-    setTest({ running: true, sale: 0, result: r, caption: '', shown: 0, revealed: [], dirty: false });
+    setReviewedFail(false); setTest({ running: true, sale: 0, result: r, caption: '', shown: 0, revealed: [], dirty: false });
     if (r.sales.length === 0) { setTest(x => ({ ...x, running: false, shown: 3, revealed: job.requirements.map(q => q.id), caption: '', fix: fixTarget(job, build, r) })); return; }
     const epoch = ++testEpoch.current;
     for (let i = 0; i < 3; i++) { await playOne(i, r); if (!mounted.current || epoch !== testEpoch.current) return; }
     setTest(x => ({ ...x, running: false, caption: '', revealed: job.requirements.map(q => q.id), fix: r.ok ? null : fixTarget(job, build, r) }));
+    sound.play(r.ok ? 'pass' : 'fail');
+    if (!r.ok) { setShake(fixTarget(job, build, r)); setTimeout(() => setShake(null), 600); }
     if (r.ok) update(o => ({ solved: { ...o.solved, [job.n]: Math.max(o.solved[job.n] ?? 0, r.score?.stars ?? 1) }, builds: { ...o.builds, [job.n]: structuredClone(build) } }));
   };
   const tap = () => { tapResolve.current?.(); tapResolve.current = null; };
@@ -324,8 +354,8 @@ export function JobsGame() {
   const step = (patch: Partial<Run>) => setRun(r => (r ? { ...r, ...patch } : r));
   const realLabel = (effects: OrderResult['effects'], c: Ctx) => {
     const got: Partial<Record<PersonId, bigint>> = {};
-    for (const e of effects) if (e.kind === 'payout') { const w = ownerOf(e.account, c); if (w) got[w] = (got[w] ?? 0n) + BigInt(e.amount); }
-    return (f: SinkFlow) => (f.kind === 'Payout' && f.person ? `+${fmtN(got[f.person] ?? 0n)}` : undefined);
+    for (const e of effects) if (e.kind === 'payout' && e.settled === true) { const w = ownerOf(e.account, c); if (w) got[w] = (got[w] ?? 0n) + BigInt(e.amount); }
+    return (f: SinkFlow) => (f.kind === 'Payout' && f.person && got[f.person] ? `+${fmtN(got[f.person]!)}` : f.kind === 'Payout' ? 'transfer requested' : undefined);
   };
   const playReal = async (effects: OrderResult['effects'], c: Ctx, saleBuild: Build) => {
     const sc = sceneRef.current; if (!sc) return;
@@ -338,7 +368,7 @@ export function JobsGame() {
     if (run && !['done', 'error'].includes(run.phase)) { setLevels(true); return; }
     const pend = pendingOrder();
     if (pend && !pend.machineId.startsWith(job.slug.slice(0, 8))) { setRun({ job: job.n, phase: 'error', error: 'An earlier order is still being checked. Open that job first.', started: Date.now() }); return; }
-    setRunClosed(false); setMomentClosed(false);
+    dismissGuide(); setRunClosed(false); setMomentClosed(false); setCardOpen(false); setReceiptsOpen(false);
     setRun({ job: job.n, phase: 'session', started: Date.now(), build: structuredClone(build) });
     try {
       const s = await ensureSession();
@@ -375,20 +405,21 @@ export function JobsGame() {
       step({ phase: 'order' });
       await order(id);
     } catch (e) {
-      if (mounted.current) step({ phase: 'error', error: (e as Error).message });
+      if (mounted.current) step({ phase: pendingOrder() ? 'unknown' : 'error', error: (e as Error).message });
     }
   };
-  const order = async (id: string) => {
+  const order = async (id: string, resend = false) => {
     const r0 = runRef.current!; const orderJob = jobByN(r0.job); const orderBuild = r0.build ?? build; const c = r0.ctx ?? ctx;
-    const r = await submitOrder(id, true, r0.recipient, () => step({ phase: 'unknown' }));
-    addRow({ kind: 'order', orderId: r.orderId, title: `A seeded customer bought from ${orderJob.shop}`, amount: near(PRICE), status: 'confirmed', statusText: r.pending ? 'paid · a share waits at the Gate' : 'paid', tx: r.tx, detail: [`machine ${id}`, `order ${r.orderId}`, '1.32 NEAR deposit kept by the contract for storage'] });
+    const r = await submitOrder(id, true, r0.recipient, () => step({ phase: 'unknown' }), { resend });
+    addRow({ kind: 'order', orderId: r.orderId, title: `A seeded customer bought from ${orderJob.shop}`, amount: near(PRICE), status: 'confirmed', statusText: r.pending ? 'order accepted · a share waits at the Gate' : 'order accepted', tx: r.tx, detail: [`machine ${id}`, `order ${r.orderId}`, '1.32 NEAR deposit kept by the contract for storage'] });
     const ext = r.effects.find(e => e.kind === 'external');
     let payoutRow: string | undefined;
     if (ext && ext.kind === 'external') payoutRow = addRow({ kind: 'payout', payoutId: ext.payoutId, title: `Portal: ${eth(ext.wei)} ETH to ${shortAddr(ext.recipient)}`, amount: eth(ext.wei), unit: 'ETH', status: 'pending', statusText: 'signing on NEAR', tx: r.tx });
     setRun(x => x && { ...x, orderId: r.orderId, orderTx: r.tx, customer: (r as { customer?: string }).customer, effects: r.effects, pending: r.pending, payoutId: ext && ext.kind === 'external' ? ext.payoutId : undefined, payoutRow, phase: 'paying' });
+    recordRunEffects(runRef.current!);
     finishOrder(r.orderId);
     if (ext && ext.kind === 'external' && payoutRow) trackPayout(ext.payoutId, payoutRow);
-    if (!r.effects.length && !r.pending) { step({ phase: 'unknown', error: 'Order observed on NEAR. Payment receipts are unavailable; check the transaction. No new sale will be sent.' }); return; }
+    if (!r.effects.length && !r.pending && !r.recovered) { step({ phase: 'unknown', error: 'Order observed on NEAR. Payment receipts are unavailable; check the transaction. No new sale will be sent.' }); return; }
     if (activeJobRef.current.n === orderJob.n) await playReal(r.effects, c, orderBuild);
     if (r.pending) { step({ phase: 'approve' }); return; }
     afterPaid(id, ext && ext.kind === 'external' ? ext.payoutId : undefined, payoutRow);
@@ -412,36 +443,47 @@ export function JobsGame() {
       await sleep(2000);
     }
   };
-  const approve = async () => {
+  const [canExpire, setCanExpire] = useState(false);
+  useEffect(() => {
+    setCanExpire(false);
+    if (run?.phase !== 'approve' || !run.machineId || !run.orderId) return;
+    let stopped = false;
+    const check = async () => { try { const e = await api.expiry?.(run.machineId!, run.orderId!); if (!stopped) setCanExpire(!!e?.eligible); } catch { if (!stopped) setCanExpire(false); } };
+    void check(); const timer = setInterval(check, 3000);
+    return () => { stopped = true; clearInterval(timer); };
+  }, [run?.phase, run?.machineId, run?.orderId]);
+  const approve = async (refund = false) => {
     const r = runRef.current; if (!r?.machineId || !r.orderId) return;
     try {
-      step({ phase: 'paying' });
-      const a = await api.approve(r.machineId, r.orderId);
-      addRow({ kind: 'approve', title: 'Delivery confirmed: the Gate opened', status: a.observation === 'unknown' ? 'unknown' : 'confirmed', statusText: a.observation === 'unknown' ? 'submitted — result not confirmed yet' : 'confirmed', tx: a.tx });
-      step({ approveTx: a.tx, orderEffects: (r.effects ?? []).length, effects: [...(r.effects ?? []), ...a.effects], pending: a.pending });
-      if (a.observation === 'unknown') { step({ phase: 'unknown', error: 'The approval was sent, but its result could not be read yet. Check the receipt link.' }); return; }
+      step({ phase: 'paying', gateIntent: refund ? 'expire' : 'approve', orderEffects: r.effects?.length ?? 0, error: undefined });
+      const a = await submitApproval(r.machineId, r.orderId, refund ? 'expire' : 'approve');
+      addRow({ kind: 'approve', title: refund ? 'Order expired: the refund exit opened' : 'Delivery confirmed: the Gate opened', status: a.observation === 'unknown' ? 'unknown' : 'confirmed', statusText: a.observation === 'unknown' ? 'submitted — result not confirmed yet' : 'confirmed', tx: a.tx });
+      step({ resolution: a.observation === 'unknown' ? undefined : refund ? 'expired' : 'approved', approveTx: a.tx, orderEffects: (r.effects ?? []).length, effects: [...(r.effects ?? []), ...a.effects], pending: a.pending });
+      if (a.observation === 'unknown') { step({ phase: 'unknown', error: 'The Gate action was sent, but its result could not be read yet. Check the receipt link.' }); return; }
+      recordRunEffects(runRef.current!); finishApproval(r.machineId, r.orderId);
       const b = r.build ?? build; const s = sinkFlows(b);
       const g = Object.keys(b).find(k => b[k]?.kind === 'Gate');
-      if (g && activeJobRef.current.n === r.job) await sceneRef.current?.release(g, releaseFlows(b, s, g, true, realLabel(a.effects, r.ctx ?? ctx)), api.mode === 'mock' ? 'mock' : 'real');
+      if (g && activeJobRef.current.n === r.job) await sceneRef.current?.release(g, releaseFlows(b, s, g, !refund, realLabel(a.effects, r.ctx ?? ctx)), api.mode === 'mock' ? 'mock' : 'real');
       const ext = a.effects.find(e => e.kind === 'external');
       afterPaid(r.machineId, ext && ext.kind === 'external' ? ext.payoutId : undefined);
-    } catch (e) { step({ phase: 'approve', error: (e as Error).message }); }
+    } catch (e) { step({ phase: 'unknown', error: `The Gate action could not be confirmed. Checking the order before offering another action. ${(e as Error).message}` }); }
   };
   useEffect(() => {
-    if (run?.phase !== 'unknown' || !run.approveTx || !run.machineId || !run.orderId) return;
+    if (!['unknown', 'paying'].includes(run?.phase ?? '') || !run?.gateIntent || !run.machineId || !run.orderId) return;
     let cancelled = false;
     const check = async () => {
       try {
         const found = await api.getOrder(run.machineId!, run.orderId!);
-        if (!cancelled && found && !found.pending && found.observation !== 'unknown' && found.effects.length) {
-          step({ effects: found.effects, pending: false, error: undefined });
+        if (!cancelled && found && !found.pending && found.observation !== 'unknown' && ['approved', 'expired'].includes(found.resolution ?? '')) {
+          step({ effects: found.effects, pending: false, resolution: found.resolution === 'expired' ? 'expired' : 'approved', error: undefined });
+          recordRunEffects(runRef.current!); finishApproval(run.machineId!,run.orderId!);
           finish(run.machineId!);
         }
       } catch { /* read only: missing observation never authorizes another approval */ }
     };
     void check(); const timer = setInterval(check, 2000);
     return () => { cancelled = true; clearInterval(timer); };
-  }, [run?.phase, run?.approveTx]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [run?.phase, run?.approveTx, run?.gateIntent]); // eslint-disable-line react-hooks/exhaustive-deps
   // Portal status → scene (only on API status; the star waits for confirmed)
   useEffect(() => {
     const sc = sceneRef.current;
@@ -458,8 +500,11 @@ export function JobsGame() {
   // resume after reload: an order in flight is resumed (never re-spent); payouts restart via restoreLedger
   useEffect(() => {
     const r = loadRun(); if (!r) return;
+    const intent = r.machineId && r.orderId ? approvalIntent(r.machineId,r.orderId) : null;
+    if (intent) { step({phase:'unknown', gateIntent:intent.action, approveTx:intent.tx ?? r.approveTx}); return; }
+    if(r.approveTx && !r.resolution && ['unknown','paying'].includes(r.phase)) { step({phase:'unknown',gateIntent:'approve'}); return; }
     if (r.phase === 'session' || r.phase === 'publish') step({ phase: 'error', error: 'The page reloaded before the sale. Test this job and ship again; any existing shop will be reused.' });
-    if (r.phase === 'paying' && r.orderId && !r.payoutId) {
+    if (r.phase === 'paying' && r.orderId && !r.payoutId && !r.gateIntent) {
       if (r.pending) step({ phase: 'approve' });
       else if (r.effects?.length) finish(r.machineId!);
     }
@@ -468,10 +513,12 @@ export function JobsGame() {
       if (pend && r.machineId && pend.machineId === r.machineId) { setRun({ ...r, phase: 'order' }); void order(r.machineId).catch(e => step({ phase: 'error', error: (e as Error).message })); }
       else if (!r.orderId) setRun({ ...r, phase: 'error', error: 'The page reloaded before the order was sent. Nothing was spent on it. You can ship again.' });
     }
+    if (r.job === 5 && r.balanceBefore && ['done','portal','paying'].includes(r.phase)) void watchBalance();
     if (['portal', 'paying'].includes(r.phase) && r.payoutId && r.payoutRow) { step({ phase: 'portal' }); trackPayout(r.payoutId, r.payoutRow); }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // restore the solved build when coming back to a solved/shipped job
   useEffect(() => {
+    if(guide && tutorialReplay && job.n===1) return;
     const saved = (run && run.job === job.n && run.phase !== 'error' && run.build) || prog.builds[job.n];
     if (saved && prog.solved[job.n] && test.dirty && !test.result) {
       const used = new Set(Object.values(saved).filter(Boolean).map(p => p!.uid));
@@ -488,21 +535,69 @@ export function JobsGame() {
   const result = test.result;
   const passed = !!result?.ok && !test.dirty && !test.running;
   const failed = !!result && !result.ok && !test.dirty && !test.running;
-  const runHere = run && run.job === job.n ? run : null;
+  const runHere = !(guide && tutorialReplay && job.n===1) && run && run.job === job.n ? run : null;
   const shipping = !!runHere && !['done', 'error'].includes(runHere.phase);
   const shipped = runHere?.phase === 'done';
   const momentOn = !!runHere?.payoutId && !momentClosed && !runClosed && (runHere.phase === 'portal' || (runHere.phase === 'done' && !!payout));
-  useEffect(() => { sceneRef.current?.focus(momentOn ? 'portal' : 'all'); }, [momentOn]);
+  useEffect(() => { sceneRef.current?.focus(momentOn ? 'portal' : (!prog.intro || help) ? 'title' : test.running ? 'test' : 'all'); }, [momentOn, prog.intro, help, test.running]);
+  useEffect(() => { sound.portal(momentOn && !!payout && !payout.stalled && !payout.readFailed && !['confirmed', 'signature_failed'].includes(payout.status)); if (momentOn && payout?.status === 'confirmed') sound.play('gem'); }, [momentOn, payout?.status, payout?.stalled, payout?.readFailed]);
+  useEffect(() => {
+    if(!momentOn) return;
+    const observer=new ResizeObserver(()=>sceneRef.current?.relayout());
+    document.querySelectorAll('.j-moment-top,.j-moment-bottom').forEach(el=>observer.observe(el));
+    return ()=>observer.disconnect();
+  },[momentOn]);
+  const [factory, setFactory] = useState<{customers:number; totals:Partial<Record<PersonId,bigint>>;ethTotals:Partial<Record<PersonId,bigint>>}>({customers:0,totals:{},ethTotals:{}});
+  const factoryOn = (passed || (shipped && !test.dirty)) && !help && prog.intro && !shipping && !momentOn && !editing && !selected && !target && !cardOpen && !receiptsOpen && !levels;
+  useEffect(() => {
+    setFactory({customers:0,totals:{},ethTotals:{}});
+    if (!factoryOn) return;
+    let cancelled = false;
+    const sc = sceneRef.current, b = structuredClone(build), fs = sinkFlows(b);
+    const loop = async () => {
+      await sleep(1800);
+      while (!cancelled && sc) {
+        const plan = salePlan(b, fs, () => 'SIMULATED');
+        await sc.playSale({kind:'sim',flows:plan.flows,cancelled:()=>cancelled});
+        if (cancelled) return;
+        for (const g of plan.gates) { await sc.release(g,releaseFlows(b,fs,g,true,()=> 'SIMULATED'),'sim'); if (cancelled) return; }
+        setFactory(v => { const totals={...v.totals},ethTotals={...v.ethTotals}; for(const f of fs) if(f.person && f.kind==='Payout' && f.port!=='f') totals[f.person]=(totals[f.person]??0n)+f.amount; for(const f of fs) if(f.kind==='Portal' && f.port!=='f' && abroad) ethTotals[abroad]=(ethTotals[abroad]??0n)+BigInt(b[f.path.at(-1)!]?.wei??'0'); return {customers:v.customers+1,totals,ethTotals}; });
+        sc.customerLeave(); await sleep(2500);
+      }
+    };
+    void loop(); return () => { cancelled=true; sc?.stopSim(); };
+  }, [factoryOn, job.n, build]); // illustrative flow only, never an API order
+  const continueBuilding = () => { if (job.n < 5) { step({backgrounded:true}); setMomentClosed(true); setRunClosed(true); openJob(job.n+1); } };
+  const guideStep = (() => {
+    if (!guide || job.n!==1 || !prog.intro || help || shipping || runHere || test.running || levels) return null;
+    if (cardOpen) return {target:'job-card',text:'Ada keeps three times each helper’s share.'};
+    if (failed && !reviewedFail) return {target:'fail-why',text:'This goal failed. Tap the reason to inspect.'};
+    if (editing) {
+      const p=build[editing];
+      if(p?.kind==='Splitter') return p.shares!.length===2 ? {target:'belt-add',text:'Add a belt for each helper.'} : {target:'sheet',text:'Turn the dials. Then tap Done.'};
+      if(p?.kind==='Payout') return {target:`who-${['ada','bola','chi'][Number(editing.split('.')[1]??0)]??'ada'}`,text:'Choose who this Payout pays.'};
+      return {target:'sheet',text:'Inspect the part. Tap Done to continue.'};
+    }
+    if (passed) return {target:'ship',text:'It works! Ship one real testnet sale.'};
+    if (failed && test.fix) return {target:`socket-${test.fix}`,text:'Open this part and fix the failed goal.'};
+    const t=todos[0];
+    if(t) {
+      if(selected) return {target:`socket-${t.socket}`,text:'Drop the part on this glowing spot.'};
+      if(t.what==='person') return {target:`socket-${t.socket}`,text:'Choose who this part pays.'};
+      return {target:`tray-${t.socket==='r'?'Splitter':'Payout'}`,text:t.socket==='r'?'Pick a Splitter to divide each sale.':'Pick a Payout for this belt.'};
+    }
+    return {target:'test',text:'Test three pretend customers. See what happens.'};
+  })();
   const shopSetup = job.n === 5 && shopEdit;
   const next: string = (() => {
     if (!prog.intro || help) return 'intro';
     if (shopSetup) return 'shop-done';
-    if (cardOpen && !prog.seen[job.n]) return 'card';
+    if (cardOpen && (!runHere || runClosed) && !test.running) return 'card';
     if (test.waitTap) return 'tap';
     if (momentOn) return payout?.status === 'confirmed' ? 'moment' : 'none';
     if (runHere && runClosed && !shipped) return 'reopen';
     if (runHere?.phase === 'approve') return 'approve';
-    if (shipped) return 'nextjob';
+    if (shipped) return runClosed ? 'reopen' : 'nextjob';
     if (shipping || test.running) return 'none';
     if (passed) return 'ship';
     if (editing) return (build[editing]?.kind === 'Payout' || build[editing]?.kind === 'Worker') && !build[editing]?.person ? 'sheet' : 'done-edit';
@@ -516,11 +611,12 @@ export function JobsGame() {
     }
     return 'test';
   })();
-  const isNext = (k: string) => (next === k ? ' is-next' : '');
+  const isNext = (k: string) => (!guideStep && next === k ? ' is-next' : '');
   useEffect(() => {
     const kind = tray.find(t => t.uid === selected)?.kind;
+    if(guideStep) { const socket=guideStep.target.startsWith('socket-')?guideStep.target.slice(7):null; sceneRef.current?.setGlow(socket?[socket]:[],socket); return; }
     sceneRef.current?.setGlow(kind ? active.filter(s => s.accepts.includes(kind) && !build[s.id]).map(s => s.id) : target ? [target] : [], next.startsWith('socket:') ? next.slice(7) : null);
-  }, [selected, target, next, build]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selected, target, next, build, guideStep?.target]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selectedKind = tray.find(t => t.uid === selected)?.kind;
   const bannerText = (() => {
@@ -561,7 +657,7 @@ export function JobsGame() {
   const share = async () => { try { if (navigator.share) { await navigator.share({ title: 'WORLDWORKS shop', text: shareText, url: shopUrl }); return; } } catch { /* cancelled */ } void navigator.clipboard?.writeText(`${shareText} ${shopUrl}`).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }, () => {}); };
 
   return (
-    <div className={`ww-game jobs-game ${is2d ? 'is-2d' : ''} ${test.running || shipping ? 'is-running' : ''} ${momentOn ? 'is-moment' : ''}`} data-testid="jobs-game" data-job={job.n} data-next={next}>
+    <div className={`ww-game jobs-game ${new URLSearchParams(location.search).get('lowfx') === '1' ? 'lowfx' : ''} ${is2d ? 'is-2d' : ''} ${test.running || shipping ? 'is-running' : ''} ${momentOn ? 'is-moment' : ''} ${!prog.intro || help ? 'is-title' : ''}`} onClickCapture={e => { if ((e.target as HTMLElement).closest('[data-testid="fail-why"]')) setReviewedFail(true); }} data-testid="jobs-game" data-job={job.n} data-next={next}>
       <canvas ref={canvasRef} className="j-canvas" aria-hidden />
       <div ref={overlayRef} className="j-overlay">
         {active.map(s => {
@@ -594,13 +690,14 @@ export function JobsGame() {
 
       {/* top bar: job chip + requirement pills */}
       <header className="j-top">
-        <button type="button" className={`j-chip${isNext('card')}`} onClick={() => setCardOpen(o => !o)} data-testid="job-chip" aria-expanded={cardOpen}>
+        <button type="button" className="j-icon" onClick={() => { const m = !muted; setMuted(m); sound.mute(m); }} aria-label={muted ? 'Unmute sound' : 'Mute sound'} aria-pressed={muted} disabled={new URLSearchParams(location.search).get('lowfx') === '1'} data-testid="mute">{muted ? '♪̸' : '♪'}</button>
+        <button type="button" className={`j-chip${cardOpen ? '' : isNext('card')}`} onClick={() => { setRunClosed(true); setCardOpen(o => !o); }} data-testid="job-chip" aria-expanded={cardOpen}>
           <Face id={job.client} size={24} /><span><b>{job.n < 5 ? `${job.n}. ` : ''}{job.title}</b>{prog.solved[job.n] ? <em className="j-stars">{stars(prog.solved[job.n])}</em> : null}</span><i>▾</i>
         </button>
         <span className="j-pills"><ModePills sim={test.running} /></span>
         <button type="button" className="j-icon" onClick={() => setLevels(v => !v)} disabled={test.running} aria-label="Jobs" data-testid="levels">☰</button>
         <button type="button" className="j-icon" onClick={() => setLedger(v => !v)} aria-label="Ledger" title="Real transactions">≡</button>
-        <button type="button" className="j-icon" onClick={() => setHelp(true)} aria-label="Help" data-testid="help">?</button>
+        <button type="button" className="j-icon" onClick={() => setHelp(true)} disabled={test.running} aria-label="Help" data-testid="help">?</button>
       </header>
       {!cardOpen && (
         <ul className="j-reqpills" data-testid="requirements" onClick={() => setCardOpen(true)}>
@@ -629,7 +726,7 @@ export function JobsGame() {
       )}
 
       {/* job card (expanded on tap) */}
-      {cardOpen && (
+      {cardOpen && (!runHere || runClosed) && !test.running && (
         <section className="j-card g-card" data-testid="job-card">
           <div className="j-card-head">
             <Face id={job.client} size={44} />
@@ -646,9 +743,9 @@ export function JobsGame() {
       )}
 
       {/* banner: one line of what is happening / what to do */}
-      {(bannerText || failed || passed) && (!runHere || runClosed) && !cardOpen && !shopSetup && (
+      {(bannerText || failed || passed) && (!runHere || runClosed || !['done','error','unknown','approve'].includes(runHere.phase)) && !momentOn && !cardOpen && !shopSetup && (
         <div className={`j-banner ${failed ? 'bad' : passed ? 'good' : ''}`} data-testid="banner" aria-live="polite">
-          {failed ? <><b>✗</b> <span data-testid="fail-why">{result!.why}</span></>
+          {failed ? <><b>✗</b> <span data-testid="fail-why" role="button" tabIndex={0} onKeyDown={e=>{if(e.key==='Enter')setReviewedFail(true);}}>{result!.why}</span></>
             : passed ? <span data-testid="pass-note"><b className="j-stars">{stars(result!.score?.stars ?? 1)}</b> It works! {result!.score?.note}</span>
             : bannerText}
         </div>
@@ -725,11 +822,13 @@ export function JobsGame() {
             return (
               <label key={f} className="j-field">
                 <span>{pname(f)} <small>(optional)</small></span>
+                <input aria-label={`${pname(f)} name (owner only)`} maxLength={24} value={friendDraft.names?.[f] ?? ''} onChange={e => setFriendDraft(d => ({ ...d, names: { ...d.names, [f]: e.target.value } }))} placeholder="Friend’s name (owner only)" data-testid={`name-${f}`} />
                 <input value={friendDraft[f]} onChange={e => setFriendDraft(d => ({ ...d, [f]: e.target.value }))} placeholder="name.testnet or 0x… (Sepolia)" spellCheck={false} autoCapitalize="off" data-testid={`friend-${f}`} className={k === 'bad' ? 'bad' : ''} />
                 <small>{k === 'near' ? 'NEAR account: paid by a Payout' : k === 'evm' ? 'Ethereum address: paid by the Portal (it must have received Sepolia ETH before)' : k === 'bad' ? 'Not a NEAR account or a 0x address' : 'Leave empty for none'}</small>
               </label>
             );
           })}
+          <p className="j-muted">Names stay in this browser for you only. Shared shops show addresses.</p>
           {friendKind(friendDraft.f1) === 'evm' && friendKind(friendDraft.f2) === 'evm' && <p className="j-err">Only one friend can be on Ethereum: each sale carries one Ethereum recipient.</p>}
           <button type="button" className={`j-btn wide${isNext('shop-done')}`} data-testid="shop-go"
             disabled={friendKind(friendDraft.f1) === 'bad' || friendKind(friendDraft.f2) === 'bad' || (friendKind(friendDraft.f1) === 'evm' && friendKind(friendDraft.f2) === 'evm')}
@@ -738,21 +837,27 @@ export function JobsGame() {
       )}
 
       {/* Portal moment: the world fills the screen while NEAR signs an Ethereum payment */}
-      {momentOn && runHere && <PortalMoment run={runHere} job={job} who={who} abroad={abroad} next={isNext('moment')} onClose={() => setMomentClosed(true)} />}
+      {momentOn && runHere && <PortalMoment run={runHere} job={job} who={who} abroad={abroad} next={isNext('moment')} onContinue={job.n<5?continueBuilding:undefined} onClose={() => { setMomentClosed(true); setReceiptsOpen(true); }} />}
 
+      {factoryOn && <div className="j-factory" data-testid="factory-counter"><b>SIMULATED factory</b> · {factory.customers} customers{Object.entries(factory.totals).map(([p,n])=><span key={p}>{who(p as PersonId)} {fmtN(n!)} NEAR</span>)}{Object.entries(factory.ethTotals).map(([p,n])=><span key={p}>{who(p as PersonId)} {fmtE(n!)} ETH</span>)}</div>}
+      {hint===job.n && !cardOpen && !momentOn && !shipping && !shopEdit && <aside className="j-new-hint" data-testid="job-hint">{job.n===2?'Chain Splitters: a belt can feed another Splitter.':job.n===3?'Portal: send from NEAR to someone on Ethereum.':job.n===4?'Gate: delivery opens one exit; expiry opens the refund.':'Your own shop pays you. Add friends before building.'}<button type="button" onClick={()=>{setHint(0);localStorage.setItem(`ww-hint4-${scope()}-${job.n}`,'done');}}>Got it</button></aside>}
+      {run && run.job!==job.n && (run.phase!=='done' || run.backgrounded) && <button type="button" className={`j-background-run ${run.phase==='done'?'confirmed':''}`} data-testid="background-run" onClick={()=>{step({backgrounded:false});openJob(run.job);}}>Job {run.job} · {run.phase==='done'?(payout?.status==='confirmed'?'Ethereum confirmed — receipts':'Order complete — check receipts'):payout?.readFailed?'Status unavailable — check':payout?.status??run.phase}</button>}
+      {shipping && !momentOn && !runClosed && runHere && !['approve','error','unknown'].includes(runHere.phase) && <section className="j-inside g-card" data-testid="inside-machine"><h2>Inside the machine</h2><InsideMachine run={runHere} />{job.n<5 && <button type="button" className="j-mini" data-testid="continue-building" onClick={continueBuilding}>Start the next job while this finishes</button>}</section>}
       {/* ship panel */}
-      {runHere && !runClosed && !momentOn && (
+      {runHere && !runClosed && !momentOn && ['done','error','unknown','approve'].includes(runHere.phase) && (
         <section className="j-ship g-card" data-testid="ship-panel" data-phase={runHere.phase}>
           <header><b>{api.mode === 'mock' ? 'MOCK run' : 'Real run · NEAR testnet'}</b><button type="button" className="g-x" onClick={() => setRunClosed(true)} aria-label="Close" data-testid="ship-close">×</button></header>
           <p className="j-run-caption" aria-live="polite" data-testid="ship-caption">{shipCaption(runHere, job, who, payout?.status, payout?.waitingPayoutId, payout?.relayError)}</p>
           {runHere.phase === 'error' && <p className="j-err" data-testid="ship-error">{runHere.error}</p>}
-          {runHere.error && runHere.phase === 'approve' && <p className="j-err">{runHere.error}</p>}
+          {runHere.error && ['approve','done'].includes(runHere.phase) && <p className="j-err">{runHere.error}</p>}
           {runHere.phase === 'unknown' && <p className="j-warn">{runHere.error ?? 'Submitted — result not confirmed yet. Checking the chain… (nothing will be paid twice)'}</p>}
-          {runHere.job === 5 && runHere.balanceBefore && <YourBalance run={runHere} />}
-          <Receipts run={runHere} who={who} />
+          {runHere.phase === 'unknown' && pendingOrder()?.stalled && runHere.machineId && <div><button type="button" className="j-mini" onClick={() => { void order(runHere.machineId!).catch(e => step({ phase:'unknown', error:e.message })); }}>Check again</button><button type="button" className="j-mini" onClick={() => { void order(runHere.machineId!, true).catch(e => step({ phase:'unknown', error:e.message })); }}>Send again with the same order id</button></div>}
+          {runHere.job === 5 && runHere.balanceBefore && <YourBalance run={runHere} onRefresh={async () => { try { step({ balanceAfter: await api.balance(), error: undefined }); } catch { step({ error: 'Could not refresh your balance. Try again.' }); } }} />}
+          {runHere.phase === 'done' && <><button type="button" className="j-mini" aria-expanded={receiptsOpen} onClick={() => setReceiptsOpen(v => !v)} data-testid="receipts-toggle">{receiptsOpen ? 'Hide receipts' : 'View receipts'}</button>{receiptsOpen && <Receipts run={runHere} who={who} />}</>}
           {runHere.phase === 'approve' && (
-            <button type="button" className={`j-btn${isNext('approve')}`} onClick={approve} data-testid="approve-real">✓ Delivered <small>You confirm for the customer (you hold the Key)</small></button>
+            <button type="button" className={`j-btn${isNext('approve')}`} onClick={() => approve()} data-testid="approve-real">✓ Delivered <small>You hold the Key for this demo; confirm for the customer</small></button>
           )}
+          {runHere.phase === 'approve' && canExpire && <button type="button" className="j-mini" onClick={() => approve(true)} data-testid="expire-real">Bread never arrived — refund the customer</button>}
           {runHere.payoutId && <><PortalCard payoutId={runHere.payoutId} />
             {payout?.relayError && <p role="alert">{payout.relayError}</p>}
             {(payout?.relayError || payout?.status === 'signature_failed') && <button type="button" className="j-mini" onClick={() => retryRelay(runHere.payoutId!)}>Retry payout status</button>}</>}
@@ -771,7 +876,7 @@ export function JobsGame() {
         </section>
       )}
 
-      {runHere && runClosed && <button type="button" className={`j-reopen j-mini${isNext('reopen')}`} onClick={() => { setRunClosed(false); setMomentClosed(false); }}>View the real run</button>}
+      {runHere && runClosed && <button type="button" className={`j-reopen j-mini${isNext('reopen')}`} onClick={() => { setRunClosed(false); setMomentClosed(false); setCardOpen(false); }}>View the real run</button>}
       {/* bottom: tray + one main button */}
       <footer className="j-bottom">
         {!busy && !shipped && (
@@ -811,15 +916,16 @@ export function JobsGame() {
       {drag?.moved && <div className="j-ghost" style={{ transform: `translate(${drag.x}px, ${drag.y}px)` }}><PartChip kind={drag.kind} small /></div>}
 
       {(!prog.intro || help) && (
-        <div className="j-intro" role="dialog" aria-modal data-testid="intro">
+        <div className="j-intro" role="dialog" aria-modal aria-label="Welcome to WORLDWORKS" data-testid="intro">
           <div className="g-card">
             <h1>WORLDWORKS</h1>
-            <p className="point" data-testid="point">Build money machines that really run on NEAR. Solve each job with the fewest parts, then ship it as a real shop anyone can pay.</p>
-            {help && <ol className="how"><li><b>Read the job.</b> It says what people want, not how.</li><li><b>Build.</b> Drag parts onto glowing spots. A Splitter can feed another Splitter.</li><li><b>Test.</b> 3 pretend customers buy. Each goal gets ✓ or ✗ as the coins land.</li><li><b>Ship.</b> One real sale on NEAR testnet. You get a link anyone can pay.</li></ol>}
-            <button type="button" className="j-btn wide is-next" data-testid="start" onClick={() => { update({ intro: true }); setHelp(false); }}>{help ? 'Got it' : 'Start job 1'}</button>
+            <p className="point" data-testid="point">Money that runs itself: solve a real person's money problem with parts, then ship it as a real payment app on NEAR.</p>
+
+            <button type="button" className="j-btn wide is-next" data-testid="start" onClick={() => { update({ intro: true }); if(help) { setTutorialReplay(true); openJob(1); setGuide(true); setCardOpen(true); setRunClosed(true); setReviewedFail(false); } setHelp(false); }}>{help ? 'Replay job 1 tutorial' : 'Start job 1'}</button>
           </div>
         </div>
       )}
+      {guideStep && <Spotlight target={guideStep.target} text={guideStep.text} onSkip={dismissGuide} />}
       <LedgerPanel open={ledger} onClose={() => setLedger(false)} />
       {sessionError && runHere?.phase === 'error' && <span className="sr-only">{sessionError}</span>}
     </div>
@@ -833,8 +939,8 @@ function shipCaption(r: Run, job: Job, who: (p: PersonId) => string, status?: st
     case 'session': return `Creating your free test account…${mock}`;
     case 'publish': return `Putting ${job.n === 5 ? 'your shop' : job.shop} on NEAR testnet…${mock}`;
     case 'order': return `A seeded customer is paying 0.10 NEAR…${mock}`;
-    case 'unknown': return 'Payment sent. Checking the result…';
-    case 'paying': return 'Paying everyone…';
+    case 'unknown': return 'Outcome unknown. Checking the existing order…';
+    case 'paying': return 'Reading the transfer receipts…';
     case 'approve': return 'A share waits at the Gate. Tap Delivered when the bread arrives.';
     case 'portal':
       if (relayError) return `${ab}’s payout could not be verified. Check the receipt before retrying.`;
@@ -842,12 +948,12 @@ function shipCaption(r: Run, job: Job, who: (p: PersonId) => string, status?: st
       if (status === 'broadcast') return 'Sent to Ethereum. Waiting for blocks…';
       if (status === 'signature_failed') return `NEAR could not sign ${ab}’s payment. No ETH was sent.`;
       return 'NEAR is signing an Ethereum transaction…';
-    case 'done': return r.payoutId ? `Paid on NEAR and on Ethereum${mock}. Every receipt is below.` : r.job === 5 ? `Your shop paid out${mock}. Every receipt is below.` : `Everyone got paid${mock}. Every receipt is below.`;
+    case 'done': return r.resolution === 'expired' ? `Order expired — the refund exit ran${mock}. Check transfer receipts.` : r.payoutId ? `Ethereum confirmed${mock}. Check each NEAR transfer receipt.` : `Order complete${mock}. Check transfer receipts.`;
     case 'error': return 'The real run stopped.';
   }
 }
 
-function PortalMoment({ run, job, who, abroad, next, onClose }: { run: Run; job: Job; who: (p: PersonId) => string; abroad?: PersonId; next: string; onClose: () => void }) {
+function PortalMoment({ run, job, who, abroad, next, onClose, onContinue }: { run: Run; job: Job; who: (p: PersonId) => string; abroad?: PersonId; next: string; onClose: () => void; onContinue?: () => void }) {
   const p = useApp(s => (run.payoutId ? s.payouts[run.payoutId] : undefined));
   const liveNow = !!p && p.status !== 'confirmed' && p.status !== 'signature_failed';
   useTick(liveNow, 500);
@@ -857,9 +963,10 @@ function PortalMoment({ run, job, who, abroad, next, onClose }: { run: Run; job:
   const owner = job.n === 5 ? 'You' : 'Ada';
   const s = p?.status ?? 'awaiting_signature';
   const signedAt = p?.stepAt.signed ?? p?.stepAt.broadcast;
-  const head = s === 'confirmed' ? `${name} got ${eth(p?.wei ?? '0')} ETH on Ethereum`
+  const head = p?.readFailed ? 'Cannot read the payout status' : p?.stalled ? 'The payout is taking longer than expected' : s === 'confirmed' ? `${name} got ${eth(p?.wei ?? '0')} ETH on Ethereum`
     : s === 'broadcast' ? 'Crossing the water: Ethereum is adding it to a block'
-    : s === 'signed' || s === 'waiting_for_earlier_nonce' ? 'Signed by NEAR. Sending it to Ethereum…'
+    : s === 'waiting_for_earlier_nonce' ? `Waiting for earlier payout #${p?.waitingPayoutId ?? 'unknown'}`
+    : s === 'signed' ? 'Signed by NEAR. Sending it to Ethereum…'
     : s === 'signature_failed' ? 'NEAR could not sign. No ETH was sent.'
     : 'NEAR is signing an Ethereum transaction';
   const t = s === 'awaiting_signature' || s === 'waiting_for_signature' ? secs(p?.startedAt) : s === 'broadcast' ? secs(p?.stepAt.broadcast) : null;
@@ -868,15 +975,20 @@ function PortalMoment({ run, job, who, abroad, next, onClose }: { run: Run; job:
     <div className={`j-moment st-${s}`} data-testid="portal-moment" data-status={s}>
       <div className="j-moment-top">
         <small>{api.mode === 'mock' ? 'MOCK · timings imitate testnet, nothing is on chain' : 'LIVE · NEAR testnet → Sepolia'}</small>
+        {s === 'confirmed' && <strong className="j-confirmed">✓ Confirmed{api.mode === 'mock' ? ' · MOCK' : ''}</strong>}
         <h2 data-testid="moment-head">{head}{t !== null && <span className="secs"> · {t}s</span>}</h2>
-        <p>{owner} never touched Ethereum. {owner === 'You' ? 'Your' : 'Her'} NEAR machine paid {name} there by itself.</p>
+        <p>{owner} never touched Ethereum. {owner === 'You' ? 'Your' : 'Her'} NEAR machine {s === 'confirmed' ? 'paid' : s === 'signature_failed' ? 'could not pay' : 'will pay'} {name} there by itself.</p>
       </div>
       <div className="j-moment-bottom">
+        {(p?.relayError || p?.stalled || p?.readFailed) && <div className="j-moment-error" role="status">{p?.relayError || 'Payout tracking is stalled. Confirmation is not known.'}<button type="button" className="j-mini" onClick={() => retryRelay(run.payoutId!)} data-testid="moment-retry">Retry payout status</button></div>}
+        {s!=='confirmed' && <p className="j-live-stage" data-testid="live-stage">{s==='broadcast' ? p?.confirmationProgress?.length ? `Ethereum block depth ${Math.max(0,Math.min(3,...p.confirmationProgress.map(x=>Number(x.depth))))}/3. Both RPCs must agree before confirmation.` : 'Sent to Ethereum. Waiting for a mined block receipt.' : s==='waiting_for_earlier_nonce' ? `Payout #${p?.waitingPayoutId??'unknown'} must finish first: Ethereum nonces run in order.` : s==='signature_failed' ? 'The signer failed. Check status before retrying.' : 'No bridge. NEAR itself signs the Ethereum payment.'}</p>}
         <ol className="j-moment-steps">
           <li className={p?.stepAt.signed || ['signed', 'broadcast', 'confirmed'].includes(s) ? 'done' : 'on'}>NEAR signs{signedAt && p ? ` · ${secs(p.startedAt, signedAt)}s` : ''}</li>
           <li className={['broadcast', 'confirmed'].includes(s) ? (s === 'confirmed' ? 'done' : 'on') : ''}>Beam to Ethereum</li>
           <li className={s === 'confirmed' ? 'done' : ''}>{s === 'confirmed' ? (rpcs >= 2 ? `Confirmed · seen by ${rpcs} RPCs` : api.mode === 'mock' ? 'Confirmed (mock)' : 'Confirmed') : 'Lands in ' + name + '’s wallet'}</li>
         </ol>
+        <details className="j-stage-details"><summary data-testid="wait-toggle">Inside the machine · observed stages</summary><InsideMachine run={run} /></details>
+        {onContinue && s!=='confirmed' && <button type="button" className="j-wait-next" data-testid="continue-building" onClick={onContinue}>Start the next job while this finishes</button>}
         <div className="j-moment-links"><Tx tx={p?.nearTx ?? run.orderTx} label="NEAR" />{p?.evmTx && <Tx tx={p.evmTx} label="Sepolia" />}</div>
         <button type="button" className={`j-btn wide${next}`} onClick={onClose} data-testid="moment-close">{s === 'confirmed' ? 'See every receipt' : 'Watch from the receipts'}</button>
       </div>
@@ -884,13 +996,29 @@ function PortalMoment({ run, job, who, abroad, next, onClose }: { run: Run; job:
   );
 }
 
-function YourBalance({ run }: { run: Run }) {
+function InsideMachine({run}: {run:Run}) {
+  const p=useApp(s=>run.payoutId?s.payouts[run.payoutId]:undefined);
+  useTick(!!p && p.status!=='confirmed',1000);
+  return <ol className="j-stage-line" data-testid="observed-stages">
+    {!run.orderTx && <li>Waiting for the NEAR order receipt. No result is known yet.</li>}
+    {run.orderTx && <li>Order accepted on NEAR. <Tx tx={run.orderTx} label={`NEAR ${shortAddr(run.orderTx.hash)}`} /></li>}
+    {!!run.effects?.length && <li>The contract ran your machine and returned these routes.</li>}
+    {run.effects?.map((e,i)=><li key={i}>{e.kind==='payout'?`${shortAddr(e.account)} · ${fmtN(BigInt(e.amount))} NEAR · ${nearTransferText(e)}`:e.kind==='vault'?`${fmtN(BigInt(e.amount))} NEAR routed to a Vault`:`Portal fee ${fmtN(BigInt(e.fee))} NEAR · requested ${eth(e.wei)} ETH`}</li>)}
+    {p && <li>{p.status==='waiting_for_earlier_nonce'?`Waiting for earlier payout #${p.waitingPayoutId??'unknown'}. Each Ethereum nonce goes in order.`:p.status==='confirmed'?'Both RPCs agree: the Ethereum receipt succeeded.':p.status==='broadcast'?'Sent to Ethereum. Waiting for its confirmed block receipt.':p.status==='signature_failed'?'The signer failed. No Ethereum confirmation is known.':`NEAR’s signer network is working · ${Math.max(0,Math.floor((Date.now()-p.startedAt)/1000))}s. No bridge: NEAR itself signs the Ethereum payment.`}{p.evmTx && <Tx tx={p.evmTx} label={`Ethereum ${shortAddr(p.evmTx.hash)}`} />}</li>}
+    {p?.nearBlockHeight && <li>Observed NEAR block {p.nearBlockHeight}.</li>}
+    {p && p.status==='broadcast' && <li>{p.confirmationProgress?.length ? `Ethereum depth ${Math.max(0,Math.min(3,...p.confirmationProgress.map(x=>Number(x.depth))))}/3 · ${p.confirmationProgress.length}/2 RPCs have a validated receipt. Waiting for both.` : api.mode==='mock' ? 'MOCK: no real block-depth data.' : 'No mined receipt observed yet. Waiting for block-depth reads.'}</li>}
+    {api.mode==='mock' && <li>MOCK: these stages imitate testnet; no chain transaction.</li>}
+  </ol>;
+}
+
+function YourBalance({ run, onRefresh }: { run: Run; onRefresh: () => void }) {
   const b0 = BigInt(run.balanceBefore!); const b1 = run.balanceAfter ? BigInt(run.balanceAfter) : null;
   const link = run.account ? (api.mode === 'mock' ? null : `https://testnet.nearblocks.io/address/${run.account}`) : null;
   return (
     <div className="j-balance" data-testid="your-balance">
       <Face id="you" size={32} />
-      <span><b>Your account</b><small>{fmtN(b0)} → {b1 !== null ? <b data-testid="balance-after">{fmtN(b1)} NEAR</b> : 'checking…'}{b1 !== null && <em className="up" data-testid="balance-delta"> +{fmtN(b1 - b0)}</em>}{api.mode === 'mock' ? ' (mock)' : ''}</small></span>
+      <span><b>Your account</b><small>{fmtN(b0)} → {b1 !== null ? <b data-testid="balance-after">{fmtN(b1)} NEAR</b> : 'checking…'}{b1 !== null && <em className="up" data-testid="balance-delta"> {b1 >= b0 ? '+' : '−'}{fmtN(b1 >= b0 ? b1 - b0 : b0 - b1)}</em>}{api.mode === 'mock' ? ' (mock)' : ''}</small></span>
+      <button type="button" className="j-mini" onClick={onRefresh} data-testid="balance-refresh">Refresh</button>
       {link && <a className="txl" href={link} target="_blank" rel="noreferrer">account ↗</a>}
     </div>
   );
@@ -902,10 +1030,10 @@ function Receipts({ run, who }: { run: Run; who: (p: PersonId) => string }) {
   const c = run.ctx ?? {};
   const rows: { face: PersonId | null; key: string; name: string; amount: string; tx?: TxRef; evm?: TxRef; note?: string }[] = [];
   run.effects.forEach((e, i) => {
-    const tx = run.approveTx && run.orderEffects !== undefined && i >= run.orderEffects ? run.approveTx : run.orderTx;
+    const tx = run.orderEffects !== undefined && i >= run.orderEffects ? run.approveTx : run.orderTx;
     if (e.kind === 'payout') {
-      const w = ownerOf(e.account, c);
-      rows.push({ face: w, key: w ?? 'other', name: w === 'customer' ? 'Customer refund' : w ? who(w) : shortAddr(e.account), amount: `+${fmtN(BigInt(e.amount))} NEAR`, tx });
+      const w = e.account === run.customer ? 'customer' : ownerOf(e.account, c);
+      rows.push({ face: w, key: w ?? 'other', name: w === 'customer' ? 'Customer refund' : w ? who(w) : shortAddr(e.account), amount: `${e.settled === true ? '+' : ''}${fmtN(BigInt(e.amount))} NEAR`, note: nearTransferText(e), tx });
     } else if (e.kind === 'vault') rows.push({ face: null, key: 'vault', name: 'Vault', amount: `${fmtN(BigInt(e.amount))} NEAR kept`, tx });
     else {
       const confirmed = payouts?.status === 'confirmed';

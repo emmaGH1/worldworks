@@ -13,6 +13,7 @@ export async function confirm(payoutId:string) {
   if(p.status !== 'signed') {
     const limits = await view(ACCOUNT,'get_limits',{});
     const block = await clientBlock();
+    result.nearBlockHeight = String(block);
     result.retryEligible = p.status === 'signature_failed' || p.status === 'awaiting_signature' && BigInt(block) >= BigInt(p.requested_at)+BigInt(limits.signature_timeout_blocks);
     return result;
   }
@@ -28,14 +29,14 @@ export async function confirm(payoutId:string) {
       if (tx.blockHash === null) return null;
       if(receipt.transactionHash.toLowerCase() !== hash || tx.hash.toLowerCase() !== hash || receipt.status !== 'success' || receipt.from.toLowerCase() !== portalAddress.toLowerCase() || tx.from.toLowerCase() !== portalAddress.toLowerCase() || receipt.to?.toLowerCase() !== p.recipient.toLowerCase() || tx.to?.toLowerCase() !== p.recipient.toLowerCase() || tx.value !== BigInt(p.wei) || tx.nonce !== p.nonce || receipt.blockHash !== tx.blockHash) throw Error('Sepolia receipt/transaction mismatch or revert');
       const head = await rpc.getBlockNumber();
-      if(head < receipt.blockNumber + 3n) return null;
       return {head:head.toString(),depth:(head-receipt.blockNumber).toString(),rpc:confirmationUrls[i],hash,blockHash:receipt.blockHash,blockNumber:receipt.blockNumber.toString(),from:receipt.from,to:receipt.to,value:tx.value.toString(),status:1};
     } catch(error) {
       if((error as Error).name === 'TransactionReceiptNotFoundError') return null;
       throw error;
     }
   }));
-  if(proofs.every(Boolean)) {
+  result.confirmationProgress = proofs.filter(Boolean).map(proof=>({rpc:proof!.rpc,depth:proof!.depth,blockNumber:proof!.blockNumber}));
+  if(proofs.every(Boolean) && proofs.every(proof=>BigInt(proof!.depth)>=3n)) {
     if(proofs[0]!.blockHash !== proofs[1]!.blockHash) throw Error('RPCs disagree about receipt block');
     result.status='confirmed'; result.confirmations=proofs;
   } else {

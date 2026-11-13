@@ -2,6 +2,7 @@
 // (chained Splitters, Gate exits, a Portal anywhere). Nothing moves unless the game asks: one customer, one sale,
 // coins travelling flow by flow along the belts. Interaction is DOM: the scene only positions elements that carry
 // data-anchor="<id>" inside the overlay, so the 2D fallback keeps every control.
+import { sound } from './sound';
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
@@ -16,7 +17,7 @@ export type LaneDest =
   | { type: 'nobody' };
 /** One stream of coins: socket path from the root ('r') to where it stops. */
 export interface Flow { path: string[]; coins: number; dest: LaneDest; label?: string; tag?: string }
-export interface SalePlan { kind: CoinKind; flows: Flow[] }
+export interface SalePlan { kind: CoinKind; flows: Flow[]; cancelled?: () => boolean }
 export type PortalPhase = 'idle' | 'swirl' | 'beam' | 'pop' | 'failed';
 export interface World { people: PersonId[]; abroad?: PersonId }
 export interface JobScene {
@@ -26,15 +27,16 @@ export interface JobScene {
   playSale(plan: SalePlan, onLand?: (f: Flow) => void): Promise<void>;
   release(gate: string, flows: Flow[], kind: CoinKind, onLand?: (f: Flow) => void): Promise<void>;
   customerLeave(): void;
+  stopSim(): void;
   setPortal(phase: PortalPhase, kind: CoinKind): void;
-  focus(mode: 'all' | 'portal'): void;
+  focus(mode: 'all' | 'portal' | 'test' | 'title'): void;
   floater(anchor: string, html: string, cls?: string): void;
   hop(person: PersonId): void;
   relayout(): void;
   is2d: boolean;
   dispose(): void;
 }
-export interface SceneOpts { margins?: (w: number, h: number, portrait: boolean, mode: 'all' | 'portal') => { t: number; b: number; l: number; r: number } }
+export interface SceneOpts { margins?: (w: number, h: number, portrait: boolean, mode: 'all' | 'portal' | 'test' | 'title') => { t: number; b: number; l: number; r: number } }
 
 const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
 type V3 = THREE.Vector3;
@@ -76,7 +78,7 @@ export function layoutFor(job: Job | null, build: Build, world: World): Layout {
   if (world.abroad) people[world.abroad] = V(ISLE.x + 0.9, 0, ISLE.z + 1.1);
   const customer = V(-9.9, 0, 1.1); people.customer = customer;
   const fit = [V(-11.4, 0, -2.2), V(-11.4, 0, 3.6), V(-8, 2.6, 0), V(9, 0, 4.4), V(9, 1.6, -4.4), V(-3, 0, 4.6), V(-3, 0, -4.6)];
-  if (isle) fit.push(V(ISLE.x + ISLE.hx + 0.4, 0, ISLE.z - ISLE.hz), V(ISLE.x + ISLE.hx + 0.4, 0, ISLE.z + ISLE.hz), V(ISLE.x, 2.2, 0));
+  // The distant island is framed only during the Portal moment.
   const homeSign = world.abroad && job?.abroad ? V(7.7, 0, -((row.length) / 2) * ps - 0.6) : undefined;
   return { stand: V(-7.6, 0, 0), customer, nodes, keys, edges, people, abroad: world.abroad, exit: V(ISLE.x - 1.1, 0, ISLE.z - 1.0), isle, homeSign, fit };
 }
@@ -137,9 +139,10 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.NeutralToneMapping;
   renderer.toneMappingExposure = 1.05;
-  renderer.shadowMap.enabled = !low; renderer.shadowMap.type = THREE.PCFShadowMap;
+  renderer.shadowMap.enabled = !low; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   const scene = new THREE.Scene();
   scene.background = new THREE.Color('#3f979d');
+  if (!low) scene.fog = new THREE.Fog('#3f979d', 95, 150);
   const pmrem = new THREE.PMREMGenerator(renderer);
   const envTex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
   scene.environment = envTex; scene.environmentIntensity = 0.35;
@@ -262,7 +265,7 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
   const coinMesh = new THREE.InstancedMesh(coinGeo, coinMat, MAX); coinMesh.castShadow = true; coinMesh.frustumCulled = false; coinMesh.count = 0; scene.add(coinMesh);
   const KIND_COLOR: Record<CoinKind, THREE.Color> = { sim: new THREE.Color('#ffc53a'), real: new THREE.Color('#2ee6a8'), mock: new THREE.Color('#ff8a74') };
   type Leg = { kind: 'line'; pts: V3[]; speed: number } | { kind: 'arc'; to: V3; h: number; dur: number } | { kind: 'hold'; at: V3 } | { kind: 'wait'; dur: number };
-  type Coin = { pos: V3; legs: Leg[]; li: number; t: number; from: V3; delay: number; color: THREE.Color; spin: number; done: () => void; hold?: boolean; gone?: boolean; gate?: string; scale?: number };
+  type Coin = { kind: CoinKind; pos: V3; legs: Leg[]; li: number; t: number; from: V3; delay: number; color: THREE.Color; spin: number; done: () => void; hold?: boolean; gone?: boolean; gate?: string; scale?: number };
   const coins: Coin[] = [];
   const tmpM = new THREE.Matrix4(), tmpQ = new THREE.Quaternion(), tmpE = new THREE.Euler(), tmpS = V(1, 1, 1), tmpV = V();
   function stepCoin(c: Coin, dt: number) {
@@ -283,7 +286,7 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
     c.pos.lerpVectors(c.from, leg.to, e); c.pos.y += Math.sin(Math.PI * k) * leg.h;
     if (k >= 1) next(c);
   }
-  function next(c: Coin) { c.li++; c.t = 0; c.from = c.pos.clone(); if (c.li >= c.legs.length) { c.gone = true; c.done(); } }
+  function next(c: Coin) { c.li++; c.t = 0; c.from = c.pos.clone(); if (c.li >= c.legs.length) { c.gone = true; if (!low) burst(c.pos, 4, '#ffe14d'); sound.play('coin'); c.done(); } }
   function drawCoins() {
     let n = 0;
     for (const c of coins) {
@@ -297,7 +300,7 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
   }
   function spawn(from: V3, legs: Leg[], kind: CoinKind, delay: number, gate?: string): Promise<void> {
     if (coins.length >= MAX) return Promise.resolve();
-    return new Promise(res => { coins.push({ pos: from.clone(), from: from.clone(), legs, li: 0, t: 0, delay, color: KIND_COLOR[kind], spin: Math.random() * 6, done: res, gate }); });
+    return new Promise(res => { coins.push({ kind, pos: from.clone(), from: from.clone(), legs, li: 0, t: 0, delay, color: KIND_COLOR[kind], spin: Math.random() * 6, done: res, gate }); });
   }
 
   // ---------- particles / floaters ----------
@@ -579,9 +582,11 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
     if (!L || !job) return;
     const Lo = L;
     await walkCustomerIn();
+    if (plan.cancelled?.()) return;
     const total = plan.flows.reduce((a, f) => a + f.coins, 0);
     const standIn = Lo.stand.clone().setY(1.2).add(V(-0.7, 0, 0));
     await Promise.all(Array.from({ length: total }, (_, i) => spawn(Lo.customer.clone().setY(0.9), [{ kind: 'arc', to: standIn, h: 0.9, dur: 0.38 }], plan.kind, i * 0.03)));
+    if (plan.cancelled?.()) return;
     if (standG) kick(standG, 5);
     await runFlows(plan.flows, plan.kind, f => { const pts = pathPts(f.path, true, f.dest.type === 'gate'); return { from: pts[0], pts }; }, onLand);
     await wait(200);
@@ -615,7 +620,7 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
   function customerLeave() { if (customer && !custGone) { custWant = V(-13.5, FLOOR, -2.5); custGone = true; } }
 
   // ---------- camera ----------
-  let portrait = false, mode: 'all' | 'portal' = 'all';
+  let portrait = false, mode: 'all' | 'portal' | 'test' | 'title' = 'all';
   const camDir = V();
   const cam = { cx: 0, cy: 0, s: 0.02 }, camWant = { cx: 0, cy: 0, s: 0.02 };
   function layoutCamera(snap = false) {
@@ -625,6 +630,7 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
     const az = THREE.MathUtils.degToRad(portrait ? 90 : 18), el = THREE.MathUtils.degToRad(portrait ? 58 : 44);
     camDir.set(Math.sin(az) * Math.cos(el), Math.sin(el), Math.cos(az) * Math.cos(el));
     let pts = L?.fit ?? [V(-11, 0, -4), V(8, 0, 4)];
+    if (mode === 'test' && L) pts = [L.stand, ...Object.values(L.nodes), ...Object.values(L.keys), ...Object.entries(L.people).filter(([id]) => id !== L!.abroad).map(([,p]) => p)].flatMap(p => [p.clone().add(V(-1.1, 0, -1.1)), p.clone().add(V(1.1, 2.8, 1.1))]);
     if (mode === 'portal' && L?.isle && portalSock) { const p = L.nodes[portalSock]; pts = [p.clone().add(V(-2.6, 0, 0)), p.clone().add(V(-1, 0, 2.4)), p.clone().add(V(-1, 0, -2.4)), V(ISLE.x + ISLE.hx, 0, ISLE.z - ISLE.hz + 0.6), V(ISLE.x + ISLE.hx, 0, ISLE.z + ISLE.hz - 0.6), V((p.x + ISLE.x) / 2, 5.6, (p.z + ISLE.z) / 2)]; }
     camera.position.copy(camDir).multiplyScalar(80); camera.up.set(0, 1, 0); camera.lookAt(0, 0, 0); camera.updateMatrixWorld();
     let minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
@@ -639,7 +645,9 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
     const w = Math.max(1, innerWidth), h = Math.max(1, innerHeight);
     camera.position.copy(camDir).multiplyScalar(80); camera.lookAt(0, 0, 0); camera.updateMatrixWorld();
     const right = V(1, 0, 0).applyQuaternion(camera.quaternion), up = V(0, 1, 0).applyQuaternion(camera.quaternion);
-    const tgt = V().addScaledVector(right, cam.cx).addScaledVector(up, cam.cy);
+    const drift = mode === 'title' && !low ? Math.sin(t * 0.18) * 0.7 : 0;
+    const nudge = portalPhase === 'pop' && phaseT > 1.1 && phaseT < 1.5 && !low ? Math.sin((phaseT - 1.1) * 30) * 0.12 : 0;
+    const tgt = V().addScaledVector(right, cam.cx + drift + nudge).addScaledVector(up, cam.cy);
     camera.position.copy(tgt).addScaledVector(camDir, 80); camera.lookAt(tgt);
     camera.left = (-w / 2) * cam.s; camera.right = (w / 2) * cam.s; camera.top = (h / 2) * cam.s; camera.bottom = (-h / 2) * cam.s;
     camera.updateProjectionMatrix(); camera.updateMatrixWorld();
@@ -656,6 +664,7 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
       cam.cx += (camWant.cx - cam.cx) * k0; cam.cy += (camWant.cy - cam.cy) * k0; cam.s += (camWant.s - cam.s) * k0; applyCam();
     }
     for (const b of belts) b.tex.offset.x -= dt * 2.2 / 0.6;
+    if (mode === 'title' || (portalPhase === 'pop' && phaseT < 1.6)) applyCam();
     for (const [id, rec] of tiles) {
       const on = glow.has(id), nx = nextSock === id;
       const k = 0.5 + 0.5 * Math.sin(t * 5);
@@ -689,9 +698,9 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
       if (diveT <= 0) { diveT = 0.55; const p = L.nodes[portalSock]; const a = Math.random() * 6.28; void spawn(V(p.x + Math.cos(a) * 1.4, 2.6, p.z + Math.sin(a) * 1.4), [{ kind: 'arc', to: p.clone().setY(FLOOR + 0.25), h: 0.5, dur: 0.7 }], diveKind, 0); }
     }
     const gl = portalPhase === 'swirl' ? 1 : portalPhase === 'beam' ? 1.4 : 0;
-    if (portalSwirl) { portalSwirl.uniforms.t.value = t; portalSwirl.uniforms.glow.value += (gl - portalSwirl.uniforms.glow.value) * Math.min(1, dt * 4); }
+    if (portalSwirl) { portalSwirl.uniforms.t.value = t * (portalPhase === 'swirl' && !low ? 2.8 : 1); portalSwirl.uniforms.glow.value += (gl - portalSwirl.uniforms.glow.value) * Math.min(1, dt * 4); }
     if (exitSwirl) { exitSwirl.uniforms.t.value = t; exitSwirl.uniforms.glow.value += ((portalPhase === 'beam' || portalPhase === 'pop' ? 1 : 0) - exitSwirl.uniforms.glow.value) * Math.min(1, dt * 3); }
-    if (portalPhase === 'beam') { beamU.fade.value = Math.min(1, beamU.fade.value + dt * 3); beamU.head.value = Math.min(1.6, phaseT / 1.2); }
+    if (portalPhase === 'beam') { beamU.fade.value = Math.min((low ? 1 : 0.86 + 0.14 * Math.sin(phaseT * 9)), beamU.fade.value + dt * 3); beamU.head.value = Math.min(1.6, phaseT / 1.2); }
     else beamU.fade.value = Math.max(0, beamU.fade.value - dt * 2);
     if (gem.visible) {
       const k = Math.min(1, phaseT / 1.1); gem.position.lerpVectors(gemFrom, gemTo, easeInOut(k)); gem.position.y += Math.sin(Math.PI * k) * 2.2;
@@ -716,7 +725,9 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
   }
   const onResize = () => layoutCamera(true);
   addEventListener('resize', onResize);
-  raf = requestAnimationFrame(n => { last = n; frame(n); });
+  // Explicit deterministic capture mode: the existing advance hook owns rendering.
+  // Normal play always uses requestAnimationFrame.
+  if (params.get('step') !== '1') raf = requestAnimationFrame(n => { last = n; frame(n); });
   (window as unknown as { __ww2: unknown }).__ww2 = { renderScale: (ratio: number) => { renderer.setPixelRatio(Math.max(0.25, Math.min(1, ratio))); draw(); }, state: () => ({ coins: coins.length, held: coins.filter(c => c.gate).length, portal: portalPhase, gem: gem.visible, customer: customer?.visible ?? false, mode }), advance: (s: number) => { for (let i = 0; i < Math.round(s * 30); i++) step(1 / 30); draw(); } };
 
   return {
@@ -724,6 +735,7 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
     setJob, setBuild,
     setGlow(s, n) { glow = new Set(s); nextSock = n; },
     playSale, release, customerLeave,
+    stopSim() { for(const c of coins) if(c.kind==='sim') {c.gone=true;c.done();} },
     setPortal(phase, kind) {
       if (phase === portalPhase) return;
       portalPhase = phase; phaseT = 0; diveKind = kind;
@@ -792,8 +804,9 @@ function create2D(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: SceneOp
     setJob(j, w) { job = j; world = w; L = layoutFor(j, { r: null }, w); fit(); },
     setBuild(b) { if (job) { L = layoutFor(job, b, world); draw(); } },
     setGlow() { /* DOM sockets carry the highlight */ },
-    async playSale(plan, onLand) { await wait(700); for (const f of plan.flows) { await wait(150); onLand?.(f); } },
+    async playSale(plan, onLand) { await wait(700); for (const f of plan.flows) { if(plan.cancelled?.()) return; await wait(150); onLand?.(f); } },
     async release(_g, flows, _k, onLand) { await wait(400); for (const f of flows) onLand?.(f); },
+    stopSim() { /* static fallback; cancellation is checked by playSale */ },
     customerLeave() { /* nothing animated */ },
     setPortal() { /* the HUD card shows the phase */ },
     focus() { /* static */ },

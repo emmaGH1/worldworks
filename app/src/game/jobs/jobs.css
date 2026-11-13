@@ -251,3 +251,74 @@
 .g-shop-people { list-style: none; padding: 0; }
 .g-shop-people li { margin: 8px 0; font-size: 14px; display: flex; gap: 7px; align-items: center; flex-wrap: wrap; }
 .g-shop-avatar { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; color: #132d3a; margin-right: 7px; }
+
+/* GAME-4: the title and Portal each own their text bands. */
+.jobs-game.is-moment .j-top, .jobs-game.is-title .j-top,
+.jobs-game.is-title .j-reqpills, .jobs-game.is-title .j-bottom,
+.jobs-game.is-title .j-banner, .jobs-game.is-title .j-card,
+.jobs-game.is-title .j-overlay { visibility: hidden; pointer-events: none; }
+.jobs-game .j-intro { background: linear-gradient(180deg, rgba(10,40,50,.12) 20%, rgba(10,40,50,.94) 80%); align-items: end; padding-bottom: max(40px, 8vh); }
+.jobs-game .j-intro .g-card { background: transparent; box-shadow: none; color: #fff8e9; max-width: 640px; padding: 20px; border: 0; }
+.jobs-game .j-intro h1 { color: #ffe2a1; font-size: clamp(30px, 7vw, 62px); letter-spacing: -.03em; line-height: 1; margin-bottom: 18px; }
+.jobs-game .j-intro .point { font-size: clamp(18px, 3vw, 24px); font-weight: 500; line-height: 1.4; text-wrap: balance; margin-bottom: 24px; }
+.jobs-game .j-moment-top { padding: max(18px, env(safe-area-inset-top)) 20px 18px; min-height: 170px; box-sizing: border-box; background: #151a38; }
+.jobs-game .j-moment.st-confirmed .j-moment-top { background: #104633; }
+.jobs-game .j-moment-top h2 { text-wrap: balance; }
+.jobs-game .j-moment-top small { letter-spacing: .04em; }
+.jobs-game .j-moment-bottom { background: linear-gradient(transparent, #151a38 30%); padding-top: 30px; }
+.jobs-game .j-confirmed { display: inline-block; color: #d1ffe1; font-size: 14px; letter-spacing: .08em; padding: 5px 12px; border: 2px solid #99e7b3; border-radius: 4px; transform: rotate(-3deg); }
+.jobs-game [data-testid="pass-note"] .j-stars { display: inline-block; animation: j-star-reveal .6s cubic-bezier(.16,1,.3,1); }
+@keyframes j-star-reveal { from { transform: scale(.4) rotate(-12deg); } to { transform: scale(1) rotate(0); } }
+@media (max-width: 640px) {
+  .jobs-game .j-moment-top { padding: max(16px, env(safe-area-inset-top)) 18px 16px; min-height: 215px; }
+  .jobs-game .j-moment-top h2 { font-size: 21px; line-height: 1.22; margin: 10px auto; }
+  .jobs-game .j-moment-steps { display: grid; gap: 5px; width: 100%; max-width: 340px; }
+  .jobs-game .j-moment-steps li { text-align: center; padding: 6px 10px; }
+  .jobs-game .j-top { gap: 4px; }
+  .jobs-game .j-top .j-icon { min-width: 30px; width: 30px; }
+}
+@media (prefers-reduced-motion: reduce) { .jobs-game *, .jobs-game *::before { animation: none !important; } }
+.jobs-game.lowfx * { animation: none !important; }
+.jobs-game .j-moment-error { max-width: 440px; padding: 10px 14px; background: #fff1d5; color: #422710; border-radius: 12px; font-size: 14px; }
+.jobs-game .j-moment-error button { display: block; margin: 8px auto 0; }
+.jobs-game .j-balance .j-mini { font-size: 12px; padding: 6px; }
+
+/* A tutorial points at the actual controls. Everything outside its hole is inert. */
+.jobs-game .j-guide { position:fixed; inset:0; z-index:40; pointer-events:none; }
+.jobs-game .j-guide-hole { position:fixed; border-radius:14px; outline:3px solid #ffe14d; box-shadow:0 0 0 9999px rgba(7,20,28,.78); pointer-events:none; }
+.jobs-game .j-guide-shield { position:fixed; pointer-events:auto; touch-action:none; }
+.jobs-game .j-guide-bubble { position:fixed; width:250px; padding:14px 16px; border-radius:14px; color:#142e34; background:#fff5d8; font-size:17px; font-weight:700; line-height:1.3; text-align:center; }
+.jobs-game .j-guide-bubble span { display:block; font-size:26px; line-height:1; color:#965b00; }
+.jobs-game .j-guide-skip { position:fixed; right:12px; top:max(12px,env(safe-area-inset-top)); pointer-events:auto; background:#fff5d8; color:#142e34; border:0; border-radius:12px; padding:10px 14px; font:inherit; font-weight:700; }
+.jobs-game .j-new-hint { position:fixed; top:112px; left:12px; z-index:8; max-width:min(350px,calc(100vw - 24px)); padding:12px 16px; background:#fff5d8; color:#142e34; border-radius:14px; box-shadow:0 5px 20px #102a3433; font-size:15px; }
+.jobs-game .j-new-hint button { margin-left:12px; border:0; background:transparent; font:inherit; font-weight:700; color:#154d52; text-decoration:underline; }
+.jobs-game .j-factory { position:fixed; top:112px; left:50%; transform:translateX(-50%); max-width:calc(100vw - 24px); padding:8px 12px; background:#14363a; color:#fff5d8; border-radius:12px; z-index:4; font-size:12px; text-align:center; }
+.jobs-game .j-factory span { display:inline-block; margin-left:10px; font-variant-numeric:tabular-nums; }
+.jobs-game .j-inside { position:fixed; right:16px; top:64px; z-index:7; width:min(370px,calc(100vw - 32px)); padding:18px; max-height:calc(100dvh - 170px); overflow:auto; }
+.jobs-game .j-inside h2 { font-size:20px; margin:0 0 14px; }
+.jobs-game .j-stage-line { margin:0; padding:0 0 0 20px; font-size:14px; line-height:1.45; }
+.jobs-game .j-stage-line li { padding:0 0 10px 4px; }
+.jobs-game .j-stage-line a { margin-left:6px; }
+.jobs-game .j-stage-details { color:#fff; width:min(420px,100%); font-size:12px; }
+.jobs-game .j-stage-details summary { cursor:pointer; text-align:center; padding:5px; }
+.jobs-game .j-stage-details[open] { max-height:150px; overflow:auto; background:#151a38; padding:10px; border-radius:12px; }
+.jobs-game .j-wait-next { border:1px solid #ddd8ff; background:#151a38; color:#fff; border-radius:12px; padding:8px 12px; font:inherit; font-size:13px; }
+.jobs-game .j-background-run { position:fixed; right:12px; bottom:170px; z-index:12; padding:10px 14px; background:#151a38; color:#fff; border:0; border-radius:12px; font:inherit; font-size:13px; }
+.jobs-game .j-background-run.confirmed { background:#105c41; animation:j-star-reveal .6s; }
+@media (min-width:1000px) {
+ .jobs-game .j-trayitem { min-width:104px; padding:10px 14px; }
+ .jobs-game .j-part em { font-size:16px; }
+ .jobs-game .j-reqpills li { font-size:14px; padding:7px 12px; }
+ .jobs-game .j-chip { font-size:15px; }
+}
+@media (min-width:1700px) {
+ .jobs-game .j-bottom { padding-bottom:22px; }
+ .jobs-game .j-trayitem { min-width:126px; padding:14px 18px; }
+ .jobs-game .j-reqpills { top:62px; }
+}
+.jobs-game .j-background-run { top:112px; bottom:auto; z-index:4; max-width:210px; font-size:12px; }
+.jobs-game.is-title .j-background-run, .jobs-game.is-title .j-factory, .jobs-game.is-title .j-inside, .jobs-game.is-title .j-new-hint { visibility:hidden; }
+.jobs-game .j-live-stage { margin:0; max-width:420px; text-align:center; color:#fff5d8; font-size:13px; line-height:1.35; }
+/* Processing copy must stay opaque over moving world labels. */
+.jobs-game .j-inside { background:#fff9eb; top:100px; }
+.jobs-game .j-moment-bottom { background:#151a38; }

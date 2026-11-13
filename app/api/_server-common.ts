@@ -43,7 +43,10 @@ export function envAccount(prefix:string) {
 }
 export function failure(res:Response,error:unknown) {
   // Do not serialize provider errors: they may include signed request details.
-  return res.status((error as any).code ?? 503).json({error:error instanceof Error ? error.message : 'Testnet service unavailable'});
+  const e=error as {code?:number;definitive?:boolean;message?:string};
+  const clientError=typeof e.code==='number' && e.code>=400 && e.code<500;
+  const safe=e.definitive || clientError || /^(Testnet |Aggregate testnet|SPONSOR testnet|CUSTOMER testnet|Sponsor account)/.test(e.message ?? '');
+  return res.status(clientError?e.code!:503).json({error:safe?e.message:'Testnet service unavailable; check the order before retrying',definitive:e.definitive===true || clientError});
 }
 let queue:Promise<unknown> = Promise.resolve();
 export function serialized<T>(fn:()=>Promise<T>):Promise<T> {

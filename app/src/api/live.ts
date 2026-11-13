@@ -1,5 +1,5 @@
 import type { WorldworksApi, MachineDoc, Session, OrderResult, PayoutView, TxRef, ApproveResult } from './types.js';
-import { account, KeyPair, actions, CONTRACT, DEMO_RECIPIENT, rpc, view, send, price, placeOrder, txRef, limits, checkId, checkLegacyId, receiptResult, readOrder } from '../../api/_near.js';
+import { account, KeyPair, actions, CONTRACT, DEMO_RECIPIENT, rpc, view, send, price, placeOrder, txRef, limits, checkId, checkLegacyId, receiptResult, readOrder, withSettlement } from '../../api/_near.js';
 import { validateMachine } from '../engine/index.js';
 import { validate as wasmValidate, preview_order } from '../engine/pkg/worldworks_engine_wasm.js';
 const config = (import.meta as ImportMeta & {env?:Record<string,string>}).env ?? {};
@@ -12,11 +12,13 @@ export class LiveApi implements WorldworksApi {
     if(contractId !== CONTRACT) throw Error(`This adapter is pinned to testnet contract ${CONTRACT}`);
   }
   private async post(path:string,body:unknown):Promise<any> {
-    const response = await fetch(`${this.base}/api/${path}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    if(!response.ok) throw Object.assign(Error(`API ${response.status}`),{status:response.status});
-    if(!response.headers.get('content-type')?.includes('application/json')) throw Error('API returned a non-JSON response');
-    return response.json();
+    const response = await fetch(`${this.base}/api/${path}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(20000)});
+    const data=await response.json().catch(()=>null);
+    if(!response.ok) throw Object.assign(Error(typeof data?.error==='string'?data.error:`API ${response.status}`),{status:response.status,definitive:data?.definitive===true});
+    if(!data)throw Error('API returned a non-JSON response');
+    return data;
   }
+
   private key(name='session') {
     const path = `worldworks.testnet.${name}.key`;
     let secret = this.storage.getItem(path);
@@ -79,19 +81,38 @@ export class LiveApi implements WorldworksApi {
     for(const effect of result.effects) if(effect.kind === 'external') this.storage.setItem(`worldworks.testnet.payout.${effect.payoutId}`,JSON.stringify(result.tx));
     return result;
   }
-  async order(machineId:string,recipient?:string,orderId?:string) { return this.remember(await placeOrder(await this.player(),machineId,recipient,orderId)); }
+  async order(machineId:string,recipient?:string,orderId:string=crypto.randomUUID()) { return this.remember(await placeOrder(await this.player(),machineId,recipient,orderId,tx=>this.storage.setItem(`worldworks.testnet.order.${orderId}`,JSON.stringify(tx)))); }
   async customerOrder(machineId:string,orderId:string=crypto.randomUUID(),recipient?:string) { return this.remember(await this.post('customer',{machineId,orderId,...(recipient?{recipient}:{})})); }
   async getOrder(machineId:string,orderId:string) {
-    const found=await readOrder(machineId,orderId);if(!found)return null;
     const saved=this.storage.getItem(`worldworks.testnet.order.${orderId}`);
+    const found=await readOrder(machineId,orderId,saved?JSON.parse(saved):undefined);if(!found)return null;
     return this.remember({...found,tx:saved?JSON.parse(saved):found.tx});
+  }
+  async expiry(machineId:string, orderId:string) {
+    checkLegacyId(machineId); checkLegacyId(orderId,64);
+    const order = await view('get_order',{machine_id:machineId,order_id:orderId});
+    if (!order) throw Error('Order not found');
+    const block = await rpc('block',{finality:'final'});
+    const expiresAt = String(order.expires_at), blockHeight = String(block.header.height);
+    return {pending:!!order.pending, expiresAt, blockHeight, eligible:!!order.pending && BigInt(blockHeight) >= BigInt(expiresAt)};
+  }
+  async expire(machineId:string, orderId:string):Promise<ApproveResult> {
+    if (!(await this.expiry(machineId,orderId)).eligible) throw Error('Order is not pending or has not expired');
+    const {result,tx} = await send(await this.player(),'expire',{machine_id:machineId,order_id:orderId});
+    const outcome = receiptResult(result,'expire');
+    if (!outcome) return {tx,effects:[],pending:false,observation:'unknown'};
+    this.remember({tx,orderId,...outcome});
+    return {tx,effects:outcome.effects,pending:outcome.pending};
   }
   async balance() { return (await (await this.player()).getState()).balance.available.toString(); }
   async retrySignature(payoutId:string) { await send(await this.player(),'retry_signature',{payout_id:payoutId}); }
   async approve(machineId:string,orderId:string):Promise<ApproveResult> {
     checkLegacyId(machineId); checkLegacyId(orderId,64); await this.workerPermission();
     const {result,tx}=await send(await this.player(true),'approve',{machine_id:machineId,order_id:orderId});
-    const outcome=receiptResult(result,'approve');
+    this.storage.setItem(`worldworks.testnet.order.${orderId}`,JSON.stringify(tx));
+    const decoded=receiptResult(result,'approve');
+    let observed=result;try {observed=await rpc('EXPERIMENTAL_tx_status',{tx_hash:tx.hash,sender_account_id:(await this.session()).accountId,wait_until:'FINAL'});}catch {}
+    const outcome=decoded?withSettlement(observed,decoded):undefined;
     if(!outcome) return {tx,effects:[],pending:false,observation:'unknown'};
     this.remember({tx,orderId,...outcome});
     return {tx,effects:outcome.effects,pending:outcome.pending};

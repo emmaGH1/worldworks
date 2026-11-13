@@ -17,9 +17,11 @@ export interface OrderResult {
   tx: TxRef;
   orderId: string;
   pending: boolean;                      // held at an approval Gate
+  recovered?: boolean;
+  resolution?: 'approved' | 'expired' | 'pending' | 'completed';
   observation?: 'unknown';               // live only: tx was sent but its receipt could not be decoded; effects are unknown (not empty), pending is false
   effects: Array<
-    | { kind: 'payout'; account: string; amount: Yocto }
+    | { kind: 'payout'; account: string; amount: Yocto; settled?: true | false | 'unknown' }
     | { kind: 'vault'; name: string; amount: Yocto }
     | { kind: 'external'; payoutId: string; recipient: string; wei: string; fee: Yocto }>;
   trace: string[];
@@ -33,6 +35,7 @@ export interface ApproveResult {
 }
 
 export interface PayoutView {
+  nearBlockHeight?: string; confirmationProgress?: Array<{rpc:string;depth:string;blockNumber:string}>;
   payoutId: string; status: PayoutStatus; recipient: string; wei: string;
   portalAddress: string; nonce: number; nearTx?: TxRef; evmTx?: TxRef; waitingPayoutId?: string; retryEligible?: boolean; confirmations?: Array<{ rpc: string; hash: string; blockHash: string; status: number }>;
 }
@@ -52,6 +55,8 @@ export interface WorldworksApi {
   customerOrder(machineId: string, orderId?: string, recipient?: string): Promise<OrderResult & { customer: string }>; // seeded customer account buys (labeled "seeded customer")
   approve(machineId: string, orderId: string): Promise<ApproveResult>;           // as the bound Worker; effects include Portal payouts released by the approval
   getOrder(machineId: string, orderId: string): Promise<OrderResult | null>;
+  expiry?(machineId: string, orderId: string): Promise<{ pending: boolean; expiresAt: string; blockHeight: string; eligible: boolean }>;
+  expire?(machineId: string, orderId: string): Promise<ApproveResult>;
   balance(): Promise<Yocto>;
   retrySignature?(payoutId: string): Promise<void>;
   getPayout(payoutId: string): Promise<PayoutView>;

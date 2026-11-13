@@ -1,7 +1,7 @@
 // Tiny global store: session, ledger rows, payout tracking, goals. Survives page switches (pushState routing).
 import { useSyncExternalStore } from 'react';
 import { api } from '../api/index.js';
-import type { PayoutView, Session, TxRef } from '../api/types.js';
+import type { OrderResult, PayoutView, Session, TxRef } from '../api/types.js';
 
 export type LedgerRow = {
   id: string;
@@ -24,7 +24,7 @@ export type AppState = {
   session: Session | null;
   sessionError: string | null;
   ledger: LedgerRow[];
-  payouts: Record<string, PayoutView & { startedAt: number; stepAt: Record<string, number>; relayError?: string }>;
+  payouts: Record<string, PayoutView & { startedAt: number; stepAt: Record<string, number>; relayError?: string; stalled?: boolean; readFailed?: boolean }>;
   goals: { stopLosing: 'todo' | 'preview' | 'done'; payEthereum: 'locked' | 'todo' | 'running' | 'done' };
   keptNote: string;
   sound: boolean;
@@ -98,15 +98,15 @@ export function trackPayout(payoutId:string,rowId:string,onDone?:(v:PayoutView)=
       const v=await advancePayout(payoutId);
       if(v.status === 'waiting_for_earlier_nonce' && v.waitingPayoutId && v.waitingPayoutId !== payoutId) await advancePayout(v.waitingPayoutId);
       failures=0;
-      setState(s=>({payouts:{...s.payouts,[payoutId]:{...v,startedAt,stepAt:{...s.payouts[payoutId]?.stepAt,[v.status]:s.payouts[payoutId]?.stepAt[v.status] ?? Date.now()}}}}));
+      setState(s=>({payouts:{...s.payouts,[payoutId]:{...v,startedAt,readFailed:false,stalled:v.status!=='confirmed' && Date.now()-startedAt>=90000,stepAt:{...s.payouts[payoutId]?.stepAt,[v.status]:s.payouts[payoutId]?.stepAt[v.status] ?? Date.now()}}}}));
       updateRow(rowId,{status:v.status === 'confirmed'?'confirmed':'pending',statusText:v.status === 'waiting_for_earlier_nonce'?`waiting for an earlier payout #${v.waitingPayoutId}`:statusText[v.status],evmTx:v.evmTx,...(v.nearTx?.hash?{tx:v.nearTx}:{})});
       if(v.status === 'confirmed') {active.delete(payoutId);onDone?.(v);return;}
     } catch {
       if(++failures>=5) {
         const message="Can't read the payout status right now";
         updateRow(rowId,{status:'unknown',statusText:message});
-        setState(s=>({payouts:{...s.payouts,[payoutId]:{...s.payouts[payoutId],relayError:message}}}));
-        active.delete(payoutId);return;
+        setState(s=>({payouts:{...s.payouts,[payoutId]:{...s.payouts[payoutId],relayError:message,readFailed:true,stalled:true}}}));
+        active.delete(payoutId);const background=setInterval(()=>{clearInterval(background);trackPayout(payoutId,rowId,onDone);},30000);(background as unknown as {unref?:()=>void}).unref?.();return;
       }
     }
     setTimeout(tick,api.mode==='mock'?700:2000);
@@ -135,3 +135,16 @@ export function restoreLedger() {
 
 // Surviving integration surface for the jobs UI. Acknowledge only after persisting its run/receipt.
 export { submitOrder, pendingOrder, finishOrder, canPay, GAS_MARGIN } from './orders.js';
+
+/** Shared settlement wording for NEAR receipts and ledger consumers. */
+export function nearTransferText(effect:Extract<OrderResult['effects'][number],{kind:'payout'}>) {
+  return effect.settled===true?'sent':effect.settled===false?'failed — held for the recipient to claim':'transfer requested';
+}
+export function recordNearEffects(result:OrderResult) {
+  for(const [i,e] of result.effects.entries())if(e.kind==='payout') {
+    const title=`NEAR → ${e.account}`;
+    const existing=state.ledger.find(r=>r.kind==='payout' && r.orderId===result.orderId && r.detail?.includes(`effect ${i}`));
+    const patch={kind:'payout' as const,title,orderId:result.orderId,detail:[`effect ${i}`],amount:(Number(BigInt(e.amount)/10n**18n)/1e6).toString(),status:e.settled===true?'confirmed' as const:e.settled===false?'failed' as const:'unknown' as const,statusText:nearTransferText(e),tx:result.tx};
+    if(existing)updateRow(existing.id,patch);else addRow(patch);
+  }
+}

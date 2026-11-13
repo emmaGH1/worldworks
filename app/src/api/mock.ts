@@ -77,7 +77,7 @@ function runEngine(doc: MachineDoc, recipient?: string): { ok: true; pending: bo
 function mapEffects(raw: RawEffect[], payer: string, mkPayout: (r: string, wei: string, fee: string) => string): OrderResult['effects'] {
   return raw.map(e => {
     if (e.VaultCredit) return { kind: 'vault' as const, name: e.VaultCredit.name, amount: e.VaultCredit.amount };
-    if (e.Payout) return { kind: 'payout' as const, account: e.Payout.account === 'buyer.testnet' ? payer : e.Payout.account, amount: e.Payout.amount };
+    if (e.Payout) return { kind: 'payout' as const, settled: true, account: e.Payout.account === 'buyer.testnet' ? payer : e.Payout.account, amount: e.Payout.amount };
     const x = e.ExternalPayout!;
     return { kind: 'external' as const, payoutId: mkPayout(x.recipient, x.wei, x.fee), recipient: x.recipient, wei: x.wei, fee: x.fee };
   });
@@ -205,33 +205,18 @@ export const mockApi: WorldworksApi & { limits(): Promise<Limits> } = {
     return { ...r, customer: MOCK_CUSTOMER };
   },
 
-  async approve(machineId, orderId) {
-    await sleep(NEAR_TX_MS);
-    const key = `${machineId}/${orderId}`;
-    const h = db.held[key];
-    if (!h) throw new Error('Nothing is waiting for approval on that order.');
-    const rec = db.machines[machineId];
-    const m = rec.doc.machine as Machine;
-    const sim = simulateRelease(m, h.gate, BigInt(h.amount));
-    const tx = nearTx();
-    const effects: OrderResult['effects'] = [];
-    for (const s of sim.sinks) {
-      const p = m.nodes[s.node];
-      if (p?.type === 'Vault') {
-        rec.vaults[p.name] = (BigInt(rec.vaults[p.name] ?? '0') + s.amount).toString();
-        effects.push({ kind: 'vault', name: p.name, amount: s.amount.toString() });
-      }
-      if (p?.type === 'Payout') effects.push({ kind: 'payout', account: p.account === 'buyer.testnet' ? h.payer : p.account, amount: s.amount.toString() });
-      if (p?.type === 'Portal' && h.recipient) {
-        const payoutId = String(db.nonce++);
-        db.payouts[payoutId] = { createdAt: Date.now(), view: { payoutId, status: 'awaiting_signature', recipient: h.recipient, wei: p.wei, portalAddress: MOCK_PORTAL, nonce: Number(payoutId), nearTx: tx } };
-        effects.push({ kind: 'external', payoutId, recipient: h.recipient, wei: p.wei, fee: s.amount.toString() });
-      }
-    }
-    delete db.held[key];
-    save();
-    return { tx, effects, pending: sim.held.length > 0 };
+  async expiry(machineId, orderId) {
+    const held = !!db.held[`${machineId}/${orderId}`];
+    const key = `ww-mock-expiry:${machineId}/${orderId}`;
+    const at = Number(localStorage.getItem(key) ?? Date.now() + 60000);
+    localStorage.setItem(key, String(at));
+    return {pending:held, expiresAt:String(Math.ceil(at/1000)), blockHeight:String(Math.floor(Date.now()/1000)), eligible:held && Date.now() >= at};
   },
+  async expire(machineId, orderId) {
+    if (!(await mockApi.expiry!(machineId, orderId)).eligible) throw Error('Mock order has not expired');
+    return releaseMock(machineId, orderId, false);
+  },
+  async approve(machineId, orderId) { return releaseMock(machineId, orderId, true); },
 
   async balance() { return db.balance ?? SPONSORED; },
   async getOrder(machineId,orderId) { if(unknownReads-->0)return null;return db.orders?.[`${machineId}/${orderId}`] ?? null; },
@@ -265,3 +250,34 @@ export const mockApi: WorldworksApi & { limits(): Promise<Limits> } = {
     return { contractId: 'mock-contract.testnet', portalAddress: MOCK_PORTAL, explorer: 'https://testnet.nearblocks.io' };
   },
 };
+
+async function releaseMock(machineId: string, orderId: string, pass: boolean) {
+    await sleep(NEAR_TX_MS);
+    const key = `${machineId}/${orderId}`;
+    const h = db.held[key];
+    if (!h) throw new Error('Nothing is waiting for approval on that order.');
+    const rec = db.machines[machineId];
+    const m = structuredClone(rec.doc.machine) as Machine;
+    if (!pass) { const g = m.nodes[h.gate]; if (g?.type === 'Gate') g.pass = g.fail; }
+    const sim = simulateRelease(m, h.gate, BigInt(h.amount));
+    const tx = nearTx();
+    const effects: OrderResult['effects'] = [];
+    for (const s of sim.sinks) {
+      const p = m.nodes[s.node];
+      if (p?.type === 'Vault') {
+        rec.vaults[p.name] = (BigInt(rec.vaults[p.name] ?? '0') + s.amount).toString();
+        effects.push({ kind: 'vault', name: p.name, amount: s.amount.toString() });
+      }
+      if (p?.type === 'Payout') effects.push({ kind: 'payout', settled: true, account: (p.account === 'buyer.testnet' || p.account === '$payer') ? h.payer : p.account, amount: s.amount.toString() });
+      if (p?.type === 'Portal' && h.recipient) {
+        const payoutId = String(db.nonce++);
+        db.payouts[payoutId] = { createdAt: Date.now(), view: { payoutId, status: 'awaiting_signature', recipient: h.recipient, wei: p.wei, portalAddress: MOCK_PORTAL, nonce: Number(payoutId), nearTx: tx } };
+        effects.push({ kind: 'external', payoutId, recipient: h.recipient, wei: p.wei, fee: s.amount.toString() });
+      }
+    }
+    delete db.held[key];
+    const order = db.orders?.[key]; if (order) { order.pending = sim.held.length > 0; order.resolution=order.pending?'pending':pass?'approved':'expired'; order.effects.push(...effects); }
+    save();
+    return { tx, effects, pending: sim.held.length > 0 };
+
+}

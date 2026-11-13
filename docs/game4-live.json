@@ -1,0 +1,53 @@
+{
+  "machineId": "rider3-1c132b47-c83a2d2141",
+  "orderId": "93edced3-0a19-4625-b48a-e2f27db3bbdb",
+  "customer": "ww-customer-g4-261112.testnet",
+  "publishTx": {
+    "hash": "EpnPLJhsFkfHtMYLhRhZ9dVBBg8qA2orUKSgs6CBMTig",
+    "explorerUrl": "https://testnet.near.rocks/tx/EpnPLJhsFkfHtMYLhRhZ9dVBBg8qA2orUKSgs6CBMTig"
+  },
+  "orderTx": {
+    "hash": "BWqtXfRJhrDP8tCVc1ysB2o8zLPzhXwewdgKpCATdVB7",
+    "explorerUrl": "https://testnet.near.rocks/tx/BWqtXfRJhrDP8tCVc1ysB2o8zLPzhXwewdgKpCATdVB7"
+  },
+  "expireTx": {
+    "hash": "5oXXGB6oZceCMRjcuZpKxTaTaDWneNNN8pHMyk63LDmp",
+    "explorerUrl": "https://testnet.near.rocks/tx/5oXXGB6oZceCMRjcuZpKxTaTaDWneNNN8pHMyk63LDmp"
+  },
+  "effects": [
+    {
+      "kind": "payout",
+      "account": "65c8bc5009157ffaa72a5160b0d56f4864c19e2214cc07f42c8f4205cfc7a4be",
+      "amount": "80000000000000000000000"
+    },
+    {
+      "kind": "payout",
+      "account": "ww-customer-g4-261112.testnet",
+      "amount": "20000000000000000000000"
+    }
+  ],
+  "orders": 1,
+  "consoleErrors": [],
+  "refundReadback": {
+    "pending": false,
+    "trace": [
+      "slot: 100000000000000000000000 yoctoNEAR",
+      "n_r: 100000000000000000000000 yoctoNEAR",
+      "Splitter 'n_r': 8000 bps -> n_r_0 (80000000000000000000000 yoctoNEAR)",
+      "Splitter 'n_r': 2000 bps -> n_r_1 (20000000000000000000000 yoctoNEAR)",
+      "n_r_0: 80000000000000000000000 yoctoNEAR",
+      "n_r_1: 20000000000000000000000 yoctoNEAR",
+      "Gate 'n_r_1': pending approval by checker",
+      "Order '93edced3-0a19-4625-b48a-e2f27db3bbdb': expired",
+      "n_r_1_f: 20000000000000000000000 yoctoNEAR"
+    ],
+    "settlement": [
+      {
+        "kind": "payout",
+        "account": "ww-customer-g4-261112.testnet",
+        "amount": "20000000000000000000000",
+        "settled": true
+      }
+    ]
+  }
+}

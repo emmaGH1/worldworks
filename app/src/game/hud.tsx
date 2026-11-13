@@ -41,7 +41,7 @@ const COPY: Record<PayoutStatus, { title: string; sub: string }> = {
   awaiting_signature: { title: 'NEAR network signing…', sub: 'NEAR Chain Signatures (MPC) is signing the Sepolia payment · usually ~15 s' },
   waiting_for_signature: { title: 'NEAR network signing…', sub: 'the MPC signature is not back yet · usually ~15 s' },
   signed: { title: 'Signed · handing to the relayer…', sub: 'the relayer only broadcasts the signed bytes; it cannot change them' },
-  waiting_for_earlier_nonce: { title: 'Queued behind an earlier payout…', sub: 'Portal payouts go out in nonce order; retrying automatically' },
+  waiting_for_earlier_nonce: { title: 'Queued behind an earlier payout…', sub: 'Portal payouts go out in nonce order' },
   broadcast: { title: 'Sent to Sepolia · waiting for 3 blocks…', sub: 'waiting for inclusion plus 3 more blocks on two RPCs · usually ~15–45 s' },
   confirmed: { title: 'Confirmed on Sepolia', sub: '' },
   signature_failed: { title: 'Signature failed · no ETH was sent', sub: 'the signature request did not complete; you can retry it' },
@@ -69,10 +69,11 @@ export function PortalCard({ payoutId }: { payoutId: string }) {
       <div className="pc-head">
         <span className={`pc-orb ${live ? 'spin' : ''}`} aria-hidden />
         <div>
-          <b data-testid="portal-title">{c.title}{live && <span className="secs" data-testid="portal-secs"> {since(stepStart)}s</span>}</b>
-          <small>{p.status === 'confirmed' ? `${p.wei && p.wei !== '0' ? `${eth(p.wei)} ETH` : 'the payment'} to ${shortAddr(p.recipient)}${rpcs >= 2 ? ` · seen by ${rpcs} RPCs, 3+ blocks deep` : ''} · ${since(p.startedAt, p.stepAt.confirmed)}s total` : c.sub}</small>
+          <b data-testid="portal-title">{p.readFailed?'Cannot read payout status':p.stalled?'Payout stalled — check again':c.title}{live && <span className="secs" data-testid="portal-secs"> {since(stepStart)}s</span>}</b>
+          <small>{p.status === 'confirmed' ? `${p.wei && p.wei !== '0' ? `${eth(p.wei)} ETH` : 'the payment'} to ${shortAddr(p.recipient)}${rpcs >= 2 ? ` · seen by ${rpcs} RPCs, 3+ blocks deep` : ''} · ${since(p.startedAt, p.stepAt.confirmed)}s total` : p.waitingPayoutId ? `Waiting behind payout #${p.waitingPayoutId}; this payment will pay after it clears.` : c.sub}</small>
         </div>
       </div>
+      {(p.stalled || p.readFailed) && <p role="status">Background checks continue. <button className="g-mini" onClick={()=>retryRelay(payoutId)}>Retry</button></p>}
       <ol className="pc-steps">{steps.map(s => <li key={s.k} className={`${s.done ? 'done' : ''} ${s.on ? 'on' : ''}`}><i />{s.label}</li>)}</ol>
       <div className="pc-links">
         <Tx tx={p.nearTx} label="NEAR tx" />

@@ -1,7 +1,7 @@
 // GAME-3 jobs, MOCK API: plays jobs 1–4 and "Your shop" with at least one deliberately wrong build per job that
 // fails Test with the right one-line reason, then fixes it and ships (mock). Desktop 1366×800 + phone 390×844. 0 console errors.
 //   npx vite --port 4260 &   UI_BASE=http://127.0.0.1:4260 UI_ADVANCE=1 node ui-tests/game3-mock.mjs
-// UI_SHOTS=1 writes stills to docs/design/screens/g3-*.png. UI_ONLY=phone|desktop runs one viewport.
+// UI_SHOTS=1 writes GAME-4 stills to docs/design/screens/g4-*.png. UI_ONLY=phone|desktop runs one viewport.
 import { launch, watchErrors } from './common.mjs';
 import { mkdirSync } from 'node:fs';
 const BASE = process.env.UI_BASE ?? 'http://127.0.0.1:4260';
@@ -18,10 +18,10 @@ async function run(label, viewport) {
   const ctx = await browser.newContext({ viewport, isMobile: phone, hasTouch: phone, deviceScaleFactor: 1 });
   const page = await ctx.newPage(); watchErrors(page, errors); globalThis.__page = page;
   page.setDefaultTimeout(30000);
-  if (process.env.UI_ADVANCE === '1') await page.addInitScript(() => { let scaled = false; setInterval(() => { const w = window.__ww2; if (!w) return; if (!scaled) { w.renderScale?.(0.5); scaled = true; } if (w.state().coins) w.advance(0.6); }, 600); });
+  if (process.env.UI_ADVANCE === '1') await page.addInitScript(() => { let scaled = false; setInterval(() => { const w = window.__ww2; if (!w) return; if (!scaled) { w.renderScale?.(0.25); scaled = true; } w.advance(0.6); }, 600); });
   const T = id => page.locator(`[data-testid="${id}"]`);
   const next = () => T('jobs-game').getAttribute('data-next');
-  const shot = async name => { if (!SHOTS) return; await page.evaluate(() => window.__ww2?.renderScale?.(1)); await page.screenshot({ path: `${DIR}g3-${name}-${label}.png` }); if (process.env.UI_ADVANCE === '1') await page.evaluate(() => window.__ww2?.renderScale?.(0.5)); };
+  const shot = async name => { if (!SHOTS) return; await page.evaluate(() => window.__ww2?.renderScale?.(1)); await page.screenshot({ path: `${DIR}g4-${name}-${label}.png` }); if (process.env.UI_ADVANCE === '1') await page.evaluate(() => window.__ww2?.renderScale?.(0.25)); };
   const oneNext = async where => check(await page.locator('.is-next').count() <= 1, `${label}: ${where}: at most one highlighted action`);
   const place = async (kind, socket) => { await T(`tray-${kind}`).first().click(); await T(`socket-${socket}`).click(); };
   const pay = async (socket, person) => { await place('Payout', socket); await T(`who-${person}`).click(); };
@@ -55,15 +55,18 @@ async function run(label, viewport) {
   const shipDone = async () => {
     await T('ship').click();
     await T('live-link').waitFor({ timeout: 120000 });
+    if (!(await T('receipts').count())) await T('receipts-toggle').click();
     check(await T('receipts').count() === 1, `${label}: receipts listed`);
     const faces = await T('receipts').locator('.j-face').evaluateAll(els => els.map(e => { const r = e.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; }));
     check(faces.length > 0 && faces.every(([w, h]) => w === 32 && h === 32), `${label}: receipt avatars are 32px circles (${JSON.stringify(faces)})`);
   };
 
-  await page.goto(`${BASE}/?lowfx=1${process.env.UI_2D === '1' ? '&webgl=0' : ''}`);
+  await page.goto(`${BASE}/?lowfx=1${process.env.UI_ADVANCE === '1' ? '&step=1' : ''}${process.env.UI_2D === '1' ? '&webgl=0' : ''}`);
   await T('intro').waitFor({ timeout: 60000 });
   await oneNext('intro');
-  await T('start').click();
+  check((await T('point').innerText()).startsWith('Money that runs itself:'), `${label}: title explains the game`);
+  await shot('title');
+  await T('start').click(); await page.waitForTimeout(200); if(await T('tutorial-skip').count()) await T('tutorial-skip').click();
 
   // ---------------- job 1: Ada keeps 3× each helper ----------------
   check(await next() === 'card', `${label}: job 1 opens with its card`);
@@ -134,9 +137,13 @@ async function run(label, viewport) {
   await T('ship').click();
   await T('portal-moment').waitFor({ timeout: 60000 });
   check(/NEAR is signing an Ethereum transaction/.test(await T('moment-head').innerText()), `${label}: Portal moment says NEAR is signing`);
-  check((await T('portal-moment').innerText()).includes('Ada never touched Ethereum. Her NEAR machine paid Chi there by itself.'), `${label}: Portal moment says why it matters`);
+  check((await T('portal-moment').innerText()).includes('Ada never touched Ethereum. Her NEAR machine will pay Chi there by itself.'), `${label}: Portal moment says why it matters`);
+  await T('wait-toggle').click(); await shot('wait-signing'); await T('wait-toggle').click();
   await page.waitForTimeout(2500);
   await shot('portal-moment');
+  check(await page.locator('.j-top').evaluate(e => getComputedStyle(e).visibility === 'hidden'), `${label}: Portal hides the entire top bar`);
+  await page.waitForFunction(() => document.querySelector('[data-testid=portal-moment]')?.getAttribute('data-status') === 'broadcast', null, { timeout: 120000 });
+  await shot('portal-beam');
   await page.waitForFunction(() => document.querySelector('[data-testid=portal-moment]')?.getAttribute('data-status') === 'confirmed', null, { timeout: 120000 });
   await page.waitForTimeout(1600);
   await shot('portal-gem');
@@ -170,6 +177,7 @@ async function run(label, viewport) {
   check(await next() === 'approve', `${label}: real run waits for Delivered`);
   await T('approve-real').click();
   await T('live-link').waitFor({ timeout: 60000 });
+  if (!(await T('receipts').count())) await T('receipts-toggle').click();
   check(await T('receipt-dayo').count() === 1, `${label}: Dayo receipt after delivery`);
   await T('next-job').click();
 

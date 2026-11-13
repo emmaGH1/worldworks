@@ -41,7 +41,7 @@ test('two independent matching receipts required; missing, altered, reverted and
       });
       const res=response();await payout({method:'POST',body:{payout_id:'0'}},res);
       if(['reverted','offline','hash','sender','recipient','value'].includes(status)) {assert.equal(res.code,502,status);assert(!res.data.status);}
-      else {assert.equal(res.code,200,status);assert.equal(res.data.status,status==='success'?'confirmed':status==='missing'?'signed':'broadcast',status);if(status==='success') assert.equal(res.data.confirmations.length,2);}
+      else {if(status==='shallow'||status==='one-shallow') {assert.equal(Math.min(...res.data.confirmationProgress.map((p:any)=>Number(p.depth))),2);assert.equal(res.data.status,'broadcast');}assert.equal(res.code,200,status);assert.equal(res.data.status,status==='success'?'confirmed':status==='missing'?'signed':'broadcast',status);if(status==='success') assert.equal(res.data.confirmations.length,2);}
     }
   } finally {globalThis.fetch=priorFetch;clients.forEach((c,i)=>Object.assign(c,prior[i]));}
 });
