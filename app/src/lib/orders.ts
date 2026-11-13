@@ -18,7 +18,7 @@ export async function submitOrder(machineId:string,customer:boolean,recipient?:s
   if(saved?.result && saved.result.observation!=='unknown') return saved.result;
   if(!saved) {
     try {
-      result=customer?await api.customerOrder(machineId,intent.orderId):await api.order(machineId,recipient,intent.orderId);
+      result=customer?await api.customerOrder(machineId,intent.orderId,intent.recipient):await api.order(machineId,recipient,intent.orderId);
       intent.result=result;localStorage.setItem(key(),JSON.stringify(intent));
       if(result.observation!=='unknown') return result;
     } catch(error) {

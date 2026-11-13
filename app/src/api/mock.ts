@@ -19,6 +19,7 @@ const MOCK_LIMITS: Limits = {
   orderFee: '1320000000000000000000000',       // 1.32 NEAR per order, retained by the contract for storage
   publishDeposit: '400000000000000000000000', // 0.4 NEAR attached to publish for machine storage
   rate: '1000000',                            // min Portal fee: 1e6 yocto per wei (0.001 NEAR per 0.001 ETH)
+  maxWeiPerPayout: '2000000000000000',
   epochBudgetWei: '10000000000000000',        // 0.01 Sepolia ETH per epoch
   epochRemainingWei: '10000000000000000',
 };
@@ -196,8 +197,8 @@ export const mockApi: WorldworksApi & { limits(): Promise<Limits> } = {
     return result;
   },
 
-  async customerOrder(machineId, orderId) {
-    const r = await placeOrder(machineId, MOCK_CUSTOMER, MOCK_CUSTOMER_EVM, false, orderId);
+  async customerOrder(machineId, orderId, recipient) {
+    const r = await placeOrder(machineId, MOCK_CUSTOMER, recipient ?? MOCK_CUSTOMER_EVM, false, orderId);
     if(scenario()==='customer504') { unknownReads=3; throw Object.assign(Error('API 504'),{status:504}); }
     return { ...r, customer: MOCK_CUSTOMER };
   },

@@ -80,7 +80,7 @@ export class LiveApi implements WorldworksApi {
     return result;
   }
   async order(machineId:string,recipient?:string,orderId?:string) { return this.remember(await placeOrder(await this.player(),machineId,recipient,orderId)); }
-  async customerOrder(machineId:string,orderId:string=crypto.randomUUID()) { return this.remember(await this.post('customer',{machineId,orderId})); }
+  async customerOrder(machineId:string,orderId:string=crypto.randomUUID(),recipient?:string) { return this.remember(await this.post('customer',{machineId,orderId,...(recipient?{recipient}:{})})); }
   async getOrder(machineId:string,orderId:string) {
     const found=await readOrder(machineId,orderId);if(!found)return null;
     const saved=this.storage.getItem(`worldworks.testnet.order.${orderId}`);

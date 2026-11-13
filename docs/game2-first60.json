@@ -1,0 +1,78 @@
+[
+  {
+    "seconds": 0,
+    "text": "WORLDWORKS\n\nMoney that runs itself: solve a real person’s money problem with parts, then ship it as a real payment app on NEAR.\n\nStart job 1"
+  },
+  {
+    "seconds": 8.3,
+    "text": "+\nsplits the money\n+\npays someone\n+\npays someone\n+\npays someone\nAda\nBola\nChi\nAda's Bakery\nCoin Slot · 0.10 NEAR a loaf\nJob 1 of 3 ▾\nMOCK DATA\n≡\n?\nJOB 1 · Ada, baker, owns the shop\nI pay my two helpers by hand every evening. Make my shop pay everyone automatically.\n○\nAda gets 60%\n○\nBola gets 20%\n○\nChi gets 20%\nDrag a part onto a glowing spot (or tap the part, then the spot).\n◔\nSplitter\nsplits money into shares\n✉\nPayout\npays one person on NEAR\n✉\nPayout\npays one person on NEAR\n✉\nPayout\npays one person on NEAR\n▣\nVault\nkeeps money locked\nTest\n3 customers · simulated"
+  },
+  {
+    "seconds": 13.3,
+    "text": "+\nsplits the money\n+\npays someone\n+\npays someone\n+\npays someone\nAda\nBola\nChi\nAda's Bakery\nCoin Slot · 0.10 NEAR a loaf\nJob 1 of 3 ▾\nMOCK DATA\n≡\n?\nJOB 1 · Ada, baker, owns the shop\nI pay my two helpers by hand every evening. Make my shop pay everyone automatically.\n○\nAda gets 60%\n○\nBola gets 20%\n○\nChi gets 20%\nNow tap a glowing spot for the Splitter.\n◔\nSplitter\nsplits money into shares\n✉\nPayout\npays one person on NEAR\n✉\nPayout\npays one person on NEAR\n✉\nPayout\npays one person on NEAR\n▣\nVault\nkeeps money locked\nTest\n3 customers · simulated"
+  },
+  {
+    "seconds": 15.3,
+    "text": "◔\nSplitter\n40% · 30% · 30%\n+\npays someone\n+\npays someone\n+\npays someone\nAda\nBola\nChi\nAda's Bakery\nCoin Slot · 0.10 NEAR a loaf\nJob 1 of 3 ▾\nMOCK DATA\n≡\n?\nJOB 1 · Ada, baker, owns the shop\nI pay my two helpers by hand every evening. Make my shop pay everyone automatically.\n○\nAda gets 60%\n○\nBola gets 20%\n○\nChi gets 20%\nFill the glowing spot.\n◔\nSplitter\n×\n\nHow much goes down each belt?\n\nbelt 1\n−\n40%\n+\nbelt 2\n−\n30%\n+\nbelt 3\n−\n30%\n+\n\nTotal 100% ✓\n\nBack to tray\nDone\n✉\nPayout\npays one person on NEAR\n✉\nPayout\npays one person on NEAR\n✉\nPayout\npays one person on NEAR\n▣\nVault\nkeeps money locked\nTest\n3 customers · simulated"
+  },
+  {
+    "seconds": 21.5,
+    "text": "◔\nSplitter\n40% · 30% · 30%\n+\npays someone\n+\npays someone\n+\npays someone\nAda\nBola\nChi\nAda's Bakery\nCoin Slot · 0.10 NEAR a loaf\nJob 1 of 3 ▾\nMOCK DATA\n≡\n?\nJOB 1 · Ada, baker, owns the shop\nI pay my two helpers by hand every evening. Make my shop pay everyone automatically.\n○\nAda gets 60%\n○\nBola gets 20%\n○\nChi gets 20%\nDrag a part onto a glowing spot (or tap the part, then the spot).\n✉\nPayout\npays one person on NEAR\n✉\nPayout\npays one person on NEAR\n✉\nPayout\npays one person on NEAR\n▣\nVault\nkeeps money locked\nTest\n3 customers · simulated"
+  },
+  {
+    "seconds": 23,
+    "text": "◔\nSplitter\n40% · 30% · 30%\n+\npays someone\n+\npays someone\n+\npays someone\nAda\nBola\nChi\nAda's Bakery\nCoin Slot · 0.10 NEAR a loaf\nJob 1 of 3 ▾\nMOCK DATA\n≡\n?\nJOB 1 · Ada, baker, owns the shop\nI pay my two helpers by hand every evening. Make my shop pay everyone automatically.\n○\nAda gets 60%\n○\nBola gets 20%\n○\nChi gets 20%\nNow tap a glowing spot for the Payout.\n✉\nPayout\npays one person on NEAR\n✉\nPayout\npays one person on NEAR\n✉\nPayout\npays one person on NEAR\n▣\nVault\nkeeps money locked\nTest\n3 customers · simulated"
+  },
+  {
+    "seconds": 24,
+    "text": "◔\nSplitter\n40% · 30% · 30%\n✉\nPayout\npays… who?\n+\npays someone\n+\npays someone\nAda\nBola\nChi\nAda's Bakery\nCoin Slot · 0.10 NEAR a loaf\nJob 1 of 3 ▾\nMOCK DATA\n≡\n?\nJOB 1 · Ada, baker, owns the shop\nI pay my two helpers by hand every evening. Make my shop pay everyone automatically.\n○\nAda gets 60%\n○\nBola gets 20%\n○\nChi gets 20%\nWho does this Payout pay? Tap it and choose.\n✉\nPayout\n×\n\nWho gets paid?\n\nAda\nBola\nChi\nBack to tray\nDone\n✉\nPayout\npays one person on NEAR\n✉\nPayout\npays one person on NEAR\n▣\nVault\nkeeps money locked\nTest\n3 customers · simulated"
+  },
+  {
+    "seconds": 25.8,
+    "text": "◔\nSplitter\n40% · 30% · 30%\n✉\nPayout\npays Ada\n+\npays someone\n+\npays someone\nAda\nBola\nChi\nAda's Bakery\nCoin Slot · 0.10 NEAR a loaf\nJob 1 of 3 ▾\nMOCK DATA\n≡\n?\nJOB 1 · Ada, baker, owns the shop\nI pay my two helpers by hand every evening. Make my shop pay everyone automatically.\n○\nAda gets 60%\n○\nBola gets 20%\n○\nChi gets 20%\nDrag a part onto a glowing spot (or tap the part, then the spot).\n✉\nPayout\npays one person on NEAR\n✉\nPayout\npays one person on NEAR\n▣\nVault\nkeeps money locked\nTest\n3 customers · simulated"
+  },
+  {
+    "seconds": 27.3,
+    "text": "◔\nSplitter\n40% · 30% · 30%\n✉\nPayout\npays Ada\n+\npays someone\n+\npays someone\nAda\nBola\nChi\nAda's Bakery\nCoin Slot · 0.10 NEAR a loaf\nJob 1 of 3 ▾\nMOCK DATA\n≡\n?\nJOB 1 · Ada, baker, owns the shop\nI pay my two helpers by hand every evening. Make my shop pay everyone automatically.\n○\nAda gets 60%\n○\nBola gets 20%\n○\nChi gets 20%\nNow tap a glowing spot for the Payout.\n✉\nPayout\npays one person on NEAR\n✉\nPayout\npays one person on NEAR\n▣\nVault\nkeeps money locked\nTest\n3 customers · simulated"
+  },
+  {
+    "seconds": 28.3,
+    "text": "◔\nSplitter\n40% · 30% · 30%\n✉\nPayout\npays Ada\n✉\nPayout\npays… who?\n+\npays someone\nAda\nBola\nChi\nAda's Bakery\nCoin Slot · 0.10 NEAR a loaf\nJob 1 of 3 ▾\nMOCK DATA\n≡\n?\nJOB 1 · Ada, baker, owns the shop\nI pay my two helpers by hand every evening. Make my shop pay everyone automatically.\n○\nAda gets 60%\n○\nBola gets 20%\n○\nChi gets 20%\nWho does this Payout pay? Tap it and choose.\n✉\nPayout\n×\n\nWho gets paid?\n\nAda\nBola\nChi\nBack to tray\nDone\n✉\nPayout\npays one person on NEAR\n▣\nVault\nkeeps money locked\nTest\n3 customers · simulated"
+  },
+  {
+    "seconds": 29.8,
+    "text": "◔\nSplitter\n40% · 30% · 30%\n✉\nPayout\npays Ada\n✉\nPayout\npays Bola\n+\npays someone\nAda\nBola\nChi\nAda's Bakery\nCoin Slot · 0.10 NEAR a loaf\nJob 1 of 3 ▾\nMOCK DATA\n≡\n?\nJOB 1 · Ada, baker, owns the shop\nI pay my two helpers by hand every evening. Make my shop pay everyone automatically.\n○\nAda gets 60%\n○\nBola gets 20%\n○\nChi gets 20%\nDrag a part onto a glowing spot (or tap the part, then the spot).\n✉\nPayout\npays one person on NEAR\n▣\nVault\nkeeps money locked\nTest\n3 customers · simulated"
+  },
+  {
+    "seconds": 31.3,
+    "text": "◔\nSplitter\n40% · 30% · 30%\n✉\nPayout\npays Ada\n✉\nPayout\npays Bola\n+\npays someone\nAda\nBola\nChi\nAda's Bakery\nCoin Slot · 0.10 NEAR a loaf\nJob 1 of 3 ▾\nMOCK DATA\n≡\n?\nJOB 1 · Ada, baker, owns the shop\nI pay my two helpers by hand every evening. Make my shop pay everyone automatically.\n○\nAda gets 60%\n○\nBola gets 20%\n○\nChi gets 20%\nNow tap a glowing spot for the Payout.\n✉\nPayout\npays one person on NEAR\n▣\nVault\nkeeps money locked\nTest\n3 customers · simulated"
+  },
+  {
+    "seconds": 32.5,
+    "text": "◔\nSplitter\n40% · 30% · 30%\n✉\nPayout\npays Ada\n✉\nPayout\npays Bola\n✉\nPayout\npays… who?\nAda\nBola\nChi\nAda's Bakery\nCoin Slot · 0.10 NEAR a loaf\nJob 1 of 3 ▾\nMOCK DATA\n≡\n?\nJOB 1 · Ada, baker, owns the shop\nI pay my two helpers by hand every evening. Make my shop pay everyone automatically.\n○\nAda gets 60%\n○\nBola gets 20%\n○\nChi gets 20%\nWho does this Payout pay? Tap it and choose.\n✉\nPayout\n×\n\nWho gets paid?\n\nAda\nBola\nChi\nBack to tray\nDone\n▣\nVault\nkeeps money locked\nTest\n3 customers · simulated"
+  },
+  {
+    "seconds": 34,
+    "text": "◔\nSplitter\n40% · 30% · 30%\n✉\nPayout\npays Ada\n✉\nPayout\npays Bola\n✉\nPayout\npays Chi\nAda\nBola\nChi\nAda's Bakery\nCoin Slot · 0.10 NEAR a loaf\nJob 1 of 3 ▾\nMOCK DATA\n≡\n?\nJOB 1 · Ada, baker, owns the shop\nI pay my two helpers by hand every evening. Make my shop pay everyone automatically.\n○\nAda gets 60%\n○\nBola gets 20%\n○\nChi gets 20%\nEverything is placed. Press Test to try it with 3 customers.\n▣\nVault\nkeeps money locked\nTest\n3 customers · simulated"
+  },
+  {
+    "seconds": 38,
+    "text": "◔\nSplitter\n40% · 30% · 30%\n✉\nPayout\npays Ada\n✉\nPayout\npays Bola\n✉\nPayout\npays Chi\nAda\nBola\nChi\nCustomer 1\nAda's Bakery\nCoin Slot · 0.10 NEAR a loaf\nJob 1 of 3 ▾\nMOCK DATA\nSIMULATED\n≡\n?\nJOB 1 · Ada, baker, owns the shop\nI pay my two helpers by hand every evening. Make my shop pay everyone automatically.\n○\nAda gets 60%\n○\nBola gets 20%\n○\nChi gets 20%\n\nTest · simulated in your browser by the same engine the contract runs. Not on any chain.\n\nCustomer 1 of 3 pays 0.10 NEAR\n▣\nVault\nkeeps money locked\nTest\n3 customers · simulated"
+  },
+  {
+    "seconds": 39,
+    "text": "◔\nSplitter\n40% · 30% · 30%\n✉\nPayout\npays Ada\n✉\nPayout\npays Bola\n✉\nPayout\npays Chi\nAda\nBola\nChi\nCustomer 1\nAda's Bakery\nCoin Slot · 0.10 NEAR a loaf\nJob 1 of 3 ▾\nMOCK DATA\nSIMULATED\n≡\n?\nJOB 1 · Ada, baker, owns the shop\nI pay my two helpers by hand every evening. Make my shop pay everyone automatically.\n✗\nAda gets 60%\n+0.04 NEAR\n✗\nBola gets 20%\n+0.03 NEAR\n✗\nChi gets 20%\n+0.03 NEAR\n\nTest · simulated in your browser by the same engine the contract runs. Not on any chain.\n\nCustomer 1 of 3 pays 0.10 NEAR\n▣\nVault\nkeeps money locked\nTest\n3 customers · simulated"
+  },
+  {
+    "seconds": 39.3,
+    "text": "◔\nSplitter\n40% · 30% · 30%\n✉\nPayout\npays Ada\n✉\nPayout\npays Bola\n✉\nPayout\npays Chi\nAda\nBola\nChi\nCustomer 2\nAda's Bakery\nCoin Slot · 0.10 NEAR a loaf\nJob 1 of 3 ▾\nMOCK DATA\nSIMULATED\n≡\n?\nJOB 1 · Ada, baker, owns the shop\nI pay my two helpers by hand every evening. Make my shop pay everyone automatically.\n✗\nAda gets 60%\n+0.04 NEAR\n✗\nBola gets 20%\n+0.03 NEAR\n✗\nChi gets 20%\n+0.03 NEAR\n\nTest · simulated in your browser by the same engine the contract runs. Not on any chain.\n\nCustomer 2 of 3 pays 0.10 NEAR\n▣\nVault\nkeeps money locked\nTest\n3 customers · simulated"
+  },
+  {
+    "seconds": 40.5,
+    "text": "◔\nSplitter\n40% · 30% · 30%\n✉\nPayout\npays Ada\n✉\nPayout\npays Bola\n✉\nPayout\npays Chi\nAda\nBola\nChi\nCustomer 3\nAda's Bakery\nCoin Slot · 0.10 NEAR a loaf\nJob 1 of 3 ▾\nMOCK DATA\nSIMULATED\n≡\n?\nJOB 1 · Ada, baker, owns the shop\nI pay my two helpers by hand every evening. Make my shop pay everyone automatically.\n✗\nAda gets 60%\n+0.04 NEAR\n✗\nBola gets 20%\n+0.03 NEAR\n✗\nChi gets 20%\n+0.03 NEAR\n\nTest · simulated in your browser by the same engine the contract runs. Not on any chain.\n\nCustomer 3 of 3 pays 0.10 NEAR\n▣\nVault\nkeeps money locked\nTest\n3 customers · simulated"
+  },
+  {
+    "seconds": 41.8,
+    "text": "◔\nSplitter\n40% · 30% · 30%\n✉\nPayout\npays Ada\n✉\nPayout\npays Bola\n✉\nPayout\npays Chi\nAda\nBola\nChi\nAda's Bakery\nCoin Slot · 0.10 NEAR a loaf\nJob 1 of 3 ▾\nMOCK DATA\n≡\n?\nJOB 1 · Ada, baker, owns the shop\nI pay my two helpers by hand every evening. Make my shop pay everyone automatically.\n✗\nAda gets 60%\n+0.04 NEAR\n✗\nBola gets 20%\n+0.03 NEAR\n✗\nChi gets 20%\n+0.03 NEAR\n\nTest · simulated in your browser by the same engine the contract runs. Not on any chain.\n\n✗ Ada got 40%, needs 60%.\n▣\nVault\nkeeps money locked\nTest\n3 customers · simulated"
+  }
+]

@@ -1,0 +1,87 @@
+{
+  "job": 2,
+  "phase": "portal",
+  "machineId": "abroad-0c0cd2d4-c83a2d2141",
+  "publishTx": {
+    "hash": "EzD4FrsQZX8WX6dtSY2NyXepL6wqLK22CbEmrLn3fSeG",
+    "explorerUrl": "https://testnet.near.rocks/tx/EzD4FrsQZX8WX6dtSY2NyXepL6wqLK22CbEmrLn3fSeG"
+  },
+  "orderId": "fa575ae3-d38c-4ae7-ae91-e1f27928bc85",
+  "orderTx": {
+    "hash": "DBQHcRzFLPwbYFM6k9V2SbHg7LrcfNDP4G1z3nUMLAbb",
+    "explorerUrl": "https://testnet.near.rocks/tx/DBQHcRzFLPwbYFM6k9V2SbHg7LrcfNDP4G1z3nUMLAbb"
+  },
+  "payoutId": "29",
+  "error": null,
+  "effects": [
+    {
+      "kind": "payout",
+      "account": "65c8bc5009157ffaa72a5160b0d56f4864c19e2214cc07f42c8f4205cfc7a4be",
+      "amount": "60000000000000000000000"
+    },
+    {
+      "kind": "payout",
+      "account": "c7aaf34cd0000ea3928cada72e5c0da7f137dd6253570653f679181d547f0c4b",
+      "amount": "20000000000000000000000"
+    },
+    {
+      "kind": "external",
+      "payoutId": "29",
+      "recipient": "0xE53AA3F186Dd3f580D2b6259bCa8aA86B10Eaeb2",
+      "wei": "100000000000000",
+      "fee": "20000000000000000000000"
+    }
+  ],
+  "sepolia": {
+    "hash": "0xb92bc7a5474a2edbff7c46310c5c8044ae394ca075ef88f2e15f94789546b55e",
+    "explorerUrl": "https://sepolia.etherscan.io/tx/0xb92bc7a5474a2edbff7c46310c5c8044ae394ca075ef88f2e15f94789546b55e",
+    "status": "reverted",
+    "confirmations": [
+      {
+        "rpc": "https://rpc.sepolia.ethpandaops.io",
+        "hash": "0xb92bc7a5474a2edbff7c46310c5c8044ae394ca075ef88f2e15f94789546b55e",
+        "status": "reverted",
+        "from": "0x694ad57416073b1e1f3bc6e13b26bde28015a8b7",
+        "to": "0xe53aa3f186dd3f580d2b6259bca8aa86b10eaeb2",
+        "value": "100000000000000",
+        "gas": "21000",
+        "gasUsed": "21000",
+        "estimatedGas": "204600",
+        "blockHash": "0x1fca1f2865a72f1abc28c2dbf6613158a299361e2aaf5ed9dd56705bc5819733",
+        "blockNumber": "12125310",
+        "head": "12125337",
+        "depth": "27"
+      },
+      {
+        "rpc": "https://sepolia.gateway.tenderly.co",
+        "hash": "0xb92bc7a5474a2edbff7c46310c5c8044ae394ca075ef88f2e15f94789546b55e",
+        "status": "reverted",
+        "from": "0x694ad57416073b1e1f3bc6e13b26bde28015a8b7",
+        "to": "0xe53aa3f186dd3f580d2b6259bca8aa86b10eaeb2",
+        "value": "100000000000000",
+        "gas": "21000",
+        "gasUsed": "21000",
+        "estimatedGas": "207391",
+        "blockHash": "0x1fca1f2865a72f1abc28c2dbf6613158a299361e2aaf5ed9dd56705bc5819733",
+        "blockNumber": "12125310",
+        "head": "12125337",
+        "depth": "27"
+      }
+    ]
+  },
+  "seededCustomerOrders": 1,
+  "shipmentRetries": 0,
+  "consoleErrors": 5,
+  "nearRecipientBalances": [
+    {
+      "account": "65c8bc5009157ffaa72a5160b0d56f4864c19e2214cc07f42c8f4205cfc7a4be",
+      "amount": "160000000000000000000000",
+      "expectedAfterFundingAndPayout": "160000000000000000000000"
+    },
+    {
+      "account": "c7aaf34cd0000ea3928cada72e5c0da7f137dd6253570653f679181d547f0c4b",
+      "amount": "120000000000000000000000",
+      "expectedAfterFundingAndPayout": "120000000000000000000000"
+    }
+  ]
+}

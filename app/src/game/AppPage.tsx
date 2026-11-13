@@ -13,10 +13,13 @@ import { createWorld, type World } from './world';
 import { displayName, flowFromEffects, liveKind } from './model';
 import { ModePills, PortalCard, Tx, usePortalSync } from './hud';
 import './game.css';
+import './jobs/jobs.css';
+import { Face } from './jobs/Face';
+import { PEOPLE, CHI_EVM, isJobMachine, shopPeople } from './jobs/jobs';
 
 type Loaded = { doc: MachineDoc; owner: string; vaults: Record<string, string> };
 type Receipt = { result: OrderResult; at: number; recipient?: string; payoutId?: string; approved?: TxRef; approveErr?: string };
-const DEMO_RECIPIENT = '0x000000000000000000000000000000000000dEaD';
+const DEMO_RECIPIENT = CHI_EVM;
 
 export function AppPage({ machineId }: { machineId: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -54,6 +57,8 @@ export function AppPage({ machineId }: { machineId: string }) {
   const machine = loaded ? (loaded.doc.machine as Machine) : null;
   const total = machine ? BigInt(price(machine)) : 0n;
   const fee = limits ? BigInt(limits.orderFee) : null;
+  const jobShop = isJobMachine(machineId);
+  const people = machine && jobShop ? shopPeople(machine) : [];
   const portal = machine ? hasPortal(machine) : false;
   const preview = useMemo(() => { if (!loaded) return null; try { return api.preview(loaded.doc, portal ? PREVIEW_RECIPIENT : undefined); } catch { return null; } }, [loaded, portal]);
   const rules = useMemo(() => (machine && loaded ? describe(machine, loaded.owner) : []), [machine, loaded]);
@@ -178,7 +183,8 @@ export function AppPage({ machineId }: { machineId: string }) {
         {loaded && machine && (
           <>
             <p className="g-eyebrow">Standalone app · runs on NEAR testnet</p>
-            <h1 data-testid="app-title">{displayName(machineId)}</h1>
+            <h1 data-testid="app-title"><span data-testid="shop-title">{jobShop ? "Ada’s bakery" : displayName(machineId)}</span></h1>
+            {jobShop && <><p>This is Ada’s bakery. Pay 0.10 NEAR → it splits automatically.</p><ul className="g-shop-people">{people.map(({person, pct, how}) => <li key={person.id}><Face id={person.id} size={28} /><b>{person.name}</b> · {pct}% {how === 'eth' ? 'pays the Portal → 0.0001 Sepolia ETH' : how === 'after' ? 'after delivery' : 'on NEAR'}</li>)}</ul></> }
             <div className="g-price-row"><b data-testid="app-price">{near(total)}</b><span>NEAR</span></div>
             {shares.length > 0 && !preview?.pending && (
               <>
@@ -187,19 +193,21 @@ export function AppPage({ machineId }: { machineId: string }) {
               </>
             )}
             <div className="g-line"><span>Price</span><span className="mono">{near(total)} NEAR</span></div>
+            <details><summary>Payment details · total {fee !== null ? near(total + fee) : '…'} NEAR</summary>
             <div className="g-line"><span>Storage fee <small>kept by the contract</small></span><span className="mono">{fee !== null ? `${near(fee)} NEAR` : limitsError ? 'unknown' : '…'}</span></div>
             <div className="g-line total"><span>Total</span><span className="mono" data-testid="app-total">{fee !== null ? `${near(total + fee)} NEAR` : `${near(total)} NEAR + fee`}</span></div>
+            </details>
             {portal && (
               <label className="g-evm-field">
-                <span>Sepolia address that receives the ETH</span>
+                <span>Chi’s Ethereum wallet (demo)</span>
                 <input value={recipient} onChange={e => setRecipient(e.target.value)} placeholder="0x…" spellCheck={false} data-testid="app-recipient" className={recipient && !isEvmAddress(recipient) ? 'bad' : ''} />
-                <small>{recipient && !isEvmAddress(recipient) ? 'Not a 0x address with 40 hex characters.' : recipient.toLowerCase() === DEMO_RECIPIENT.toLowerCase() ? 'Demo burn address. Paste your own Sepolia address to receive it.' : `This machine pays ${preview?.effects.filter(e => e.kind === 'external').map(e => `${eth((e as { wei: string }).wei)} Sepolia ETH`).join(', ') || 'Sepolia ETH'} here.`}</small>
+                <small>{recipient && !isEvmAddress(recipient) ? 'Not a 0x address with 40 hex characters.' : recipient.toLowerCase() === DEMO_RECIPIENT.toLowerCase() ? 'Chi’s wallet (demo). You can use your own Sepolia wallet.' : `This machine pays ${preview?.effects.filter(e => e.kind === 'external').map(e => `${eth((e as { wei: string }).wei)} Sepolia ETH`).join(', ') || 'Sepolia ETH'} here.`}</small>
               </label>
             )}
             <button type="button" className="btn pay" onClick={pay} disabled={paying || !recipientOk || !limits} data-testid="app-pay">
               {paying ? 'Paying on NEAR testnet…' : `Pay ${fee !== null ? near(total + fee) : near(total)} NEAR`}
             </button>
-            <p className="g-payer g-muted">{session ? <>Paying from <b className="mono">{session.accountId}</b>, a sponsored testnet account made for this browser. No wallet, no real money.</> : sessionError ? <>Could not create a testnet account: {sessionError}</> : 'A sponsored testnet account is created on your first payment. No wallet.'}</p>
+            <p className="g-payer g-muted">{session ? <>Paying from <b className="mono">{shortAddr(session.accountId)}</b>, a sponsored testnet account made for this browser. No wallet, no real money.</> : sessionError ? <>Could not create a testnet account: {sessionError}</> : 'A sponsored testnet account is created on your first payment. No wallet.'}</p>
             {err && <p className="warn" role="alert">{err}</p>}
 
             {receipts.length > 0 && (

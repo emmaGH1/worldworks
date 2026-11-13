@@ -49,7 +49,7 @@ export interface WorldworksApi {
   publish(machineId: string, doc: MachineDoc): Promise<TxRef>;
   getMachine(machineId: string): Promise<{ doc: MachineDoc; owner: string; vaults: Record<string, Yocto> } | null>;
   order(machineId: string, recipient?: string, orderId?: string): Promise<OrderResult>;           // pays the CoinSlot price from the session account
-  customerOrder(machineId: string, orderId?: string): Promise<OrderResult & { customer: string }>; // seeded customer account buys (labeled "seeded customer")
+  customerOrder(machineId: string, orderId?: string, recipient?: string): Promise<OrderResult & { customer: string }>; // seeded customer account buys (labeled "seeded customer")
   approve(machineId: string, orderId: string): Promise<ApproveResult>;           // as the bound Worker; effects include Portal payouts released by the approval
   getOrder(machineId: string, orderId: string): Promise<OrderResult | null>;
   balance(): Promise<Yocto>;
