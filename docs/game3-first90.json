@@ -1,0 +1,154 @@
+[
+  {
+    "seconds": 0,
+    "text": "WORLDWORKS\n\nBuild money machines that really run on NEAR. Solve each job with the fewest parts, then ship it as a real shop anyone can pay.\n\nStart job 1"
+  },
+  {
+    "seconds": 7.3,
+    "text": "JOB 1 · Ada, baker, owns the shop\nI pay my two helpers by hand every evening. I keep three times what each helper gets, and my helpers get the same. Make the shop do it.\n○\nAda keeps 3× what each helper gets\n○\nBola and Chi get the same\n○\nEvery coin is paid out\n\nA Splitter can have 2 or 3 belts. Its dials click in 5% steps.\n\nParts budget: 7 in the tray · fewest parts earns ★★★\n\nStart building\n---\n+\nstart here\nAda\nBola\nChi\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\n☰\n≡\n?\n\n◔\nSplitter\n◔\nSplitter\n✉\nPayout\n✉\nPayout\n✉\nPayout\n✉\nPayout\n▣\nVault\nTest 3 customers · simulated · 0 parts"
+  },
+  {
+    "seconds": 21.3,
+    "text": "+\nstart here\nAda\nBola\nChi\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\n☰\n≡\n?\n○\nAda = 3× a helper\n○\nBola = Chi\n○\nAll paid out\nDrag a part onto a glowing spot (or tap the spot, then a part).\n◔\nSplitter\n◔\nSplitter\n✉\nPayout\n✉\nPayout\n✉\nPayout\n✉\nPayout\n▣\nVault\nTest 3 customers · simulated · 0 parts"
+  },
+  {
+    "seconds": 24.3,
+    "text": "+\nstart here\nAda\nBola\nChi\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\n☰\n≡\n?\n○\nAda = 3× a helper\n○\nBola = Chi\n○\nAll paid out\nNow tap a glowing spot for the Splitter.\n◔\nSplitter\n◔\nSplitter\n✉\nPayout\n✉\nPayout\n✉\nPayout\n✉\nPayout\n▣\nVault\nTest 3 customers · simulated · 0 parts"
+  },
+  {
+    "seconds": 25.5,
+    "text": "◔\n50·50\n+\n+\nAda\nBola\nChi\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\n☰\n≡\n?\n○\nAda = 3× a helper\n○\nBola = Chi\n○\nAll paid out\nDrag a part onto a glowing spot (or tap the spot, then a part).\n◔\nSplitter\nsplits money into shares\n×\nempty belt\n−\n50%\n+\nempty belt\n−\n50%\n+\n\nTotal 100% ✓ · dials click in 5% steps\n\n+ belt\n\nAnything can go here, even another Splitter or a Gate.\n\nBack to tray\nDone\n◔\nSplitter\n✉\nPayout\n✉\nPayout\n✉\nPayout\n✉\nPayout\n▣\nVault\nTest 3 customers · simulated · 1 part"
+  },
+  {
+    "seconds": 29.5,
+    "text": "◔\n40·30·30\n+\n+\n+\nAda\nBola\nChi\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\n☰\n≡\n?\n○\nAda = 3× a helper\n○\nBola = Chi\n○\nAll paid out\nDrag a part onto a glowing spot (or tap the spot, then a part).\n◔\nSplitter\nsplits money into shares\n×\nempty belt\n−\n40%\n+\nempty belt\n−\n30%\n+\nempty belt\n−\n30%\n+\n\nTotal 100% ✓ · dials click in 5% steps\n\n− belt\n\nAnything can go here, even another Splitter or a Gate.\n\nBack to tray\nDone\n◔\nSplitter\n✉\nPayout\n✉\nPayout\n✉\nPayout\n✉\nPayout\n▣\nVault\nTest 3 customers · simulated · 1 part"
+  },
+  {
+    "seconds": 32.3,
+    "text": "◔\n40·30·30\n+\n+\n+\nAda\nBola\nChi\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\n☰\n≡\n?\n○\nAda = 3× a helper\n○\nBola = Chi\n○\nAll paid out\nDrag a part onto a glowing spot (or tap the spot, then a part).\n◔\nSplitter\n✉\nPayout\n✉\nPayout\n✉\nPayout\n✉\nPayout\n▣\nVault\nTest 3 customers · simulated · 1 part"
+  },
+  {
+    "seconds": 33.8,
+    "text": "◔\n40·30·30\n+\n+\n+\nAda\nBola\nChi\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\n☰\n≡\n?\n○\nAda = 3× a helper\n○\nBola = Chi\n○\nAll paid out\nNow tap a glowing spot for the Payout.\n◔\nSplitter\n✉\nPayout\n✉\nPayout\n✉\nPayout\n✉\nPayout\n▣\nVault\nTest 3 customers · simulated · 1 part"
+  },
+  {
+    "seconds": 34.8,
+    "text": "◔\n40·30·30\n✉\nwho?\n+\n+\nAda\nBola\nChi\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\n☰\n≡\n?\n○\nAda = 3× a helper\n○\nBola = Chi\n○\nAll paid out\nWho does this Payout pay? Tap it and choose.\n✉\nPayout\npays one person on NEAR\n×\n\nWho gets paid?\n\nAda\nBola\nChi\n\nAnything can go here, even another Splitter or a Gate.\n\nBack to tray\nDone\n◔\nSplitter\n✉\nPayout\n✉\nPayout\n✉\nPayout\n▣\nVault\nTest 3 customers · simulated · 2 parts"
+  },
+  {
+    "seconds": 36,
+    "text": "◔\n40·30·30\n✉\nAda\n+\n+\nAda\nBola\nChi\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\n☰\n≡\n?\n○\nAda = 3× a helper\n○\nBola = Chi\n○\nAll paid out\nDrag a part onto a glowing spot (or tap the spot, then a part).\n◔\nSplitter\n✉\nPayout\n✉\nPayout\n✉\nPayout\n▣\nVault\nTest 3 customers · simulated · 2 parts"
+  },
+  {
+    "seconds": 37.5,
+    "text": "◔\n40·30·30\n✉\nAda\n+\n+\nAda\nBola\nChi\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\n☰\n≡\n?\n○\nAda = 3× a helper\n○\nBola = Chi\n○\nAll paid out\nNow tap a glowing spot for the Payout.\n◔\nSplitter\n✉\nPayout\n✉\nPayout\n✉\nPayout\n▣\nVault\nTest 3 customers · simulated · 2 parts"
+  },
+  {
+    "seconds": 38.5,
+    "text": "◔\n40·30·30\n✉\nAda\n✉\nwho?\n+\nAda\nBola\nChi\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\n☰\n≡\n?\n○\nAda = 3× a helper\n○\nBola = Chi\n○\nAll paid out\nWho does this Payout pay? Tap it and choose.\n✉\nPayout\npays one person on NEAR\n×\n\nWho gets paid?\n\nAda\nBola\nChi\n\nAnything can go here, even another Splitter or a Gate.\n\nBack to tray\nDone\n◔\nSplitter\n✉\nPayout\n✉\nPayout\n▣\nVault\nTest 3 customers · simulated · 3 parts"
+  },
+  {
+    "seconds": 39.8,
+    "text": "◔\n40·30·30\n✉\nAda\n✉\nBola\n+\nAda\nBola\nChi\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\n☰\n≡\n?\n○\nAda = 3× a helper\n○\nBola = Chi\n○\nAll paid out\nDrag a part onto a glowing spot (or tap the spot, then a part).\n◔\nSplitter\n✉\nPayout\n✉\nPayout\n▣\nVault\nTest 3 customers · simulated · 3 parts"
+  },
+  {
+    "seconds": 41.3,
+    "text": "◔\n40·30·30\n✉\nAda\n✉\nBola\n+\nAda\nBola\nChi\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\n☰\n≡\n?\n○\nAda = 3× a helper\n○\nBola = Chi\n○\nAll paid out\nNow tap a glowing spot for the Payout.\n◔\nSplitter\n✉\nPayout\n✉\nPayout\n▣\nVault\nTest 3 customers · simulated · 3 parts"
+  },
+  {
+    "seconds": 42.3,
+    "text": "◔\n40·30·30\n✉\nAda\n✉\nBola\n✉\nwho?\nAda\nBola\nChi\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\n☰\n≡\n?\n○\nAda = 3× a helper\n○\nBola = Chi\n○\nAll paid out\nWho does this Payout pay? Tap it and choose.\n✉\nPayout\npays one person on NEAR\n×\n\nWho gets paid?\n\nAda\nBola\nChi\n\nAnything can go here, even another Splitter or a Gate.\n\nBack to tray\nDone\n◔\nSplitter\n✉\nPayout\n▣\nVault\nTest 3 customers · simulated · 4 parts"
+  },
+  {
+    "seconds": 43.8,
+    "text": "◔\n40·30·30\n✉\nAda\n✉\nBola\n✉\nChi\nAda\nBola\nChi\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\n☰\n≡\n?\n○\nAda = 3× a helper\n○\nBola = Chi\n○\nAll paid out\nEverything is placed. Press Test to try it with 3 customers.\n◔\nSplitter\n✉\nPayout\n▣\nVault\nTest 3 customers · simulated · 4 parts"
+  },
+  {
+    "seconds": 46.3,
+    "text": "◔\n40·30·30\n✉\nAda\n✉\nBola\n✉\nChi\nAda\nBola\nChi\nCustomer 1\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\nSIMULATED\n☰\n≡\n?\n○\nAda = 3× a helper\n○\nBola = Chi\n○\nAll paid out\nCustomer 1 of 3 pays 0.10 NEAR\nTest customer 1 of 3 · simulated"
+  },
+  {
+    "seconds": 47,
+    "text": "◔\n40·30·30\n✉\nAda\n✉\nBola\n✉\nChi\nAda\nBola\nChi\nCustomer 1\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\nSIMULATED\n☰\n≡\n?\n✗\nAda = 3× a helper\n○\nBola = Chi\n○\nAll paid out\nCustomer 1 of 3 pays 0.10 NEAR\nTest customer 1 of 3 · simulated"
+  },
+  {
+    "seconds": 47.3,
+    "text": "◔\n40·30·30\n✉\nAda\n✉\nBola\n✉\nChi\nAda\nBola\nChi\nCustomer 1\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\nSIMULATED\n☰\n≡\n?\n✗\nAda = 3× a helper\n✓\nBola = Chi\n✓\nAll paid out\nCustomer 1 of 3 pays 0.10 NEAR\nTest customer 1 of 3 · simulated"
+  },
+  {
+    "seconds": 47.8,
+    "text": "◔\n40·30·30\n✉\nAda\n✉\nBola\n✉\nChi\nAda\nBola\nChi\nCustomer 2\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\nSIMULATED\n☰\n≡\n?\n✗\nAda = 3× a helper\n✓\nBola = Chi\n✓\nAll paid out\nCustomer 2 of 3 pays 0.10 NEAR\nTest customer 2 of 3 · simulated"
+  },
+  {
+    "seconds": 49,
+    "text": "◔\n40·30·30\n✉\nAda\n✉\nBola\n✉\nChi\nAda\nBola\nChi\nCustomer 3\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\nSIMULATED\n☰\n≡\n?\n✗\nAda = 3× a helper\n✓\nBola = Chi\n✓\nAll paid out\nCustomer 3 of 3 pays 0.10 NEAR\nTest customer 3 of 3 · simulated"
+  },
+  {
+    "seconds": 50.5,
+    "text": "◔\n40·30·30\n✉\nAda\n✉\nBola\n✉\nChi\nAda\nBola\nChi\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\n☰\n≡\n?\n✗\nAda = 3× a helper\n✓\nBola = Chi\n✓\nAll paid out\n✗ Ada got 0.04, needs 3× Bola’s 0.03 = 0.09.\n◔\nSplitter\n✉\nPayout\n▣\nVault\nTest 3 customers · simulated · 4 parts"
+  },
+  {
+    "seconds": 57,
+    "text": "◔\n40·30·30\n✉\nAda\n✉\nBola\n✉\nChi\nAda\nBola\nChi\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\n☰\n≡\n?\n✗\nAda = 3× a helper\n✓\nBola = Chi\n✓\nAll paid out\n✗ Ada got 0.04, needs 3× Bola’s 0.03 = 0.09.\n◔\nSplitter\nsplits money into shares\n×\nAda\n−\n40%\n+\nBola\n−\n30%\n+\nChi\n−\n30%\n+\n\nTotal 100% ✓ · dials click in 5% steps\n\n− belt\n\nAnything can go here, even another Splitter or a Gate.\n\nBack to tray\nDone\n◔\nSplitter\n✉\nPayout\n▣\nVault\nTest 3 customers · simulated · 4 parts"
+  },
+  {
+    "seconds": 58.5,
+    "text": "◔\n45·30·30\n✉\nAda\n✉\nBola\n✉\nChi\nAda\nBola\nChi\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\n☰\n≡\n?\n○\nAda = 3× a helper\n○\nBola = Chi\n○\nAll paid out\nEverything is placed. Press Test to try it with 3 customers.\n◔\nSplitter\nsplits money into shares\n×\nAda\n−\n45%\n+\nBola\n−\n30%\n+\nChi\n−\n30%\n+\n\nTotal 105% (must be 100%) · dials click in 5% steps\n\n− belt\n\nAnything can go here, even another Splitter or a Gate.\n\nBack to tray\nDone\n◔\nSplitter\n✉\nPayout\n▣\nVault\nTest 3 customers · simulated · 4 parts"
+  },
+  {
+    "seconds": 59,
+    "text": "◔\n50·30·30\n✉\nAda\n✉\nBola\n✉\nChi\nAda\nBola\nChi\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\n☰\n≡\n?\n○\nAda = 3× a helper\n○\nBola = Chi\n○\nAll paid out\nEverything is placed. Press Test to try it with 3 customers.\n◔\nSplitter\nsplits money into shares\n×\nAda\n−\n50%\n+\nBola\n−\n30%\n+\nChi\n−\n30%\n+\n\nTotal 110% (must be 100%) · dials click in 5% steps\n\n− belt\n\nAnything can go here, even another Splitter or a Gate.\n\nBack to tray\nDone\n◔\nSplitter\n✉\nPayout\n▣\nVault\nTest 3 customers · simulated · 4 parts"
+  },
+  {
+    "seconds": 59.8,
+    "text": "◔\n55·30·30\n✉\nAda\n✉\nBola\n✉\nChi\nAda\nBola\nChi\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\n☰\n≡\n?\n○\nAda = 3× a helper\n○\nBola = Chi\n○\nAll paid out\nEverything is placed. Press Test to try it with 3 customers.\n◔\nSplitter\nsplits money into shares\n×\nAda\n−\n55%\n+\nBola\n−\n30%\n+\nChi\n−\n30%\n+\n\nTotal 115% (must be 100%) · dials click in 5% steps\n\n− belt\n\nAnything can go here, even another Splitter or a Gate.\n\nBack to tray\nDone\n◔\nSplitter\n✉\nPayout\n▣\nVault\nTest 3 customers · simulated · 4 parts"
+  },
+  {
+    "seconds": 60.3,
+    "text": "◔\n60·30·30\n✉\nAda\n✉\nBola\n✉\nChi\nAda\nBola\nChi\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\n☰\n≡\n?\n○\nAda = 3× a helper\n○\nBola = Chi\n○\nAll paid out\nEverything is placed. Press Test to try it with 3 customers.\n◔\nSplitter\nsplits money into shares\n×\nAda\n−\n60%\n+\nBola\n−\n30%\n+\nChi\n−\n30%\n+\n\nTotal 120% (must be 100%) · dials click in 5% steps\n\n− belt\n\nAnything can go here, even another Splitter or a Gate.\n\nBack to tray\nDone\n◔\nSplitter\n✉\nPayout\n▣\nVault\nTest 3 customers · simulated · 4 parts"
+  },
+  {
+    "seconds": 60.8,
+    "text": "◔\n60·25·30\n✉\nAda\n✉\nBola\n✉\nChi\nAda\nBola\nChi\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\n☰\n≡\n?\n○\nAda = 3× a helper\n○\nBola = Chi\n○\nAll paid out\nEverything is placed. Press Test to try it with 3 customers.\n◔\nSplitter\nsplits money into shares\n×\nAda\n−\n60%\n+\nBola\n−\n25%\n+\nChi\n−\n30%\n+\n\nTotal 115% (must be 100%) · dials click in 5% steps\n\n− belt\n\nAnything can go here, even another Splitter or a Gate.\n\nBack to tray\nDone\n◔\nSplitter\n✉\nPayout\n▣\nVault\nTest 3 customers · simulated · 4 parts"
+  },
+  {
+    "seconds": 61.3,
+    "text": "◔\n60·20·30\n✉\nAda\n✉\nBola\n✉\nChi\nAda\nBola\nChi\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\n☰\n≡\n?\n○\nAda = 3× a helper\n○\nBola = Chi\n○\nAll paid out\nEverything is placed. Press Test to try it with 3 customers.\n◔\nSplitter\nsplits money into shares\n×\nAda\n−\n60%\n+\nBola\n−\n20%\n+\nChi\n−\n30%\n+\n\nTotal 110% (must be 100%) · dials click in 5% steps\n\n− belt\n\nAnything can go here, even another Splitter or a Gate.\n\nBack to tray\nDone\n◔\nSplitter\n✉\nPayout\n▣\nVault\nTest 3 customers · simulated · 4 parts"
+  },
+  {
+    "seconds": 61.8,
+    "text": "◔\n60·20·25\n✉\nAda\n✉\nBola\n✉\nChi\nAda\nBola\nChi\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\n☰\n≡\n?\n○\nAda = 3× a helper\n○\nBola = Chi\n○\nAll paid out\nEverything is placed. Press Test to try it with 3 customers.\n◔\nSplitter\nsplits money into shares\n×\nAda\n−\n60%\n+\nBola\n−\n20%\n+\nChi\n−\n25%\n+\n\nTotal 105% (must be 100%) · dials click in 5% steps\n\n− belt\n\nAnything can go here, even another Splitter or a Gate.\n\nBack to tray\nDone\n◔\nSplitter\n✉\nPayout\n▣\nVault\nTest 3 customers · simulated · 4 parts"
+  },
+  {
+    "seconds": 62.3,
+    "text": "◔\n60·20·20\n✉\nAda\n✉\nBola\n✉\nChi\nAda\nBola\nChi\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\n☰\n≡\n?\n○\nAda = 3× a helper\n○\nBola = Chi\n○\nAll paid out\nEverything is placed. Press Test to try it with 3 customers.\n◔\nSplitter\nsplits money into shares\n×\nAda\n−\n60%\n+\nBola\n−\n20%\n+\nChi\n−\n20%\n+\n\nTotal 100% ✓ · dials click in 5% steps\n\n− belt\n\nAnything can go here, even another Splitter or a Gate.\n\nBack to tray\nDone\n◔\nSplitter\n✉\nPayout\n▣\nVault\nTest 3 customers · simulated · 4 parts"
+  },
+  {
+    "seconds": 64.3,
+    "text": "◔\n60·20·20\n✉\nAda\n✉\nBola\n✉\nChi\nAda\nBola\nChi\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\n☰\n≡\n?\n○\nAda = 3× a helper\n○\nBola = Chi\n○\nAll paid out\nEverything is placed. Press Test to try it with 3 customers.\n◔\nSplitter\n✉\nPayout\n▣\nVault\nTest 3 customers · simulated · 4 parts"
+  },
+  {
+    "seconds": 66,
+    "text": "◔\n60·20·20\n✉\nAda\n✉\nBola\n✉\nChi\nAda\nBola\nChi\nCustomer 1\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\nSIMULATED\n☰\n≡\n?\n○\nAda = 3× a helper\n○\nBola = Chi\n○\nAll paid out\nCustomer 1 of 3 pays 0.10 NEAR\nTest customer 1 of 3 · simulated"
+  },
+  {
+    "seconds": 66.8,
+    "text": "◔\n60·20·20\n✉\nAda\n✉\nBola\n✉\nChi\nAda\nBola\nChi\nCustomer 1\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\nSIMULATED\n☰\n≡\n?\n✓\nAda = 3× a helper\n○\nBola = Chi\n○\nAll paid out\nCustomer 1 of 3 pays 0.10 NEAR\nTest customer 1 of 3 · simulated"
+  },
+  {
+    "seconds": 67,
+    "text": "◔\n60·20·20\n✉\nAda\n✉\nBola\n✉\nChi\nAda\nBola\nChi\nCustomer 1\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\nSIMULATED\n☰\n≡\n?\n✓\nAda = 3× a helper\n✓\nBola = Chi\n✓\nAll paid out\nCustomer 1 of 3 pays 0.10 NEAR\nTest customer 1 of 3 · simulated"
+  },
+  {
+    "seconds": 67.3,
+    "text": "◔\n60·20·20\n✉\nAda\n✉\nBola\n✉\nChi\nAda\nBola\nChi\nCustomer 2\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\nSIMULATED\n☰\n≡\n?\n✓\nAda = 3× a helper\n✓\nBola = Chi\n✓\nAll paid out\nCustomer 2 of 3 pays 0.10 NEAR\nTest customer 2 of 3 · simulated"
+  },
+  {
+    "seconds": 68.8,
+    "text": "◔\n60·20·20\n✉\nAda\n✉\nBola\n✉\nChi\nAda\nBola\nChi\nCustomer 3\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n▾\nMOCK DATA\nSIMULATED\n☰\n≡\n?\n✓\nAda = 3× a helper\n✓\nBola = Chi\n✓\nAll paid out\nCustomer 3 of 3 pays 0.10 NEAR\nTest customer 3 of 3 · simulated"
+  },
+  {
+    "seconds": 70.3,
+    "text": "◔\n60·20·20\n✉\nAda\n✉\nBola\n✉\nChi\nAda\nBola\nChi\nAda's Bakery\n0.10 NEAR a loaf\n1. Ada's bakery\n★★★\n▾\nMOCK DATA\n☰\n≡\n?\n✓\nAda = 3× a helper\n✓\nBola = Chi\n✓\nAll paid out\n★★★ It works! 4 parts: the best possible.\n◔\nSplitter\n✉\nPayout\n▣\nVault\nShip it for real MOCK: no chain, fake hashes\nSkip to the next job"
+  }
+]

@@ -1,62 +1,94 @@
-// GAME-2 job scene: a quiet island. Nothing moves unless the game asks: one customer, one sale, one coin batch.
-// Same look as GAME-1 (water, islands, belts, rounded parts). Interaction is DOM: the scene only positions
-// elements that carry data-anchor="<id>" inside the overlay, so the 2D fallback keeps every control.
+// GAME-3 job scene: the island is the star. The machine is a tree of sockets laid out from the build itself
+// (chained Splitters, Gate exits, a Portal anywhere). Nothing moves unless the game asks: one customer, one sale,
+// coins travelling flow by flow along the belts. Interaction is DOM: the scene only positions elements that carry
+// data-anchor="<id>" inside the overlay, so the 2D fallback keeps every control.
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
-import { PEOPLE, type Build, type Job, type PartKind, type PersonId } from './jobs';
+import { PEOPLE, activeSockets, type Build, type Job, type PartKind, type PersonId } from './jobs';
 
 export type CoinKind = 'sim' | 'real' | 'mock';
 export type LaneDest =
-  | { type: 'person'; person: PersonId }   // Payout on NEAR
+  | { type: 'person'; person: PersonId }   // Payout on NEAR (customer = refund)
   | { type: 'vault' }
   | { type: 'portal' }
   | { type: 'gate' }                        // held at the Gate until release()
   | { type: 'nobody' };
-export interface SalePlan { kind: CoinKind; lanes: { coins: number; dest: LaneDest; label?: string }[]; customer?: string }
+/** One stream of coins: socket path from the root ('r') to where it stops. */
+export interface Flow { path: string[]; coins: number; dest: LaneDest; label?: string; tag?: string }
+export interface SalePlan { kind: CoinKind; flows: Flow[] }
 export type PortalPhase = 'idle' | 'swirl' | 'beam' | 'pop' | 'failed';
+export interface World { people: PersonId[]; abroad?: PersonId }
 export interface JobScene {
-  setJob(job: Job): void;
+  setJob(job: Job, world: World): void;
   setBuild(build: Build): void;
   setGlow(sockets: string[], next: string | null): void;
-  playSale(plan: SalePlan): Promise<void>;
-  release(to: 'pass' | 'refund', dest: LaneDest): Promise<void>;
+  playSale(plan: SalePlan, onLand?: (f: Flow) => void): Promise<void>;
+  release(gate: string, flows: Flow[], kind: CoinKind, onLand?: (f: Flow) => void): Promise<void>;
   customerLeave(): void;
   setPortal(phase: PortalPhase, kind: CoinKind): void;
+  focus(mode: 'all' | 'portal'): void;
   floater(anchor: string, html: string, cls?: string): void;
   hop(person: PersonId): void;
   relayout(): void;
   is2d: boolean;
   dispose(): void;
 }
-export interface SceneOpts { margins?: (w: number, h: number, portrait: boolean) => { t: number; b: number; l: number; r: number } }
+export interface SceneOpts { margins?: (w: number, h: number, portrait: boolean, mode: 'all' | 'portal') => { t: number; b: number; l: number; r: number } }
 
 const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
 type V3 = THREE.Vector3;
 const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const FLOOR = 0.12, BELT_Y = FLOOR + 0.13;
+const DEPTH_X = [-3.4, 0.5, 4.0];
+const ISLE = { x: 14.4, z: 0, hx: 2.8, hz: 3.3 };
 
 // ------------------------------------------------------------------ layout (shared by 3D and 2D)
 export interface Layout {
-  stand: V3; customer: V3; hub: V3; lanes: { z: number; mid?: V3; key?: V3; end: V3 }[];
-  people: Partial<Record<PersonId, V3>>; ethIsle: boolean; chiHome?: V3; exit: V3; fit: V3[];
+  stand: V3; customer: V3;
+  nodes: Record<string, V3>; keys: Record<string, V3>;
+  edges: { from: string; to: string }[];
+  people: Partial<Record<PersonId, V3>>; abroad?: PersonId; exit: V3; isle: boolean; homeSign?: V3;
+  fit: V3[];
 }
-export function layoutFor(job: Job): Layout {
-  const zs = job.lanes === 3 ? [3, 0, -3] : [2.2, -2.2];
-  const lanes = zs.map((z, i) => {
-    const hasMid = job.sockets.some(s => s.role === 'mid' && s.lane === i);
-    return { z, end: V(4.2, 0, z), mid: hasMid ? V(0.9, 0, z) : undefined, key: hasMid ? V(0.9, 0, z - 1.55) : undefined };
-  });
+export function layoutFor(job: Job | null, build: Build, world: World): Layout {
+  const nodes: Record<string, V3> = {}, keys: Record<string, V3> = {};
+  const edges: { from: string; to: string }[] = [];
+  const socks = job ? activeSockets(job, build) : [{ id: 'r', depth: 0, parent: null, role: 'node' as const }];
+  const kids = new Map<string, string[]>();
+  for (const s of socks) if (s.role === 'node' && s.parent) { kids.set(s.parent, [...(kids.get(s.parent) ?? []), s.id]); edges.push({ from: s.parent, to: s.id }); }
+  const leaves: string[] = [];
+  const dfs = (id: string) => { const k = kids.get(id); if (!k?.length) leaves.push(id); else k.forEach(dfs); };
+  dfs('r');
+  const N = leaves.length, sp = N > 1 ? Math.min(2.7, 8.8 / (N - 1)) : 0;
+  const zOf = new Map<string, number>(); leaves.forEach((id, i) => zOf.set(id, ((N - 1) / 2) * sp - i * sp));
+  const place = (id: string, depth: number): number => {
+    const k = kids.get(id); const z = k?.length ? k.map(c => place(c, depth + 1)).reduce((a, b) => a + b, 0) / k.length : zOf.get(id)!;
+    nodes[id] = V(DEPTH_X[Math.min(depth, 2)], 0, z); return z;
+  };
+  place('r', 0);
+  for (const s of socks) if (s.role === 'key' && s.parent && nodes[s.parent]) { const g0 = nodes[s.parent]; keys[s.id] = V(g0.x - 1.25, 0, g0.z - 1.15); }
+  const row = world.people.filter(p => p !== world.abroad);
   const people: Partial<Record<PersonId, V3>> = {};
-  const ethIsle = job.n === 2;
-  job.people.forEach((p, i) => { people[p] = V(6.6, 0, zs[Math.min(i, zs.length - 1)]); });
-  let chiHome: V3 | undefined;
-  if (ethIsle) { chiHome = people.chi; people.chi = V(15.6, 0, -7.4); }
-  const customer = V(-9.9, 0, 1.1);
-  people.customer = customer;
-  const fit = [V(-11.2, 0, -1.8), V(-11.2, 0, 3.4), V(-8, 2.6, 0), V(7.8, 0, 4.4), V(7.8, 1.6, -4.4), V(-3, 0, 4.4), V(-3, 0, -4.4)];
-  if (ethIsle) fit.push(V(18.6, 0, -10), V(18.8, 0, -4.4), V(15.6, 2, -7.4));
-  return { stand: V(-7.6, 0, 0), customer, hub: V(-2.6, 0, 0), lanes, people, ethIsle, chiHome, exit: V(13.3, 0, -6.2), fit };
+  const ps = row.length > 1 ? Math.min(2.4, 7 / (row.length - 1)) : 0;
+  row.forEach((p, i) => { people[p] = V(7.7, 0, ((row.length - 1) / 2) * ps - i * ps); });
+  const isle = !!world.abroad;
+  if (world.abroad) people[world.abroad] = V(ISLE.x + 0.9, 0, ISLE.z + 1.1);
+  const customer = V(-9.9, 0, 1.1); people.customer = customer;
+  const fit = [V(-11.4, 0, -2.2), V(-11.4, 0, 3.6), V(-8, 2.6, 0), V(9, 0, 4.4), V(9, 1.6, -4.4), V(-3, 0, 4.6), V(-3, 0, -4.6)];
+  if (isle) fit.push(V(ISLE.x + ISLE.hx + 0.4, 0, ISLE.z - ISLE.hz), V(ISLE.x + ISLE.hx + 0.4, 0, ISLE.z + ISLE.hz), V(ISLE.x, 2.2, 0));
+  const homeSign = world.abroad && job?.abroad ? V(7.7, 0, -((row.length) / 2) * ps - 0.6) : undefined;
+  return { stand: V(-7.6, 0, 0), customer, nodes, keys, edges, people, abroad: world.abroad, exit: V(ISLE.x - 1.1, 0, ISLE.z - 1.0), isle, homeSign, fit };
+}
+/** Belt polyline (x,z) from a parent socket to a child socket. */
+function edgePts(a: V3, b: V3): [number, number][] {
+  if (Math.abs(a.z - b.z) < 0.01) return [[a.x + 0.8, a.z], [b.x - 0.75, b.z]];
+  const xm = a.x + 1.15;
+  return [[a.x + 0.8, a.z], [xm, a.z], [xm, b.z], [b.x - 0.75, b.z]];
+}
+function standPts(L: Layout): [number, number][] {
+  const r = L.nodes.r; const xm = L.stand.x + 1.6;
+  return Math.abs(r.z) < 0.01 ? [[L.stand.x + 0.85, 0], [r.x - 0.8, 0]] : [[L.stand.x + 0.85, 0], [xm, 0], [xm, r.z], [r.x - 0.8, r.z]];
 }
 
 // ------------------------------------------------------------------ public factory
@@ -75,8 +107,7 @@ const wait = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 
 // ------------------------------------------------------------------ anchors (DOM positioning)
 function placeAnchors(overlay: HTMLElement, project: (id: string) => { x: number; y: number; visible: boolean } | null) {
-  const els = overlay.querySelectorAll<HTMLElement>('[data-anchor]');
-  els.forEach(el => {
+  overlay.querySelectorAll<HTMLElement>('[data-anchor]').forEach(el => {
     const p = project(el.dataset.anchor!);
     if (!p || !p.visible) { el.style.visibility = 'hidden'; return; }
     el.style.visibility = '';
@@ -84,19 +115,16 @@ function placeAnchors(overlay: HTMLElement, project: (id: string) => { x: number
   });
 }
 function anchorPoint(L: Layout, id: string): V3 | null {
-  const [kind, key] = id.split(':');
+  const i = id.indexOf(':'); const kind = i < 0 ? id : id.slice(0, i), key = i < 0 ? '' : id.slice(i + 1);
   if (kind === 'socket') {
-    if (key === 'hub') return L.hub.clone().setY(1.2);
-    const lane = Number(key.slice(-1)); const ln = L.lanes[lane]; if (!ln) return null;
-    if (key.startsWith('end')) return ln.end.clone().setY(1.25);
-    if (key.startsWith('mid')) return ln.mid ? ln.mid.clone().setY(1.3) : null;
-    if (key.startsWith('key')) return ln.key ? ln.key.clone().setY(0.9) : null;
+    if (L.nodes[key]) return L.nodes[key].clone().setY(key === 'r' ? 1.3 : 1.15);
+    if (L.keys[key]) return L.keys[key].clone().setY(0.9);
+    return null;
   }
-  if (kind === 'person') { const p = L.people[key as PersonId]; return p ? p.clone().setY(1.55) : null; }
-  if (kind === 'stand') return L.stand.clone().setY(2.9);
-  if (kind === 'home') return L.chiHome ? L.chiHome.clone().setY(1.2) : null;
-  if (kind === 'portal') { const i = L.lanes.length - 1; return L.ethIsle ? L.lanes[i].end.clone().setY(1.0) : null; }
-  if (kind === 'isle') return L.ethIsle ? V(16, 0, -2.8) : null;
+  if (kind === 'person') { const p = L.people[key as PersonId]; return p ? p.clone().setY(1.6) : null; }
+  if (kind === 'stand') return L.stand.clone().setY(2.4);
+  if (kind === 'home') return L.homeSign ? L.homeSign.clone().setY(1.2) : null;
+  if (kind === 'isle') return L.isle ? V(ISLE.x, 0, ISLE.z - 2.6) : null;
   return null;
 }
 
@@ -118,7 +146,7 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
   const camera = new THREE.OrthographicCamera(-10, 10, 10, -10, 0.1, 400);
   scene.add(new THREE.HemisphereLight('#fff7e8', '#4f9f98', 1.15));
   const sun = new THREE.DirectionalLight('#fff0d6', 3.3);
-  Object.assign(sun.shadow.camera, { left: -24, right: 24, top: 24, bottom: -24, near: 1, far: 120 });
+  Object.assign(sun.shadow.camera, { left: -26, right: 26, top: 26, bottom: -26, near: 1, far: 120 });
   sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03;
   sun.castShadow = !low; sun.shadow.mapSize.set(touch || low ? 1024 : 2048, touch || low ? 1024 : 2048);
   scene.add(sun, sun.target); sun.target.position.set(3, 0, -1); sun.position.set(-11, 26, -6);
@@ -154,7 +182,7 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
 
   // ---------- water + islands (static) ----------
   const WATER_Y = -0.9;
-  const isles = [new THREE.Vector4(-2, 0, 11.6, 7.4), new THREE.Vector4(16, -7.2, 4.4, 4.0)];
+  const isles = [new THREE.Vector4(-2, 0, 11.6, 7.4), new THREE.Vector4(ISLE.x, ISLE.z, ISLE.hx + 0.75, ISLE.hz + 0.75)];
   const waterU = { t: { value: 0 }, isl: { value: isles } };
   const water = new THREE.Mesh(track(new THREE.PlaneGeometry(400, 400)), track(new THREE.ShaderMaterial({
     uniforms: waterU,
@@ -174,41 +202,40 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
       }`,
   })));
   water.rotation.x = -Math.PI / 2; water.position.y = WATER_Y; scene.add(water);
-  function island(cx: number, cz: number, hx: number, hz: number, top: string, cliff: string, low: string, parent: THREE.Object3D) {
+  function island(cx: number, cz: number, hx: number, hz: number, top: string, cliff: string, lowc: string, parent: THREE.Object3D) {
     const w = hx * 2, d = hz * 2;
     rbox(w + 1.5, 0.32, d + 1.5, '#f6e3b4', cx, WATER_Y - 0.22, cz, parent, 0.7);
-    rbox(w, 0.9, d, low, cx, WATER_Y - 0.1, cz, parent, 0.6);
+    rbox(w, 0.9, d, lowc, cx, WATER_Y - 0.1, cz, parent, 0.6);
     rbox(w - 0.1, 0.5, d - 0.1, cliff, cx, -0.57, cz, parent, 0.5);
     rbox(w, 0.4, d, top, cx, -0.38, cz, parent, 0.4);
   }
   island(-2, 0, 11.6 - 0.75, 7.4 - 0.75, '#8cc862', '#b8977a', '#987a60', scene);
   const ethGroup = group();
-  island(16, -7.2, 3.65, 3.25, '#c3cbf2', '#7c86c4', '#5f69a8', ethGroup);
-  rbox(5.6, FLOOR + 0.02, 5.0, '#eef0fc', 15.7, -0.02, -6.9, ethGroup, 0.9).castShadow = false;
-  for (const [x, z, s] of [[18.8, -4.6, 1], [12.9, -9.6, 0.8], [19.2, -9.9, 1.2]] as const) {
+  island(ISLE.x, ISLE.z, ISLE.hx, ISLE.hz, '#c3cbf2', '#7c86c4', '#5f69a8', ethGroup);
+  rbox(ISLE.hx * 2 - 0.6, FLOOR + 0.02, ISLE.hz * 2 - 0.8, '#eef0fc', ISLE.x, -0.02, ISLE.z, ethGroup, 0.9).castShadow = false;
+  for (const [x, z, s] of [[ISLE.x + 1.9, ISLE.z - 2.3, 1], [ISLE.x - 1.6, ISLE.z + 2.4, 0.8], [ISLE.x + 2.0, ISLE.z + 2.5, 1.2]] as const) {
     const c = mesh(new THREE.OctahedronGeometry(0.4 * s, 0), mat('#9aa8ff', { flatShading: true, roughness: 0.25, metalness: 0.2, emissive: '#3b4bd1', emissiveIntensity: 0.15 }), x, 0.38 * s, z, ethGroup);
     c.scale.y = 1.6;
   }
   // work floor
   {
-    const g = canvasTex(256, 256, c => {
+    const gt = canvasTex(256, 256, c => {
       c.fillStyle = '#f4ecdc'; c.fillRect(0, 0, 256, 256);
       c.strokeStyle = 'rgba(160,130,90,0.22)'; c.lineWidth = 4; c.strokeRect(0, 0, 256, 256);
     });
-    g.t.wrapS = g.t.wrapT = THREE.RepeatWrapping; g.t.repeat.set(17, 10);
-    rbox(17.2, FLOOR + 0.02, 10.4, mat('#ffffff', { map: g.t }), -1.6, -0.02, 0, scene, 0.18).castShadow = false;
-    rbox(17.5, 0.1, 10.7, '#e1d3b8', -1.6, -0.04, 0, scene, 0.2).castShadow = false;
+    gt.t.wrapS = gt.t.wrapT = THREE.RepeatWrapping; gt.t.repeat.set(17, 10.5);
+    rbox(17.2, FLOOR + 0.02, 10.8, mat('#ffffff', { map: gt.t }), -1.6, -0.02, 0, scene, 0.18).castShadow = false;
+    rbox(17.5, 0.1, 11.1, '#e1d3b8', -1.6, -0.04, 0, scene, 0.2).castShadow = false;
   }
-  // decor
   let seed = 7;
   const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
   function tree(x: number, z: number, kind: number, s = 1) {
-    const g = group(x, 0, z); g.scale.setScalar(s);
-    rbox(0.14, 0.4, 0.14, '#8a5a3c', 0, 0, 0, g, 0.04);
-    if (kind === 0) mesh(new THREE.ConeGeometry(0.42, 1.0, 7), mat('#3fae6a', { flatShading: true }), 0, 0.85, 0, g).rotation.y = rnd();
-    else mesh(new THREE.IcosahedronGeometry(0.48, 1), mat(kind === 2 ? '#5bbf5f' : '#6fcf6a', { flatShading: true }), 0, 0.72, 0, g);
+    const gg = group(x, 0, z); gg.scale.setScalar(s);
+    rbox(0.14, 0.4, 0.14, '#8a5a3c', 0, 0, 0, gg, 0.04);
+    if (kind === 0) mesh(new THREE.ConeGeometry(0.42, 1.0, 7), mat('#3fae6a', { flatShading: true }), 0, 0.85, 0, gg).rotation.y = rnd();
+    else mesh(new THREE.IcosahedronGeometry(0.48, 1), mat(kind === 2 ? '#5bbf5f' : '#6fcf6a', { flatShading: true }), 0, 0.72, 0, gg);
   }
-  for (const [x, z, k, s] of [[-12.4, 6, 0, 1.1], [-11.6, 6.4, 1, 1], [-4, 6.5, 2, 0.9], [8.6, 6.2, 0, 1.1], [9, 4.8, 1, 0.9], [-6, -6.6, 0, 1], [1, -6.5, 0, 1.2], [9.2, -1, 0, 1], [-12.4, -5.4, 2, 0.9]] as const) tree(x, z, k, s);
+  for (const [x, z, k, s] of [[-12.4, 6.2, 0, 1.1], [-11.6, 6.6, 1, 1], [-4, 6.7, 2, 0.9], [8.9, 6.3, 0, 1.1], [9.2, 5.1, 1, 0.9], [-6, -6.8, 0, 1], [1, -6.7, 0, 1.2], [9.3, -5.6, 0, 1], [-12.4, -5.6, 2, 0.9]] as const) tree(x, z, k, s);
 
   // ---------- characters ----------
   function character(id: PersonId) {
@@ -220,6 +247,7 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
     for (const s of [-1, 1]) mesh(new THREE.SphereGeometry(0.034, 6, 6), mat('#1d2433'), s * 0.08, 0.9, 0.2, body).castShadow = false;
     if (id === 'ada') { rbox(0.36, 0.14, 0.36, '#ffffff', 0, 1.06, 0, body, 0.06); mesh(new THREE.SphereGeometry(0.16, 12, 8), mat('#ffffff'), 0, 1.24, 0, body); }
     if (id === 'dayo') { const h = mesh(new THREE.SphereGeometry(0.26, 16, 10, 0, Math.PI * 2, 0, Math.PI * 0.5), mat('#ff8a3d'), 0, 0.93, 0, body); h.scale.y = 0.85; rbox(0.42, 0.34, 0.3, '#ffb020', 0, 0.3, -0.34, body, 0.05); }
+    if (id === 'you') mesh(new THREE.ConeGeometry(0.2, 0.3, 5), mat('#ffd23f', { metalness: 0.4, roughness: 0.3 }), 0, 1.22, 0, body);
     root.userData.body = body;
     scene.add(root);
     return root;
@@ -230,11 +258,11 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
   // ---------- coins ----------
   const coinGeo = track(new THREE.CylinderGeometry(0.17, 0.17, 0.06, 22));
   const coinMat = track(new THREE.MeshStandardMaterial({ color: '#ffffff', metalness: 0.55, roughness: 0.3, emissive: '#3a2a00', emissiveIntensity: 0.25 }));
-  const MAX = 120;
+  const MAX = 140;
   const coinMesh = new THREE.InstancedMesh(coinGeo, coinMat, MAX); coinMesh.castShadow = true; coinMesh.frustumCulled = false; coinMesh.count = 0; scene.add(coinMesh);
   const KIND_COLOR: Record<CoinKind, THREE.Color> = { sim: new THREE.Color('#ffc53a'), real: new THREE.Color('#2ee6a8'), mock: new THREE.Color('#ff8a74') };
   type Leg = { kind: 'line'; pts: V3[]; speed: number } | { kind: 'arc'; to: V3; h: number; dur: number } | { kind: 'hold'; at: V3 } | { kind: 'wait'; dur: number };
-  type Coin = { pos: V3; legs: Leg[]; li: number; t: number; from: V3; delay: number; color: THREE.Color; spin: number; done: () => void; hold?: boolean; gone?: boolean; gated?: boolean };
+  type Coin = { pos: V3; legs: Leg[]; li: number; t: number; from: V3; delay: number; color: THREE.Color; spin: number; done: () => void; hold?: boolean; gone?: boolean; gate?: string; scale?: number };
   const coins: Coin[] = [];
   const tmpM = new THREE.Matrix4(), tmpQ = new THREE.Quaternion(), tmpE = new THREE.Euler(), tmpS = V(1, 1, 1), tmpV = V();
   function stepCoin(c: Coin, dt: number) {
@@ -262,21 +290,23 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
       if (n >= MAX) break;
       if (c.delay > 0 && c.li === 0) continue;
       tmpE.set(Math.PI / 2 * 0.15 + Math.sin(c.spin) * 0.3, c.spin, 0); tmpQ.setFromEuler(tmpE);
-      tmpM.compose(c.pos, tmpQ, tmpS); coinMesh.setMatrixAt(n, tmpM); coinMesh.setColorAt(n, c.color); n++;
+      tmpM.compose(c.pos, tmpQ, tmpS.setScalar(c.scale ?? 1)); coinMesh.setMatrixAt(n, tmpM); coinMesh.setColorAt(n, c.color); n++;
     }
+    tmpS.set(1, 1, 1);
     coinMesh.count = n; coinMesh.instanceMatrix.needsUpdate = true; if (coinMesh.instanceColor) coinMesh.instanceColor.needsUpdate = true;
   }
-  function spawn(from: V3, legs: Leg[], kind: CoinKind, delay: number, gated = false): Promise<void> {
-    return new Promise(res => { coins.push({ pos: from.clone(), from: from.clone(), legs, li: 0, t: 0, delay, color: KIND_COLOR[kind], spin: Math.random() * 6, done: res, gated }); });
+  function spawn(from: V3, legs: Leg[], kind: CoinKind, delay: number, gate?: string): Promise<void> {
+    if (coins.length >= MAX) return Promise.resolve();
+    return new Promise(res => { coins.push({ pos: from.clone(), from: from.clone(), legs, li: 0, t: 0, delay, color: KIND_COLOR[kind], spin: Math.random() * 6, done: res, gate }); });
   }
 
   // ---------- particles / floaters ----------
   const pGeo = track(new THREE.BoxGeometry(0.08, 0.08, 0.08));
-  const pMesh = new THREE.InstancedMesh(pGeo, track(new THREE.MeshBasicMaterial({ color: '#ffffff' })), 200); pMesh.frustumCulled = false; pMesh.count = 0; scene.add(pMesh);
-  type P = { p: V3; v: V3; life: number; c: THREE.Color };
-  const parts: P[] = [];
+  const pMesh = new THREE.InstancedMesh(pGeo, track(new THREE.MeshBasicMaterial({ color: '#ffffff' })), 220); pMesh.frustumCulled = false; pMesh.count = 0; scene.add(pMesh);
+  type Pt = { p: V3; v: V3; life: number; c: THREE.Color };
+  const parts: Pt[] = [];
   function burst(at: V3, n: number, color: string) {
-    for (let i = 0; i < n && parts.length < 200; i++) { const a = Math.random() * 6.28, s = 1 + Math.random() * 2; parts.push({ p: at.clone(), v: V(Math.cos(a) * s, 2 + Math.random() * 2, Math.sin(a) * s), life: 0.6 + Math.random() * 0.4, c: new THREE.Color(color) }); }
+    for (let i = 0; i < n && parts.length < 220; i++) { const a = Math.random() * 6.28, s = 1 + Math.random() * 2; parts.push({ p: at.clone(), v: V(Math.cos(a) * s, 2 + Math.random() * 2, Math.sin(a) * s), life: 0.6 + Math.random() * 0.4, c: new THREE.Color(color) }); }
   }
   type Fl = { el: HTMLElement; at: V3; t: number };
   const floaters: Fl[] = [];
@@ -284,15 +314,16 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
 
   // ---------- job-dependent world ----------
   let L: Layout | null = null;
-  let jobRoot = group();
-  let job: Job | null = null;
-  const sockets = new Map<string, { g: THREE.Group; tile: THREE.Mesh; fill: THREE.Mesh; part: THREE.Object3D | null; kind: PartKind | null; sig: string }>();
-  const belts: { tex: THREE.Texture; mat: THREE.MeshBasicMaterial }[] = [];
+  let job: Job | null = null; let world: World = { people: [] };
+  let staticRoot = group(), machineRoot = group();
+  const tiles = new Map<string, { g: THREE.Group; tile: THREE.Mesh; fill: THREE.Mesh }>();
+  const partMeshes = new Map<string, { o: THREE.Object3D; kind: PartKind; socket: string; want: V3; dial?: { redraw: () => void; shares: number[] } }>();
+  const belts: { tex: THREE.Texture }[] = [];
   let glow = new Set<string>(), nextSock: string | null = null;
-  let splitDial: { redraw: () => void; shares: number[] } | null = null;
   let portalSwirl: THREE.ShaderMaterial | null = null, exitSwirl: THREE.ShaderMaterial | null = null;
-  let portalPos: V3 | null = null;
+  let portalSock: string | null = null, beamKey = '';
   let customer: THREE.Group | null = null, custWant: V3 | null = null, custGone = true;
+  let standG: THREE.Object3D | null = null;
   const tileTex = canvasTex(256, 256, c => {
     c.strokeStyle = '#ffffff'; c.lineWidth = 12; c.setLineDash([26, 18]); c.lineCap = 'round';
     c.beginPath(); c.roundRect(14, 14, 228, 228, 40); c.stroke();
@@ -301,82 +332,81 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
   const chevron = canvasTex(128, 128, c => { c.strokeStyle = 'rgba(150,160,190,0.55)'; c.lineWidth = 14; c.lineCap = 'round'; c.lineJoin = 'round'; c.beginPath(); c.moveTo(42, 34); c.lineTo(78, 64); c.lineTo(42, 94); c.stroke(); });
   const LANE_COLORS = ['#ffc53a', '#4fb3ff', '#ff6f91', '#7bd389'];
 
-  function belt(pts: [number, number][], parent: THREE.Object3D) {
-    const W = 0.66;
+  function belt(pts: [number, number][], parent: THREE.Object3D, color = '#ff8a3d') {
+    const W = 0.62;
     for (let i = 0; i < pts.length - 1; i++) {
       const a = V(pts[i][0], 0, pts[i][1]), e = V(pts[i + 1][0], 0, pts[i + 1][1]);
       const len = a.distanceTo(e); if (len < 0.01) continue;
       const mid = a.clone().add(e).multiplyScalar(0.5), ang = Math.atan2(-(e.z - a.z), e.x - a.x);
-      const g = group(mid.x, FLOOR, mid.z, parent); g.rotation.y = ang;
-      rbox(len + W, 0.1, W, '#2d3040', 0, 0, 0, g, 0.05);
-      for (const s of [-1, 1]) rbox(len, 0.16, 0.07, '#ff8a3d', 0, 0, s * (W / 2 + 0.02), g, 0.03);
+      const gg = group(mid.x, FLOOR, mid.z, parent); gg.rotation.y = ang;
+      rbox(len + W, 0.1, W, '#2d3040', 0, 0, 0, gg, 0.05);
+      for (const s of [-1, 1]) rbox(len, 0.16, 0.07, color, 0, 0, s * (W / 2 + 0.02), gg, 0.03);
       const tex = chevron.t.clone(); tex.wrapS = THREE.RepeatWrapping; tex.repeat.set(len / 0.6, 1); tex.needsUpdate = true; track(tex);
       const m = track(new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }));
-      const pl = new THREE.Mesh(track(new THREE.PlaneGeometry(len, W * 0.8)), m); pl.rotation.x = -Math.PI / 2; pl.position.y = 0.102; g.add(pl);
-      belts.push({ tex, mat: m });
+      const pl = new THREE.Mesh(track(new THREE.PlaneGeometry(len, W * 0.8)), m); pl.rotation.x = -Math.PI / 2; pl.position.y = 0.102; gg.add(pl);
+      belts.push({ tex });
     }
   }
   function stand(at: V3, parent: THREE.Object3D) {
-    const g = springy(group(at.x, FLOOR, at.z, parent));
-    rbox(1.6, 0.95, 2.1, '#ffd23f', 0, 0, 0, g, 0.16);
-    rbox(1.66, 0.12, 2.16, '#f2b81c', 0, 0.95, 0, g, 0.05);
-    for (let k = 0; k < 4; k++) rbox(0.05, 0.6, 0.05, '#ffffff', -0.6 + (k % 2) * 1.2, 1.05, (k < 2 ? -1 : 1) * 0.92, g, 0.02);
-    const aw = group(0, 1.62, 0, g); aw.rotation.z = 0.22;
+    const gg = springy(group(at.x, FLOOR, at.z, parent));
+    rbox(1.6, 0.95, 2.1, '#ffd23f', 0, 0, 0, gg, 0.16);
+    rbox(1.66, 0.12, 2.16, '#f2b81c', 0, 0.95, 0, gg, 0.05);
+    for (let k = 0; k < 4; k++) rbox(0.05, 0.6, 0.05, '#ffffff', -0.6 + (k % 2) * 1.2, 1.05, (k < 2 ? -1 : 1) * 0.92, gg, 0.02);
+    const aw = group(0, 1.62, 0, gg); aw.rotation.z = 0.22;
     for (let k = 0; k < 6; k++) rbox(1.8, 0.09, 0.4, k % 2 ? '#fff6ec' : '#c8553d', 0, 0, -1 + k * 0.4, aw, 0.04);
-    for (const [x, z] of [[0.2, -0.5], [0.1, 0.1], [0.3, 0.6]]) { const b = mesh(new THREE.CapsuleGeometry(0.13, 0.3, 4, 10), mat('#d9954a'), x, 1.15, z, g); b.rotation.x = Math.PI / 2; }
-    rbox(0.1, 0.34, 0.8, '#3a2c10', -0.81, 0.38, 0, g, 0.04);
-    rbox(0.06, 0.07, 0.56, '#111', -0.86, 0.52, 0, g, 0.02);
-    return g;
+    for (const [x, z] of [[0.2, -0.5], [0.1, 0.1], [0.3, 0.6]]) { const b = mesh(new THREE.CapsuleGeometry(0.13, 0.3, 4, 10), mat('#d9954a'), x, 1.15, z, gg); b.rotation.x = Math.PI / 2; }
+    rbox(0.1, 0.34, 0.8, '#3a2c10', -0.81, 0.38, 0, gg, 0.04);
+    rbox(0.06, 0.07, 0.56, '#111', -0.86, 0.52, 0, gg, 0.02);
+    return gg;
   }
-  function makePart(kind: PartKind, laneColor: string): THREE.Group {
-    const g = new THREE.Group();
+  function makePart(kind: PartKind, laneColor: string, shares?: number[]): { g: THREE.Group; dial?: { redraw: () => void; shares: number[] } } {
+    const gg = new THREE.Group(); let dial: { redraw: () => void; shares: number[] } | undefined;
     if (kind === 'Splitter') {
-      rbox(1.5, 0.78, 2.1, '#2ec4b6', 0, 0, 0, g, 0.2);
-      rbox(1.56, 0.1, 2.16, '#23a99c', 0, 0, 0, g, 0.05);
-      const shares = splitDial?.shares ?? [];
+      rbox(1.4, 0.74, 1.8, '#2ec4b6', 0, 0, 0, gg, 0.2);
+      rbox(1.46, 0.1, 1.86, '#23a99c', 0, 0, 0, gg, 0.05);
+      const d = { shares: shares?.slice() ?? [], redraw: () => {} };
       const pie = canvasTex(256, 256, c => {
-        const sh = splitDial?.shares ?? shares; const tot = sh.reduce((a, b) => a + b, 0) || 1;
+        const sh = d.shares; const tot = sh.reduce((a, b) => a + b, 0) || 1;
         c.fillStyle = '#e9fffb'; c.beginPath(); c.arc(128, 128, 126, 0, 7); c.fill();
         let a0 = -Math.PI / 2;
         sh.forEach((s, i) => { const a1 = a0 + (Math.PI * 2 * s) / tot; c.fillStyle = LANE_COLORS[i]; c.beginPath(); c.moveTo(128, 128); c.arc(128, 128, 112, a0, a1); c.fill(); a0 = a1; });
         c.fillStyle = '#e9fffb'; c.beginPath(); c.arc(128, 128, 46, 0, 7); c.fill();
       });
-      splitDial = { redraw: pie.redraw, shares: splitDial?.shares ?? [] };
-      const dial = mesh(new THREE.CylinderGeometry(0.66, 0.7, 0.12, 40), [mat('#e9fffb'), new THREE.MeshStandardMaterial({ map: pie.t, roughness: 0.6 }), mat('#e9fffb')] as unknown as THREE.Material, 0, 0.84, 0, g);
-      dial.rotation.y = Math.PI / 2;
+      d.redraw = pie.redraw; dial = d;
+      const dm = mesh(new THREE.CylinderGeometry(0.6, 0.64, 0.12, 40), [mat('#e9fffb'), track(new THREE.MeshStandardMaterial({ map: pie.t, roughness: 0.6 })), mat('#e9fffb')] as unknown as THREE.Material, 0, 0.8, 0, gg);
+      dm.rotation.y = Math.PI / 2;
     } else if (kind === 'Payout') {
-      rbox(0.16, 0.7, 0.16, '#3d4256', 0, 0, 0, g, 0.04);
-      rbox(0.95, 0.66, 0.74, '#5fbf6f', 0, 0.66, 0, g, 0.2);
-      rbox(0.08, 0.06, 0.42, '#1d2433', -0.48, 1.02, 0, g, 0.02);
-      rbox(0.05, 0.42, 0.05, laneColor, 0.3, 1.22, 0.38, g, 0.02);
-      rbox(0.24, 0.16, 0.04, laneColor, 0.42, 1.52, 0.38, g, 0.02);
+      rbox(0.16, 0.7, 0.16, '#3d4256', 0, 0, 0, gg, 0.04);
+      rbox(0.95, 0.66, 0.74, '#5fbf6f', 0, 0.66, 0, gg, 0.2);
+      rbox(0.08, 0.06, 0.42, '#1d2433', -0.48, 1.02, 0, gg, 0.02);
+      rbox(0.05, 0.42, 0.05, laneColor, 0.3, 1.22, 0.38, gg, 0.02);
+      rbox(0.24, 0.16, 0.04, laneColor, 0.42, 1.52, 0.38, gg, 0.02);
     } else if (kind === 'Vault') {
-      rbox(1.5, 0.3, 1.5, '#6f61b8', 0, 0, 0, g, 0.12);
-      for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) rbox(0.18, 1.1, 0.18, '#4e4390', x * 0.66, 0.28, z * 0.66, g, 0.06);
-      rbox(1.5, 0.12, 1.5, '#4e4390', 0, 1.36, 0, g, 0.06);
-      const glass = new THREE.Mesh(track(new THREE.BoxGeometry(1.3, 1.05, 1.3)), track(new THREE.MeshStandardMaterial({ color: '#dff4ff', transparent: true, opacity: 0.22, roughness: 0.05, depthWrite: false })));
-      glass.position.y = 0.82; g.add(glass);
+      rbox(1.4, 0.3, 1.4, '#6f61b8', 0, 0, 0, gg, 0.12);
+      for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) rbox(0.18, 1.1, 0.18, '#4e4390', x * 0.6, 0.28, z * 0.6, gg, 0.06);
+      rbox(1.4, 0.12, 1.4, '#4e4390', 0, 1.36, 0, gg, 0.06);
+      const glass = new THREE.Mesh(track(new THREE.BoxGeometry(1.2, 1.05, 1.2)), track(new THREE.MeshStandardMaterial({ color: '#dff4ff', transparent: true, opacity: 0.22, roughness: 0.05, depthWrite: false })));
+      glass.position.y = 0.82; gg.add(glass);
     } else if (kind === 'Portal') {
-      mesh(new THREE.CylinderGeometry(0.95, 1.05, 0.3, 40), mat('#3a2f6b'), 0, 0.15, 0, g);
-      const torus = mesh(new THREE.TorusGeometry(0.78, 0.15, 14, 48), mat('#8b5cf6', { emissive: '#8b5cf6', emissiveIntensity: 0.35, roughness: 0.4 }), 0, 0.32, 0, g);
+      mesh(new THREE.CylinderGeometry(0.95, 1.05, 0.3, 40), mat('#3a2f6b'), 0, 0.15, 0, gg);
+      const torus = mesh(new THREE.TorusGeometry(0.78, 0.15, 14, 48), mat('#8b5cf6', { emissive: '#8b5cf6', emissiveIntensity: 0.35, roughness: 0.4 }), 0, 0.32, 0, gg);
       torus.rotation.x = Math.PI / 2;
       portalSwirl = swirl('#5b3bd6', '#4fd1ff');
-      const disc = new THREE.Mesh(track(new THREE.CircleGeometry(0.7, 48)), portalSwirl); disc.rotation.x = -Math.PI / 2; disc.position.y = 0.31; g.add(disc);
+      const disc = new THREE.Mesh(track(new THREE.CircleGeometry(0.7, 48)), portalSwirl); disc.rotation.x = -Math.PI / 2; disc.position.y = 0.31; gg.add(disc);
     } else if (kind === 'Gate') {
-      rbox(1.7, 0.22, 1.3, '#3d4256', 0, 0, 0, g, 0.08);
-      for (const s of [-1, 1]) rbox(0.22, 1.3, 0.22, '#ff8a3d', 0, 0.2, s * 0.62, g, 0.07);
-      const bar = rbox(0.14, 0.14, 1.4, '#e8456f', 0, 0.95, 0, g, 0.06); g.userData.bar = bar;
-      for (let k = -2; k <= 2; k++) rbox(0.15, 0.15, 0.12, k % 2 ? '#ffffff' : '#e8456f', 0, 0.95, k * 0.26, g, 0.03).visible = false;
+      rbox(1.5, 0.22, 1.3, '#3d4256', 0, 0, 0, gg, 0.08);
+      for (const s of [-1, 1]) rbox(0.22, 1.3, 0.22, '#ff8a3d', 0, 0.2, s * 0.62, gg, 0.07);
+      const bar = rbox(0.14, 0.14, 1.4, '#e8456f', 0, 0.95, 0, gg, 0.06); gg.userData.bar = bar;
     } else if (kind === 'Worker') {
-      rbox(0.14, 0.5, 0.14, '#3d4256', 0, 0, 0, g, 0.04);
-      const k = group(0, 0.8, 0, g);
+      rbox(0.14, 0.5, 0.14, '#3d4256', 0, 0, 0, gg, 0.04);
+      const k = group(0, 0.8, 0, gg);
       mesh(new THREE.TorusGeometry(0.17, 0.06, 10, 24), mat('#ffd23f', { metalness: 0.5, roughness: 0.3 }), 0, 0.12, 0, k);
       rbox(0.07, 0.45, 0.07, '#ffd23f', 0, -0.4, 0, k, 0.02);
       rbox(0.16, 0.07, 0.07, '#ffd23f', 0.07, -0.33, 0, k, 0.02);
-      g.userData.spin = k;
+      gg.userData.spin = k;
     }
-    g.traverse(o => { o.castShadow = true; });
-    return g;
+    gg.traverse(o => { o.castShadow = true; });
+    return { g: gg, dial };
   }
   function swirl(c1: string, c2: string) {
     return track(new THREE.ShaderMaterial({
@@ -409,200 +439,209 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
   }));
   let beam: THREE.Mesh | null = null;
   const gemMat = track(new THREE.MeshStandardMaterial({ color: '#8d9bff', metalness: 0.35, roughness: 0.18, flatShading: true, emissive: '#2e3bc4', emissiveIntensity: 0.4 }));
-  const gem = mesh(new THREE.OctahedronGeometry(0.24, 0), gemMat); gem.visible = false;
-  let portalPhase: PortalPhase = 'idle', phaseT = 0, gemFrom = V(), gemTo = V();
+  const gem = mesh(new THREE.OctahedronGeometry(0.26, 0), gemMat); gem.visible = false;
+  let portalPhase: PortalPhase = 'idle', phaseT = 0, gemFrom = V(), gemTo = V(), diveT = 0, diveKind: CoinKind = 'sim';
 
-  function setJob(j: Job) {
-    job = j; L = layoutFor(j);
-    disposeTree(jobRoot); jobRoot = group();
+  function setJob(j: Job, w: World) {
+    job = j; world = w;
+    disposeTree(staticRoot); staticRoot = group();
     for (const c of chars.values()) disposeTree(c);
-    chars.clear(); sockets.clear(); belts.length = 0; splitDial = null; portalSwirl = null; portalPos = null; customer = null;
-    coins.length = 0;
+    if (customer) disposeTree(customer);
+    chars.clear(); coins.length = 0; customer = null;
+    L = layoutFor(j, { r: null }, w);
     const Lo = L;
-    ethGroup.visible = Lo.ethIsle;
-    isles[1].z = Lo.ethIsle ? 4.4 : 0;
+    ethGroup.visible = Lo.isle; isles[1].z = Lo.isle ? ISLE.hx + 0.75 : 0;
     exitG.position.copy(Lo.exit);
-    if (beam) { disposeTree(beam); beam = null; }
     gem.visible = false; portalPhase = 'idle';
-    springy(stand(Lo.stand, jobRoot));
-    // belts
-    const H = Lo.hub;
-    belt([[Lo.stand.x + 0.85, 0], [H.x - 0.8, 0]], jobRoot);
-    Lo.lanes.forEach(ln => {
-      const pts: [number, number][] = [[H.x + 0.75, ln.z * 0.25], [H.x + 1.3, ln.z * 0.25], [H.x + 1.3, ln.z], [ln.end.x - 0.6, ln.z]];
-      belt(pts, jobRoot);
-    });
-    // sockets
-    for (const s of j.sockets) {
-      const p = s.id === 'hub' ? H : s.role === 'end' ? Lo.lanes[s.lane].end : s.role === 'mid' ? Lo.lanes[s.lane].mid! : Lo.lanes[s.lane].key!;
-      const g = group(p.x, FLOOR + 0.03, p.z, jobRoot);
-      const size = s.role === 'key' ? 1.0 : 1.7;
-      const fillM = track(new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.15, depthWrite: false }));
-      const tileM = track(new THREE.MeshBasicMaterial({ map: tileTex.t, color: '#ffffff', transparent: true, opacity: 0.7, depthWrite: false }));
-      const fill = new THREE.Mesh(track(new THREE.PlaneGeometry(size, size)), fillM); fill.rotation.x = -Math.PI / 2; g.add(fill);
-      const tile = new THREE.Mesh(track(new THREE.PlaneGeometry(size, size)), tileM); tile.rotation.x = -Math.PI / 2; tile.position.y = 0.006; g.add(tile);
-      if (s.role === 'key') { // little dashed link from key hook to its gate
-        const l = rbox(0.08, 0.04, 0.9, '#ffd23f', 0, 0, 0.9, g, 0.02); l.castShadow = false;
-      }
-      sockets.set(s.id, { g, tile, fill, part: null, kind: null, sig: '' });
-    }
-    // people
-    for (const id of [...j.people, 'customer' as PersonId]) {
+    standG = stand(Lo.stand, staticRoot);
+    for (const id of [...w.people, 'customer' as PersonId]) {
       const c = character(id);
       if (id === 'customer') { customer = c; c.position.set(-13, FLOOR, 2.5); c.visible = false; custGone = true; continue; }
       c.position.copy(Lo.people[id]!).setY(FLOOR); c.rotation.y = -Math.PI / 2;
       springy(c.userData.body);
       chars.set(id, c);
     }
-    if (Lo.chiHome) { // Chi's old spot on NEAR: a "moved abroad" sign
-      const g = group(Lo.chiHome.x, FLOOR, Lo.chiHome.z, jobRoot);
-      rbox(0.1, 0.9, 0.1, '#8a5a3c', 0, 0, 0, g, 0.03);
-      rbox(0.9, 0.5, 0.08, '#fff6ec', 0, 0.75, 0, g, 0.04).rotation.y = -0.3;
+    if (Lo.homeSign) {
+      const gg = group(Lo.homeSign.x, FLOOR, Lo.homeSign.z, staticRoot);
+      rbox(0.1, 0.9, 0.1, '#8a5a3c', 0, 0, 0, gg, 0.03);
+      rbox(0.9, 0.5, 0.08, '#fff6ec', 0, 0.75, 0, gg, 0.04).rotation.y = -0.3;
     }
-    if (Lo.ethIsle) {
-      const from = Lo.lanes[Lo.lanes.length - 1].end.clone().setY(FLOOR + 0.5), to = Lo.exit.clone().setY(FLOOR + 0.5);
-      const mid = from.clone().add(to).multiplyScalar(0.5).setY(5.5);
-      beam = new THREE.Mesh(track(new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(from, mid, to), 80, 0.1, 10)), beamMat);
-      scene.add(beam); beamU.fade.value = 0;
-      portalPos = from;
-    }
-    layoutCamera();
+    for (const pm of partMeshes.values()) disposeTree(pm.o);
+    partMeshes.clear(); portalSock = null; beamKey = '';
+    setBuild({ r: null });
+    layoutCamera(true);
   }
 
-  function setBuild(build: Build) {
-    if (!job || !L) return;
-    for (const s of job.sockets) {
-      const rec = sockets.get(s.id)!; const p = build[s.id];
-      const shares = p?.shares?.join(',') ?? '';
-      const sig = p ? `${p.kind}` : '';
-      if (p?.kind === 'Splitter') { if (!splitDial || splitDial.shares.join(',') !== shares) { splitDial = { ...(splitDial ?? { redraw: () => {} }), shares: p.shares!.slice() }; splitDial.redraw(); } }
-      if (rec.sig === sig) continue;
-      if (rec.part) { disposeTree(rec.part); rec.part = null; }
-      rec.sig = sig; rec.kind = p?.kind ?? null;
-      if (p) {
-        if (p.kind === 'Splitter') splitDial = { redraw: () => {}, shares: p.shares!.slice() };
-        const part = makePart(p.kind, LANE_COLORS[Math.max(0, s.lane)] ?? '#fff');
-        if (p.kind === 'Splitter') splitDial!.redraw();
-        part.position.copy(rec.g.position).setY(FLOOR);
-        if (s.role === 'key') part.scale.setScalar(0.9);
-        springy(part); kick(part, 7);
-        jobRoot.add(part); rec.part = part;
-        burst(part.position.clone().setY(0.6), 14, '#ffffff');
+  let build: Build = { r: null };
+  function setBuild(b: Build) {
+    if (!job) return;
+    build = b;
+    L = layoutFor(job, b, world);
+    const Lo = L;
+    // belts + tiles are cheap: rebuild them
+    disposeTree(machineRoot); machineRoot = group(); belts.length = 0; tiles.clear();
+    belt(standPts(Lo), machineRoot);
+    for (const e of Lo.edges) belt(edgePts(Lo.nodes[e.from], Lo.nodes[e.to]), machineRoot, e.to.endsWith('.f') ? '#e8456f' : e.to.endsWith('.p') ? '#3fae5a' : '#ff8a3d');
+    const all = { ...Lo.nodes, ...Lo.keys };
+    for (const [id, p] of Object.entries(all)) {
+      const gg = group(p.x, FLOOR + 0.03, p.z, machineRoot);
+      const size = Lo.keys[id] ? 0.95 : 1.5;
+      const fill = new THREE.Mesh(track(new THREE.PlaneGeometry(size, size)), track(new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.15, depthWrite: false }))); fill.rotation.x = -Math.PI / 2; gg.add(fill);
+      const tile = new THREE.Mesh(track(new THREE.PlaneGeometry(size, size)), track(new THREE.MeshBasicMaterial({ map: tileTex.t, color: '#ffffff', transparent: true, opacity: 0.7, depthWrite: false }))); tile.rotation.x = -Math.PI / 2; tile.position.y = 0.006; gg.add(tile);
+      if (Lo.keys[id]) { const gp = Lo.nodes[id.slice(0, -2)]; if (gp) { const l = rbox(0.06, 0.04, gp.distanceTo(p), '#ffd23f', (gp.x - p.x) / 2, 0, (gp.z - p.z) / 2, gg, 0.02); l.rotation.y = Math.atan2(gp.x - p.x, gp.z - p.z); l.castShadow = false; } }
+      const filled = !!b[id];
+      tile.visible = fill.visible = !filled;
+      tiles.set(id, { g: gg, tile, fill });
+    }
+    // parts keyed by uid: keep meshes, move them to their new spot
+    const seen = new Set<string>();
+    portalSock = null;
+    for (const [id, p] of Object.entries(all)) {
+      const pl = b[id]; if (!pl) continue;
+      seen.add(pl.uid);
+      const lane = Number(id.split('.')[1] ?? 0) || 0;
+      let rec = partMeshes.get(pl.uid);
+      if (rec && rec.kind !== pl.kind) { disposeTree(rec.o); partMeshes.delete(pl.uid); rec = undefined; }
+      if (!rec) {
+        const made = makePart(pl.kind, LANE_COLORS[lane % 4]);
+        made.g.position.copy(p).setY(FLOOR);
+        springy(made.g); kick(made.g, 7);
+        scene.add(made.g);
+        rec = { o: made.g, kind: pl.kind, socket: id, want: p.clone().setY(FLOOR), dial: made.dial };
+        partMeshes.set(pl.uid, rec);
+        burst(p.clone().setY(0.6), 14, '#ffffff');
       }
-      rec.tile.visible = rec.fill.visible = !p;
+      rec.socket = id; rec.want = p.clone().setY(FLOOR);
+      const depth = id.split('.').length - 1;
+      rec.o.userData.base = Lo.keys[id] ? 0.9 : depth >= 2 ? 0.82 : depth === 1 && pl.kind === 'Splitter' ? 0.86 : 1;
+      if (rec.dial && pl.shares && rec.dial.shares.join(',') !== pl.shares.join(',')) { rec.dial.shares = pl.shares.slice(); rec.dial.redraw(); }
+      if (pl.kind === 'Portal') portalSock = id;
+    }
+    for (const [uid, rec] of partMeshes) if (!seen.has(uid)) { disposeTree(rec.o); partMeshes.delete(uid); if (rec.kind === 'Portal') portalSwirl = null; }
+    // beam from the Portal (wherever it sits) across the water to the island exit
+    const key = portalSock && Lo.isle ? `${portalSock}@${Lo.nodes[portalSock].x},${Lo.nodes[portalSock].z}` : '';
+    if (key !== beamKey) {
+      if (beam) { disposeTree(beam); beam = null; }
+      beamKey = key;
+      if (key) {
+        const from = Lo.nodes[portalSock!].clone().setY(FLOOR + 0.5), to = Lo.exit.clone().setY(FLOOR + 0.5);
+        const mid = from.clone().add(to).multiplyScalar(0.5).setY(5.5);
+        beam = new THREE.Mesh(track(new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(from, mid, to), 80, 0.1, 10)), beamMat);
+        scene.add(beam); beamU.fade.value = 0;
+      }
     }
   }
 
   // ---------- sale choreography ----------
-  function lanePath(lane: number, untilMid: boolean): V3[] {
-    const Lo = L!, H = Lo.hub, ln = Lo.lanes[lane], y = BELT_Y + 0.04;
-    const pts = [V(H.x + 0.75, y, ln.z * 0.25), V(H.x + 1.3, y, ln.z * 0.25), V(H.x + 1.3, y, ln.z)];
-    if (untilMid && ln.mid) pts.push(V(ln.mid.x - 0.7, y, ln.z), ln.mid.clone().setY(y + 0.3));
-    else pts.push(V(ln.end.x - 0.6, y, ln.z), ln.end.clone().setY(y + 0.4));
+  const nodeAt = (id: string) => L!.nodes[id];
+  function pathPts(path: string[], fromStand: boolean, stopAtLast: boolean): V3[] {
+    const Lo = L!, y = BELT_Y + 0.04;
+    const pts: V3[] = [];
+    if (fromStand) for (const [x, z] of standPts(Lo)) pts.push(V(x, y, z));
+    for (let i = 0; i < path.length; i++) {
+      const p = nodeAt(path[i]); if (!p) break;
+      if (i > 0) for (const [x, z] of edgePts(nodeAt(path[i - 1]), p)) pts.push(V(x, y, z));
+      if (i < path.length - 1 || !stopAtLast) pts.push(p.clone().setY(y + 0.15));
+    }
     return pts;
   }
-  let heldLane = -1;
-  const destLegs = (dest: LaneDest, lane: number, i: number): Leg[] => {
-    const Lo = L!;
-    if (dest.type === 'person') {
-      const at = Lo.people[dest.person] ?? Lo.chiHome; if (!at) return [];
-      const to = (dest.person === 'chi' && Lo.chiHome) ? Lo.chiHome.clone().setY(0.5) : at.clone().setY(1.0);
-      return [{ kind: 'arc', to, h: 1.6, dur: 0.55 }];
+  const destLegs = (f: Flow, i: number): Leg[] => {
+    const Lo = L!; const end = nodeAt(f.path[f.path.length - 1]);
+    const d = f.dest;
+    if (d.type === 'person') {
+      const at = Lo.people[d.person]; if (!at) return [];
+      return [{ kind: 'arc', to: d.person === 'customer' ? Lo.customer.clone().setY(1.0) : at.clone().setY(1.0), h: d.person === 'customer' ? 3.0 : 1.6, dur: d.person === 'customer' ? 0.9 : 0.55 }];
     }
-    if (dest.type === 'vault') { const e = Lo.lanes[lane].end; return [{ kind: 'arc', to: V(e.x + (i % 3 - 1) * 0.3, FLOOR + 0.4 + Math.floor(i / 3) * 0.07, e.z + (Math.floor(i / 3) % 2 ? 0.2 : -0.2)), h: 0.8, dur: 0.4 }, { kind: 'hold', at: V(e.x + (i % 3 - 1) * 0.3, FLOOR + 0.42 + Math.floor(i / 3) * 0.07, e.z) }]; }
-    if (dest.type === 'portal') { const e = Lo.lanes[lane].end; return [{ kind: 'arc', to: e.clone().setY(FLOOR + 0.2), h: 0.6, dur: 0.35 }]; }
-    if (dest.type === 'gate') { const m = Lo.lanes[lane].mid!; const a = (i / 6) * Math.PI * 2; return [{ kind: 'hold', at: V(m.x + Math.cos(a) * 0.35, 1.9 + (i % 2) * 0.12, m.z + Math.sin(a) * 0.35) }]; }
-    return [{ kind: 'arc', to: Lo.lanes[lane].end.clone().setY(-2), h: 0.4, dur: 0.6 }];
+    if (d.type === 'vault') return [{ kind: 'arc', to: V(end.x + (i % 3 - 1) * 0.3, FLOOR + 0.4, end.z + (Math.floor(i / 3) % 2 ? 0.2 : -0.2)), h: 0.8, dur: 0.4 }, { kind: 'hold', at: V(end.x + (i % 3 - 1) * 0.3, FLOOR + 0.42 + Math.floor(i / 3) * 0.07, end.z) }];
+    if (d.type === 'portal') return [{ kind: 'arc', to: end.clone().setY(FLOOR + 0.2), h: 0.6, dur: 0.35 }];
+    if (d.type === 'gate') { const a = (i / 6) * Math.PI * 2; return [{ kind: 'hold', at: V(end.x + Math.cos(a) * 0.35, 1.9 + (i % 2) * 0.12, end.z + Math.sin(a) * 0.35) }]; }
+    return [{ kind: 'arc', to: end.clone().setY(-2), h: 0.4, dur: 0.6 }];
   };
   async function walkCustomerIn() {
     const Lo = L!; if (!customer) return;
     customer.visible = true; custGone = false;
     customer.position.set(Lo.customer.x - 2.6, FLOOR, Lo.customer.z + 1.8);
     custWant = Lo.customer.clone().setY(FLOOR);
-    await wait(750);
+    await wait(700);
   }
-  async function playSale(plan: SalePlan) {
+  async function runFlows(flows: Flow[], kind: CoinKind, start: (f: Flow) => { from: V3; pts: V3[]; gate?: string }, onLand?: (f: Flow) => void) {
+    let k = 0;
+    const all: Promise<void>[] = [];
+    flows.forEach((f, fi) => {
+      const s = start(f);
+      const ps: Promise<void>[] = [];
+      for (let i = 0; i < f.coins; i++) ps.push(spawn(s.from, [{ kind: 'line', pts: s.pts, speed: 6.4 }, ...destLegs(f, i)], kind, fi * 0.45 + (k++) * 0.05, f.dest.type === 'gate' ? f.path[f.path.length - 1] : undefined));
+      all.push(Promise.all(ps).then(() => { arrived(f); onLand?.(f); }));
+    });
+    await Promise.all(all);
+  }
+  async function playSale(plan: SalePlan, onLand?: (f: Flow) => void) {
     if (!L || !job) return;
     const Lo = L;
     await walkCustomerIn();
-    const kind = plan.kind;
-    const total = plan.lanes.reduce((a, l) => a + l.coins, 0);
-    // customer -> stand
+    const total = plan.flows.reduce((a, f) => a + f.coins, 0);
     const standIn = Lo.stand.clone().setY(1.2).add(V(-0.7, 0, 0));
-    await Promise.all(Array.from({ length: total }, (_, i) => spawn(Lo.customer.clone().setY(0.9), [{ kind: 'arc', to: standIn, h: 0.9, dur: 0.38 }], kind, i * 0.035)));
-    const st = jobRoot.children[0]; kick(st, 5);
-    // stand -> hub -> lanes
-    const y = BELT_Y + 0.04;
-    const main = [V(Lo.stand.x + 0.9, y, 0), V(Lo.hub.x - 0.2, y, 0)];
-    const jobs: Promise<void>[] = [];
-    let k = 0;
-    plan.lanes.forEach((ln, lane) => {
-      const gated = ln.dest.type === 'gate';
-      const lp = lanePath(lane, gated);
-      for (let i = 0; i < ln.coins; i++) {
-        const legs: Leg[] = [{ kind: 'line', pts: [...main, ...lp], speed: 6.2 }, ...destLegs(ln.dest, lane, i)];
-        jobs.push(spawn(main[0], legs, kind, (k++) * 0.07, gated).then(() => arrived(ln.dest, lane, i === ln.coins - 1, ln.label)));
-      }
-      if (gated) heldLane = lane;
-    });
-    await Promise.all(jobs);
-    await wait(250);
+    await Promise.all(Array.from({ length: total }, (_, i) => spawn(Lo.customer.clone().setY(0.9), [{ kind: 'arc', to: standIn, h: 0.9, dur: 0.38 }], plan.kind, i * 0.03)));
+    if (standG) kick(standG, 5);
+    await runFlows(plan.flows, plan.kind, f => { const pts = pathPts(f.path, true, f.dest.type === 'gate'); return { from: pts[0], pts }; }, onLand);
+    await wait(200);
   }
-  function arrived(dest: LaneDest, lane: number, last: boolean, label?: string) {
-    const Lo = L!;
-    if (dest.type === 'person') {
-      const c = chars.get(dest.person);
-      if (c && !(dest.person === 'chi' && Lo.chiHome)) { kick(c.userData.body, 3); hops.set(dest.person, 0.35); }
-      if (last && label) floaterAt((dest.person === 'chi' && Lo.chiHome ? Lo.chiHome : Lo.people[dest.person]!).clone().setY(2.1), label, 'good');
-    } else if (dest.type === 'portal') {
-      if (last) { const r = sockets.get(`end${lane}`)?.part; if (r) kick(r, 6); }
-    } else if (dest.type === 'gate' && last) {
-      floaterAt(Lo.lanes[lane].mid!.clone().setY(2.6), label ?? 'waiting', 'wait');
-    } else if (dest.type === 'nobody' && last) floaterAt(Lo.lanes[lane].end.clone().setY(1.8), 'lost', 'bad');
+  function arrived(f: Flow) {
+    const Lo = L!; const d = f.dest;
+    if (d.type === 'person') {
+      const c = chars.get(d.person);
+      if (c) { kick(c.userData.body, 3); hops.set(d.person, 0.35); }
+      if (f.label) floaterAt((Lo.people[d.person] ?? Lo.customer).clone().setY(2.2), f.label, d.person === 'customer' ? 'good' : 'good');
+    } else if (d.type === 'portal') {
+      const r = [...partMeshes.values()].find(p => p.kind === 'Portal'); if (r) kick(r.o, 6);
+    } else if (d.type === 'gate') floaterAt(nodeAt(f.path[f.path.length - 1]).clone().setY(2.7), f.label ?? 'waiting', 'wait');
+    else if (d.type === 'vault' && f.label) floaterAt(nodeAt(f.path[f.path.length - 1]).clone().setY(2.0), f.label, 'bad');
+    else if (d.type === 'nobody') floaterAt(nodeAt(f.path[f.path.length - 1]).clone().setY(1.8), 'lost', 'bad');
   }
-  async function release(to: 'pass' | 'refund', dest: LaneDest) {
-    if (!L || heldLane < 0) return;
-    const Lo = L, lane = heldLane;
-    const held = coins.filter(c => !c.gone && c.gated);
-    const gate = sockets.get(`mid${lane}`)?.part; const bar = gate?.userData.bar as THREE.Object3D | undefined;
-    if (bar) bar.rotation.x = to === 'pass' ? -1.2 : 0;
-    if (gate) kick(gate, 5);
-    const ps = held.map((c, i) => new Promise<void>(res => {
-      c.hold = false; c.gated = false; c.done = res; c.gone = false;
-      const legs: Leg[] = to === 'pass'
-        ? [{ kind: 'line', pts: [c.pos.clone(), Lo.lanes[lane].mid!.clone().setY(BELT_Y + 0.05), V(Lo.lanes[lane].end.x - 0.6, BELT_Y + 0.05, Lo.lanes[lane].z), Lo.lanes[lane].end.clone().setY(BELT_Y + 0.4)], speed: 5 }, ...destLegs(dest, lane, i)]
-        : [{ kind: 'arc', to: Lo.customer.clone().setY(1.0), h: 3.2, dur: 1.0 }];
-      c.legs = legs; c.li = 0; c.t = 0; c.from = c.pos.clone(); c.delay = i * 0.08;
-    }));
-    await Promise.all(ps);
-    if (to === 'pass') arrived(dest, lane, true);
+  async function release(gate: string, flows: Flow[], kind: CoinKind, onLand?: (f: Flow) => void) {
+    if (!L) return;
+    const held = coins.filter(c => !c.gone && c.gate === gate);
+    for (const c of held) { c.gone = true; c.done = () => {}; }
+    for (let i = coins.length - 1; i >= 0; i--) if (coins[i].gone) coins.splice(i, 1);
+    const rec = [...partMeshes.values()].find(p => p.socket === gate);
+    const bar = rec?.o.userData.bar as THREE.Object3D | undefined;
+    const pass = flows.some(f => f.path.some(s => s.startsWith(gate + '.p')));
+    if (bar) bar.rotation.x = pass ? -1.2 : 0;
+    if (rec) kick(rec.o, 5);
+    await runFlows(flows, kind, f => { const pts = pathPts(f.path, false, false); return { from: nodeAt(gate).clone().setY(1.9), pts }; }, onLand);
     if (bar) setTimeout(() => { bar.rotation.x = 0; }, 600);
-    heldLane = -1;
     await wait(200);
   }
   function customerLeave() { if (customer && !custGone) { custWant = V(-13.5, FLOOR, -2.5); custGone = true; } }
 
   // ---------- camera ----------
-  let portrait = false;
+  let portrait = false, mode: 'all' | 'portal' = 'all';
   const camDir = V();
-  function layoutCamera() {
+  const cam = { cx: 0, cy: 0, s: 0.02 }, camWant = { cx: 0, cy: 0, s: 0.02 };
+  function layoutCamera(snap = false) {
     const w = Math.max(1, innerWidth), h = Math.max(1, innerHeight); portrait = h > w * 1.15;
     renderer.setPixelRatio(Math.min(devicePixelRatio, low ? 1 : touch ? 1.5 : 2));
     renderer.setSize(w, h, false);
     const az = THREE.MathUtils.degToRad(portrait ? 90 : 18), el = THREE.MathUtils.degToRad(portrait ? 58 : 44);
     camDir.set(Math.sin(az) * Math.cos(el), Math.sin(el), Math.cos(az) * Math.cos(el));
-    const pts = L?.fit ?? [V(-11, 0, -4), V(8, 0, 4)];
-    const c0 = V(0, 0, 0);
-    camera.position.copy(c0).addScaledVector(camDir, 80); camera.up.set(0, 1, 0); camera.lookAt(c0); camera.updateMatrixWorld();
+    let pts = L?.fit ?? [V(-11, 0, -4), V(8, 0, 4)];
+    if (mode === 'portal' && L?.isle && portalSock) { const p = L.nodes[portalSock]; pts = [p.clone().add(V(-2.6, 0, 0)), p.clone().add(V(-1, 0, 2.4)), p.clone().add(V(-1, 0, -2.4)), V(ISLE.x + ISLE.hx, 0, ISLE.z - ISLE.hz + 0.6), V(ISLE.x + ISLE.hx, 0, ISLE.z + ISLE.hz - 0.6), V((p.x + ISLE.x) / 2, 5.6, (p.z + ISLE.z) / 2)]; }
+    camera.position.copy(camDir).multiplyScalar(80); camera.up.set(0, 1, 0); camera.lookAt(0, 0, 0); camera.updateMatrixWorld();
     let minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
     for (const p of pts) { const v = p.clone().applyMatrix4(camera.matrixWorldInverse); minX = Math.min(minX, v.x); maxX = Math.max(maxX, v.x); minY = Math.min(minY, v.y); maxY = Math.max(maxY, v.y); }
-    const m = opts.margins?.(w, h, portrait) ?? { t: 20, b: 20, l: 20, r: 20 };
+    const m = opts.margins?.(w, h, portrait, mode) ?? { t: 20, b: 20, l: 20, r: 20 };
     const s = Math.max((maxX - minX) / Math.max(80, w - m.l - m.r), (maxY - minY) / Math.max(80, h - m.t - m.b));
-    const cx = (minX + maxX) / 2 - ((m.l - m.r) / 2) * s, cy = (minY + maxY) / 2 - ((m.b - m.t) / 2) * s;
+    camWant.cx = (minX + maxX) / 2 - ((m.l - m.r) / 2) * s; camWant.cy = (minY + maxY) / 2 - ((m.b - m.t) / 2) * s; camWant.s = s;
+    if (snap) Object.assign(cam, camWant);
+    applyCam();
+  }
+  function applyCam() {
+    const w = Math.max(1, innerWidth), h = Math.max(1, innerHeight);
+    camera.position.copy(camDir).multiplyScalar(80); camera.lookAt(0, 0, 0); camera.updateMatrixWorld();
     const right = V(1, 0, 0).applyQuaternion(camera.quaternion), up = V(0, 1, 0).applyQuaternion(camera.quaternion);
-    const tgt = c0.clone().addScaledVector(right, cx).addScaledVector(up, cy);
+    const tgt = V().addScaledVector(right, cam.cx).addScaledVector(up, cam.cy);
     camera.position.copy(tgt).addScaledVector(camDir, 80); camera.lookAt(tgt);
-    camera.left = (-w / 2) * s; camera.right = (w / 2) * s; camera.top = (h / 2) * s; camera.bottom = (-h / 2) * s;
+    camera.left = (-w / 2) * cam.s; camera.right = (w / 2) * cam.s; camera.top = (h / 2) * cam.s; camera.bottom = (-h / 2) * cam.s;
     camera.updateProjectionMatrix(); camera.updateMatrixWorld();
   }
   const project = (p: V3) => { tmpV.copy(p).project(camera); return { x: (tmpV.x * 0.5 + 0.5) * innerWidth, y: (-tmpV.y * 0.5 + 0.5) * innerHeight, visible: tmpV.z < 1 }; };
@@ -612,19 +651,26 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
   function step(dt: number) {
     t += dt;
     waterU.t.value = t;
+    const k0 = Math.min(1, dt * 3.2);
+    if (Math.abs(cam.s - camWant.s) > 1e-6 || Math.abs(cam.cx - camWant.cx) > 1e-4 || Math.abs(cam.cy - camWant.cy) > 1e-4) {
+      cam.cx += (camWant.cx - cam.cx) * k0; cam.cy += (camWant.cy - cam.cy) * k0; cam.s += (camWant.s - cam.s) * k0; applyCam();
+    }
     for (const b of belts) b.tex.offset.x -= dt * 2.2 / 0.6;
-    for (const [id, rec] of sockets) {
+    for (const [id, rec] of tiles) {
       const on = glow.has(id), nx = nextSock === id;
       const k = 0.5 + 0.5 * Math.sin(t * 5);
-      (rec.tile.material as THREE.MeshBasicMaterial).opacity = nx ? 0.75 + 0.25 * k : on ? 0.7 : 0.35;
-      (rec.fill.material as THREE.MeshBasicMaterial).opacity = nx ? 0.2 + 0.25 * k : on ? 0.22 : 0.06;
+      (rec.tile.material as THREE.MeshBasicMaterial).opacity = nx ? 0.75 + 0.25 * k : on ? 0.7 : 0.4;
+      (rec.fill.material as THREE.MeshBasicMaterial).opacity = nx ? 0.2 + 0.25 * k : on ? 0.22 : 0.07;
       (rec.tile.material as THREE.MeshBasicMaterial).color.set(nx ? '#ffe14d' : on ? '#2ee6c8' : '#ffffff');
       rec.tile.scale.setScalar(nx ? 1 + 0.05 * k : 1);
-      const sp = rec.part?.userData.spin as THREE.Object3D | undefined; if (sp) sp.rotation.y += dt * 1.5;
+    }
+    for (const rec of partMeshes.values()) {
+      rec.o.position.lerp(rec.want, Math.min(1, dt * 8));
+      const sp = rec.o.userData.spin as THREE.Object3D | undefined; if (sp) sp.rotation.y += dt * 1.5;
     }
     for (const o of springs) {
       const u = o.userData; const a = -260 * u.sx - 14 * u.sv; u.sv += a * dt; u.sx += u.sv * dt;
-      const s = THREE.MathUtils.clamp(u.sx, -0.35, 0.35); o.scale.set(1 + s * 0.6, 1 - s, 1 + s * 0.6);
+      const s = THREE.MathUtils.clamp(u.sx, -0.35, 0.35), b = u.base ?? 1; o.scale.set(b * (1 + s * 0.6), b * (1 - s), b * (1 + s * 0.6));
     }
     for (const [id, h] of hops) { const c = chars.get(id); if (!c) continue; const nh = h - dt; c.userData.body.position.y = nh > 0 ? Math.sin((1 - nh / 0.35) * Math.PI) * 0.4 : 0; if (nh <= 0) hops.delete(id); else hops.set(id, nh); }
     for (const c of chars.values()) c.userData.body.rotation.y = Math.sin(t * 0.8 + c.position.z) * 0.12;
@@ -636,10 +682,14 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
     for (const c of coins) stepCoin(c, dt);
     for (let i = coins.length - 1; i >= 0; i--) if (coins[i].gone) coins.splice(i, 1);
     for (let i = parts.length - 1; i >= 0; i--) { const p = parts[i]; p.life -= dt; p.v.y -= 9 * dt; p.p.addScaledVector(p.v, dt); if (p.life <= 0) parts.splice(i, 1); }
-    // portal
+    // portal: while NEAR signs, coins keep diving into it
     phaseT += dt;
-    const g = portalPhase === 'swirl' ? 1 : portalPhase === 'beam' ? 1.4 : 0;
-    if (portalSwirl) { portalSwirl.uniforms.t.value = t; portalSwirl.uniforms.glow.value += (g - portalSwirl.uniforms.glow.value) * Math.min(1, dt * 4); }
+    if (portalPhase === 'swirl' && portalSock && L) {
+      diveT -= dt;
+      if (diveT <= 0) { diveT = 0.55; const p = L.nodes[portalSock]; const a = Math.random() * 6.28; void spawn(V(p.x + Math.cos(a) * 1.4, 2.6, p.z + Math.sin(a) * 1.4), [{ kind: 'arc', to: p.clone().setY(FLOOR + 0.25), h: 0.5, dur: 0.7 }], diveKind, 0); }
+    }
+    const gl = portalPhase === 'swirl' ? 1 : portalPhase === 'beam' ? 1.4 : 0;
+    if (portalSwirl) { portalSwirl.uniforms.t.value = t; portalSwirl.uniforms.glow.value += (gl - portalSwirl.uniforms.glow.value) * Math.min(1, dt * 4); }
     if (exitSwirl) { exitSwirl.uniforms.t.value = t; exitSwirl.uniforms.glow.value += ((portalPhase === 'beam' || portalPhase === 'pop' ? 1 : 0) - exitSwirl.uniforms.glow.value) * Math.min(1, dt * 3); }
     if (portalPhase === 'beam') { beamU.fade.value = Math.min(1, beamU.fade.value + dt * 3); beamU.head.value = Math.min(1.6, phaseT / 1.2); }
     else beamU.fade.value = Math.max(0, beamU.fade.value - dt * 2);
@@ -647,7 +697,6 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
       const k = Math.min(1, phaseT / 1.1); gem.position.lerpVectors(gemFrom, gemTo, easeInOut(k)); gem.position.y += Math.sin(Math.PI * k) * 2.2;
       gem.rotation.y += dt * 3;
     }
-    // floaters
     for (let i = floaters.length - 1; i >= 0; i--) { const f = floaters[i]; f.t += dt; const p = project(f.at); f.el.style.transform = `translate3d(${p.x}px, ${p.y - f.t * 40}px, 0)`; f.el.style.opacity = String(Math.max(0, 1 - Math.max(0, f.t - 1.4) / 0.6)); if (f.t > 2) { f.el.remove(); floaters.splice(i, 1); } }
   }
   function draw() {
@@ -665,31 +714,33 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
     draw();
     raf = requestAnimationFrame(frame);
   }
-  const onResize = () => layoutCamera();
+  const onResize = () => layoutCamera(true);
   addEventListener('resize', onResize);
   raf = requestAnimationFrame(n => { last = n; frame(n); });
-  (window as unknown as { __ww2: unknown }).__ww2 = { renderScale: (ratio: number) => { renderer.setPixelRatio(Math.max(0.25, Math.min(1, ratio))); draw(); }, state: () => ({ coins: coins.length, held: coins.filter(c => c.gated).length, portal: portalPhase, gem: gem.visible, customer: customer?.visible ?? false }), advance: (s: number) => { for (let i = 0; i < Math.round(s * 30); i++) step(1 / 30); draw(); } };
+  (window as unknown as { __ww2: unknown }).__ww2 = { renderScale: (ratio: number) => { renderer.setPixelRatio(Math.max(0.25, Math.min(1, ratio))); draw(); }, state: () => ({ coins: coins.length, held: coins.filter(c => c.gate).length, portal: portalPhase, gem: gem.visible, customer: customer?.visible ?? false, mode }), advance: (s: number) => { for (let i = 0; i < Math.round(s * 30); i++) step(1 / 30); draw(); } };
 
   return {
     is2d: false,
     setJob, setBuild,
     setGlow(s, n) { glow = new Set(s); nextSock = n; },
     playSale, release, customerLeave,
-    setPortal(phase) {
+    setPortal(phase, kind) {
       if (phase === portalPhase) return;
-      portalPhase = phase; phaseT = 0;
+      portalPhase = phase; phaseT = 0; diveKind = kind;
       if (phase === 'beam') beamU.head.value = 0;
-      if (phase === 'pop' && L && portalPos) {
-        const chi = L.people.chi ?? L.exit;
-        gemFrom = L.exit.clone().setY(FLOOR + 0.6); gemTo = chi.clone().setY(1.35); gem.visible = true;
+      if (phase === 'pop' && L && L.abroad) {
+        const who = L.people[L.abroad]!;
+        gemFrom = L.exit.clone().setY(FLOOR + 0.6); gemTo = who.clone().setY(1.35); gem.visible = true;
         burst(gemFrom, 24, '#9fb0ff');
-        setTimeout(() => { const c = chars.get('chi'); if (c) { kick(c.userData.body, 4); hops.set('chi', 0.35); } }, 1100);
+        const ab = L.abroad;
+        setTimeout(() => { const c = chars.get(ab); if (c) { kick(c.userData.body, 4); hops.set(ab, 0.35); } burst(gemTo, 18, '#ffe14d'); }, 1100);
       }
       if (phase === 'idle') gem.visible = false;
     },
+    focus(m) { if (m === mode) return; mode = m; layoutCamera(false); },
     floater(anchor, html, cls = '') { if (!L) return; const p = anchorPoint(L, anchor); if (p) floaterAt(p.clone().setY(p.y + 0.5), html, cls); },
     hop(person) { const c = chars.get(person); if (c) { kick(c.userData.body, 4); hops.set(person, 0.35); } },
-    relayout: layoutCamera,
+    relayout: () => layoutCamera(false),
     dispose() {
       disposed = true; cancelAnimationFrame(raf); removeEventListener('resize', onResize);
       for (const f of floaters) f.el.remove();
@@ -698,19 +749,20 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
       renderer.dispose(); renderer.forceContextLoss();
     },
   };
+  void build;
 }
 
 // ------------------------------------------------------------------ 2D fallback (no WebGL): static diagram, same anchors
 function create2D(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: SceneOpts): JobScene {
   canvas.dataset.fallback = '2d';
   const c = canvas.getContext('2d');
-  let L: Layout | null = null;
+  let L: Layout | null = null, job: Job | null = null, world: World = { people: [] };
   const map = { sx: 1, ox: 0, oy: 0 };
   const P = (p: V3) => ({ x: map.ox + (p.x + p.z * 0.35) * map.sx, y: map.oy + (p.z * 0.6 - (p.y ?? 0) * 0.8) * map.sx, visible: true });
   function fit() {
     const w = innerWidth, h = innerHeight; canvas.width = w; canvas.height = h;
     if (!L) return;
-    const m = opts.margins?.(w, h, h > w * 1.15) ?? { t: 20, b: 20, l: 20, r: 20 };
+    const m = opts.margins?.(w, h, h > w * 1.15, 'all') ?? { t: 20, b: 20, l: 20, r: 20 };
     const xs = L.fit.map(p => p.x + p.z * 0.35), ys = L.fit.map(p => p.z * 0.6);
     const sx = Math.min((w - m.l - m.r) / (Math.max(...xs) - Math.min(...xs)), (h - m.t - m.b) / (Math.max(...ys) - Math.min(...ys) + 2));
     map.sx = sx; map.ox = m.l - Math.min(...xs) * sx; map.oy = m.t + (h - m.t - m.b) / 2 - (Math.min(...ys) + Math.max(...ys)) / 2 * sx + sx;
@@ -722,28 +774,29 @@ function create2D(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: SceneOp
     if (!L) return;
     const Lo = L;
     c.lineWidth = Math.max(6, map.sx * 0.5); c.lineCap = 'round'; c.strokeStyle = '#2d3040';
-    const line = (a: V3, b: V3) => { const p = P(a), q = P(b); c.beginPath(); c.moveTo(p.x, p.y); c.lineTo(q.x, q.y); c.stroke(); };
-    line(Lo.stand, Lo.hub);
-    for (const ln of Lo.lanes) { const corner = V(Lo.hub.x + 1.3, 0, ln.z); line(Lo.hub, corner); line(corner, ln.end); }
+    const poly = (pts: [number, number][]) => { c.beginPath(); pts.forEach(([x, z], i) => { const q = P(V(x, 0, z)); if (i) c.lineTo(q.x, q.y); else c.moveTo(q.x, q.y); }); c.stroke(); };
+    poly(standPts(Lo));
+    for (const e of Lo.edges) poly(edgePts(Lo.nodes[e.from], Lo.nodes[e.to]));
     const dot = (p: V3, r: number, col: string) => { const q = P(p); c.fillStyle = col; c.beginPath(); c.arc(q.x, q.y, r, 0, 7); c.fill(); };
     dot(Lo.stand, map.sx * 0.9, '#ffd23f');
     for (const [id, p] of Object.entries(Lo.people)) if (p && id !== 'customer') dot(p, map.sx * 0.45, PEOPLE[id as PersonId].shirt);
-    if (Lo.ethIsle) dot(Lo.exit, map.sx * 0.8, '#6f7ff0');
+    if (Lo.isle) dot(Lo.exit, map.sx * 0.8, '#6f7ff0');
     c.fillStyle = 'rgba(255,255,255,.75)'; c.font = '13px sans-serif'; c.textAlign = 'left'; c.fillText('2D view · all controls work', 12, canvas.height - 12);
   }
   let raf = 0, disposed = false;
-  const loop = () => { if (disposed) return; if (L) { const Lo = L; placeAnchors(overlay, id => { const p = anchorPoint(Lo, id); if (!p) return null; const q = P(p); if (innerWidth < 640 && id.startsWith('socket:key')) q.y -= 60; return q; }); } raf = requestAnimationFrame(loop); };
+  const loop = () => { if (disposed) return; if (L) { const Lo = L; placeAnchors(overlay, id => { const p = anchorPoint(Lo, id); return p ? P(p) : null; }); } raf = requestAnimationFrame(loop); };
   raf = requestAnimationFrame(loop);
   addEventListener('resize', fit);
   return {
     is2d: true,
-    setJob(j) { L = layoutFor(j); fit(); },
-    setBuild() { draw(); },
+    setJob(j, w) { job = j; world = w; L = layoutFor(j, { r: null }, w); fit(); },
+    setBuild(b) { if (job) { L = layoutFor(job, b, world); draw(); } },
     setGlow() { /* DOM sockets carry the highlight */ },
-    async playSale() { await wait(900); },
-    async release() { await wait(500); },
+    async playSale(plan, onLand) { await wait(700); for (const f of plan.flows) { await wait(150); onLand?.(f); } },
+    async release(_g, flows, _k, onLand) { await wait(400); for (const f of flows) onLand?.(f); },
     customerLeave() { /* nothing animated */ },
     setPortal() { /* the HUD card shows the phase */ },
+    focus() { /* static */ },
     floater(anchor, html, cls = '') {
       if (!L) return; const p = anchorPoint(L, anchor); if (!p) return;
       const q = P(p); const el = document.createElement('div'); el.className = 'j-floater ' + cls; el.innerHTML = html; el.style.transform = `translate3d(${q.x}px, ${q.y - 20}px, 0)`; overlay.appendChild(el); setTimeout(() => el.remove(), 1800);

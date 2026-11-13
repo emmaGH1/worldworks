@@ -30,7 +30,7 @@ export function AppPage({ machineId }: { machineId: string }) {
   const { limits, error: limitsError } = useLimits();
   const [m, setM] = useState<Loaded | null | 'loading' | { error: string }>('loading');
   const [contract, setContract] = useState<{ contractId: string; portalAddress: string; explorer: string } | null>(null);
-  const [recipient, setRecipient] = useState(DEMO_RECIPIENT);
+  const [recipient, setRecipient] = useState(() => { const to = new URLSearchParams(location.search).get('to') ?? ''; return isEvmAddress(to) ? to : DEMO_RECIPIENT; });
   const [paying, setPaying] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const receiptKey=`ww-receipts-${api.mode}-${machineId}`;
@@ -58,7 +58,8 @@ export function AppPage({ machineId }: { machineId: string }) {
   const total = machine ? BigInt(price(machine)) : 0n;
   const fee = limits ? BigInt(limits.orderFee) : null;
   const jobShop = isJobMachine(machineId);
-  const people = machine && jobShop ? shopPeople(machine) : [];
+  const ownShop = machineId.startsWith('shop-');
+  const people = machine && loaded && jobShop ? shopPeople(machine, loaded.owner) : [];
   const portal = machine ? hasPortal(machine) : false;
   const preview = useMemo(() => { if (!loaded) return null; try { return api.preview(loaded.doc, portal ? PREVIEW_RECIPIENT : undefined); } catch { return null; } }, [loaded, portal]);
   const rules = useMemo(() => (machine && loaded ? describe(machine, loaded.owner) : []), [machine, loaded]);
@@ -183,8 +184,8 @@ export function AppPage({ machineId }: { machineId: string }) {
         {loaded && machine && (
           <>
             <p className="g-eyebrow">Standalone app · runs on NEAR testnet</p>
-            <h1 data-testid="app-title"><span data-testid="shop-title">{jobShop ? "Ada’s bakery" : displayName(machineId)}</span></h1>
-            {jobShop && <><p>This is Ada’s bakery. Pay 0.10 NEAR → it splits automatically.</p><ul className="g-shop-people">{people.map(({person, pct, how}) => <li key={person.id}><Face id={person.id} size={28} /><b>{person.name}</b> · {pct}% {how === 'eth' ? 'pays the Portal → 0.0001 Sepolia ETH' : how === 'after' ? 'after delivery' : 'on NEAR'}</li>)}</ul></> }
+            <h1 data-testid="app-title"><span data-testid="shop-title">{ownShop ? 'A WORLDWORKS shop' : jobShop ? "Ada’s bakery" : displayName(machineId)}</span></h1>
+            {jobShop && <><p>{ownShop ? 'A shop built in WORLDWORKS. Pay 0.10 NEAR → it pays these people automatically.' : 'This is Ada’s bakery. Pay 0.10 NEAR → it splits automatically.'}</p><ul className="g-shop-people" data-testid="shop-people">{people.map(e => <li key={e.key}><Face id={e.face} size={28} /><b>{e.name}</b> · {e.pct}% {e.how === 'eth' ? `pays the Portal → Sepolia ETH${ownShop ? '' : ' to Chi'}` : e.how === 'after' ? 'after delivery' : 'on NEAR'}</li>)}</ul></>}
             <div className="g-price-row"><b data-testid="app-price">{near(total)}</b><span>NEAR</span></div>
             {shares.length > 0 && !preview?.pending && (
               <>
@@ -199,7 +200,7 @@ export function AppPage({ machineId }: { machineId: string }) {
             </details>
             {portal && (
               <label className="g-evm-field">
-                <span>Chi’s Ethereum wallet (demo)</span>
+                <span>{ownShop ? 'Ethereum wallet this shop pays' : 'Chi’s Ethereum wallet (demo)'}</span>
                 <input value={recipient} onChange={e => setRecipient(e.target.value)} placeholder="0x…" spellCheck={false} data-testid="app-recipient" className={recipient && !isEvmAddress(recipient) ? 'bad' : ''} />
                 <small>{recipient && !isEvmAddress(recipient) ? 'Not a 0x address with 40 hex characters.' : recipient.toLowerCase() === DEMO_RECIPIENT.toLowerCase() ? 'Chi’s wallet (demo). You can use your own Sepolia wallet.' : `This machine pays ${preview?.effects.filter(e => e.kind === 'external').map(e => `${eth((e as { wei: string }).wei)} Sepolia ETH`).join(', ') || 'Sepolia ETH'} here.`}</small>
               </label>

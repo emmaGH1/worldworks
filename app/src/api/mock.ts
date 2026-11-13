@@ -123,6 +123,8 @@ async function placeOrder(machineId: string, payer: string, recipient?: string, 
     return payoutId;
   });
   for (const e of effects) if (e.kind === 'vault') rec.vaults[e.name] = (BigInt(rec.vaults[e.name] ?? '0') + BigInt(e.amount)).toString();
+  // a payout to this browser's mock account raises its mock balance, as the contract's transfer would on chain
+  for (const e of effects) if (e.kind === 'payout' && db.account && e.account === db.account) db.balance = (BigInt(db.balance ?? SPONSORED) + BigInt(e.amount)).toString();
   if (res.pending) {
     const m = rec.doc.machine as Machine;
     const credited = effects.reduce((a, e) => a + (e.kind === 'external' ? BigInt(e.fee) : BigInt(e.amount)), 0n);
