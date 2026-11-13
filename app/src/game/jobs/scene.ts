@@ -627,7 +627,7 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
     const w = Math.max(1, innerWidth), h = Math.max(1, innerHeight); portrait = h > w * 1.15;
     renderer.setPixelRatio(Math.min(devicePixelRatio, low ? 1 : touch ? 1.5 : 2));
     renderer.setSize(w, h, false);
-    const az = THREE.MathUtils.degToRad(portrait ? 90 : 18), el = THREE.MathUtils.degToRad(portrait ? 58 : 44);
+    const az = THREE.MathUtils.degToRad(mode === 'title' ? 28 : portrait ? 90 : 18), el = THREE.MathUtils.degToRad(mode === 'title' ? 36 : portrait ? 58 : 44);
     camDir.set(Math.sin(az) * Math.cos(el), Math.sin(el), Math.cos(az) * Math.cos(el));
     let pts = L?.fit ?? [V(-11, 0, -4), V(8, 0, 4)];
     if (mode === 'test' && L) pts = [L.stand, ...Object.values(L.nodes), ...Object.values(L.keys), ...Object.entries(L.people).filter(([id]) => id !== L!.abroad).map(([,p]) => p)].flatMap(p => [p.clone().add(V(-1.1, 0, -1.1)), p.clone().add(V(1.1, 2.8, 1.1))]);
@@ -713,6 +713,7 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
     let n = 0; for (const p of parts) { tmpM.compose(p.p, tmpQ.identity(), tmpS.setScalar(Math.max(0.1, p.life))); pMesh.setMatrixAt(n, tmpM); pMesh.setColorAt(n, p.c); n++; }
     tmpS.set(1, 1, 1);
     pMesh.count = n; pMesh.instanceMatrix.needsUpdate = true; if (pMesh.instanceColor) pMesh.instanceColor.needsUpdate = true;
+    if(canvas.closest('.is-factory')) return;
     renderer.render(scene, camera);
     if (L) { const Lo = L; placeAnchors(overlay, id => { const p = anchorPoint(Lo, id); return p ? project(p) : null; }); }
   }
@@ -738,6 +739,7 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
     stopSim() { for(const c of coins) if(c.kind==='sim') {c.gone=true;c.done();} },
     setPortal(phase, kind) {
       if (phase === portalPhase) return;
+      if(phase==='beam') sound.play('beam');
       portalPhase = phase; phaseT = 0; diveKind = kind;
       if (phase === 'beam') beamU.head.value = 0;
       if (phase === 'pop' && L && L.abroad) {

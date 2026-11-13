@@ -1,0 +1,170 @@
+{
+  "errors": [],
+  "metrics": [
+    {
+      "label": "1366",
+      "calls": 6,
+      "triangles": 6388,
+      "coins": 60,
+      "customers": 4,
+      "budget": {
+        "calls": 150,
+        "triangles": 120000
+      }
+    },
+    {
+      "label": "1366",
+      "state": "fresh",
+      "calls": 2,
+      "triangles": 280,
+      "coins": 0,
+      "customers": 0,
+      "budget": {
+        "calls": 150,
+        "triangles": 120000
+      }
+    },
+    {
+      "label": "1366",
+      "state": "all",
+      "calls": 6,
+      "triangles": 8532,
+      "coins": 72,
+      "customers": 10,
+      "budget": {
+        "calls": 150,
+        "triangles": 120000
+      }
+    },
+    {
+      "label": "1366-2d",
+      "fallback": true,
+      "calls": 0,
+      "triangles": 0
+    },
+    {
+      "label": "1366-2d",
+      "state": "fresh",
+      "fallback": true,
+      "calls": 0,
+      "triangles": 0
+    },
+    {
+      "label": "1366-2d",
+      "state": "all",
+      "fallback": true,
+      "calls": 0,
+      "triangles": 0
+    },
+    {
+      "label": "1920",
+      "calls": 6,
+      "triangles": 6388,
+      "coins": 60,
+      "customers": 4,
+      "budget": {
+        "calls": 150,
+        "triangles": 120000
+      }
+    },
+    {
+      "label": "1920",
+      "state": "fresh",
+      "calls": 2,
+      "triangles": 280,
+      "coins": 0,
+      "customers": 0,
+      "budget": {
+        "calls": 150,
+        "triangles": 120000
+      }
+    },
+    {
+      "label": "1920",
+      "state": "all",
+      "calls": 6,
+      "triangles": 8532,
+      "coins": 72,
+      "customers": 10,
+      "budget": {
+        "calls": 150,
+        "triangles": 120000
+      }
+    },
+    {
+      "label": "1920-2d",
+      "fallback": true,
+      "calls": 0,
+      "triangles": 0
+    },
+    {
+      "label": "1920-2d",
+      "state": "fresh",
+      "fallback": true,
+      "calls": 0,
+      "triangles": 0
+    },
+    {
+      "label": "1920-2d",
+      "state": "all",
+      "fallback": true,
+      "calls": 0,
+      "triangles": 0
+    },
+    {
+      "label": "390",
+      "calls": 6,
+      "triangles": 6388,
+      "coins": 60,
+      "customers": 4,
+      "budget": {
+        "calls": 150,
+        "triangles": 120000
+      }
+    },
+    {
+      "label": "390",
+      "state": "fresh",
+      "calls": 2,
+      "triangles": 280,
+      "coins": 0,
+      "customers": 0,
+      "budget": {
+        "calls": 150,
+        "triangles": 120000
+      }
+    },
+    {
+      "label": "390",
+      "state": "all",
+      "calls": 6,
+      "triangles": 8532,
+      "coins": 72,
+      "customers": 10,
+      "budget": {
+        "calls": 150,
+        "triangles": 120000
+      }
+    },
+    {
+      "label": "390-2d",
+      "fallback": true,
+      "calls": 0,
+      "triangles": 0
+    },
+    {
+      "label": "390-2d",
+      "state": "fresh",
+      "fallback": true,
+      "calls": 0,
+      "triangles": 0
+    },
+    {
+      "label": "390-2d",
+      "state": "all",
+      "fallback": true,
+      "calls": 0,
+      "triangles": 0
+    }
+  ]
+}

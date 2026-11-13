@@ -322,3 +322,74 @@
 /* Processing copy must stay opaque over moving world labels. */
 .jobs-game .j-inside { background:#fff9eb; top:100px; }
 .jobs-game .j-moment-bottom { background:#151a38; }
+/* GAME-6: a single compact HUD, with complete labels and touch targets. */
+.jobs-game .j-top { gap:8px; align-items:center; }
+.jobs-game .j-top .j-icon { width:44px; min-width:44px; height:44px; display:grid; place-items:center; }
+.jobs-game .j-home { display:flex; align-items:center; gap:6px; min-height:44px; }
+.jobs-game .j-chip { min-width:0; max-width:none; min-height:44px; flex:1; }
+.jobs-game .j-chip span { min-width:0; }
+.jobs-game .j-chip b { overflow:hidden; text-overflow:ellipsis; display:block; white-space:nowrap; }
+.jobs-game .j-network { font-size:10px; font-weight:700; color:#183b40; background:#fff8e9; border-radius:6px; padding:5px; }
+.jobs-game .j-hud-sheet { position:fixed; z-index:32; right:10px; top:64px; padding:16px; width:min(340px,calc(100vw - 20px)); box-sizing:border-box; max-height:calc(100dvh - 80px); overflow:auto; }
+.jobs-game .j-hud-sheet button,.jobs-game .j-hud-sheet label { display:flex; align-items:center; gap:10px; width:100%; min-height:44px; padding:8px 12px; border:0; border-radius:8px; color:#17363b; background:#f3eddf; font:inherit; text-align:left; margin:4px 0; }
+.jobs-game .j-hud-sheet h2 {font-size:20px; margin:0 0 16px;}
+.jobs-game .j-hud-sheet p {font-size:14px; line-height:1.4;}
+.jobs-game .j-hud-sheet input {accent-color:#147359;}
+.jobs-game .j-tray {scrollbar-width:thin; scrollbar-color:#48726b #eee8d9; padding-right:32px;}
+.jobs-game .j-trayitem {white-space:nowrap;}
+.jobs-game .j-tray .j-part em {white-space:nowrap;overflow:visible;text-overflow:clip;}
+.jobs-game .j-title-link {display:block;margin:16px auto 0; min-height:44px; background:transparent;color:#fff8e9;border:0;text-decoration:underline;font:inherit;}
+.jobs-game.is-title .j-reopen {visibility:hidden;}
+.jobs-game button:focus-visible {outline:3px solid #16726b;outline-offset:3px;}
+@media(max-width:640px) {
+ .jobs-game .j-top {gap:4px;padding:6px;}
+ .jobs-game .j-home {padding:8px;}
+ .jobs-game .j-home span {display:none;}
+ .jobs-game .j-chip {max-width:none;padding:4px 6px;font-size:12px;}
+ .jobs-game .j-chip .j-stars {font-size:10px;}
+ .jobs-game .j-tray {flex:none;max-width:100%;box-sizing:border-box;}
+}
+.jobs-game.is-factory > .j-canvas,.jobs-game.is-factory > .j-overlay,.jobs-game.is-factory > .j-card,.jobs-game.is-factory > .j-reqpills,.jobs-game.is-factory > .j-bottom,.jobs-game.is-factory > .j-banner,.jobs-game.is-factory > .j-factory,.jobs-game.is-factory > .j-ship,.jobs-game.is-factory > .j-reopen,.jobs-game.is-factory > .j-new-hint,.jobs-game.is-factory > .j-inside {visibility:hidden;pointer-events:none;}
+.jobs-game .j-factory-view {position:fixed;inset:0;z-index:3;}
+.jobs-game .j-factory-heading {position:absolute;top:72px;left:24px;z-index:2;background:#173d40;color:#fff5db;padding:12px 18px;border-radius:12px;max-width:calc(100vw - 48px);}
+.jobs-game .j-factory-heading h1 {margin:0 0 5px;font-size:24px;}
+.jobs-game .j-factory-heading p {margin:4px 0;font-size:14px;}
+.jobs-game .j-factory-map {position:absolute;inset:0;pointer-events:none;}
+.jobs-game .j-plot-label,.jobs-game .j-house-label {position:absolute;left:0;top:0;pointer-events:auto;}
+.jobs-game .j-plot-label button {min-height:44px;display:flex;align-items:center;gap:8px;padding:8px 12px;border:0;border-radius:12px;background:#fff8e9;color:#1d3b3c;font:inherit;text-align:left;box-shadow:0 4px 12px #143c3940;}
+.jobs-game .j-plot-label.next button {background:#ffe08b;outline:2px solid #fff5d6;}
+.jobs-game .j-plot-label.locked button {background:#c6cdb8;color:#3a4b3b;}
+.jobs-game .j-plot-label small,.jobs-game .j-house-label span {display:block;font-size:12px;line-height:1.5;}
+.jobs-game .j-plot-label a {display:block;text-align:center;font-size:11px;background:#173d40;color:#fff5db;padding:5px;border-radius:6px;}
+.jobs-game .j-house-label {background:#173d40;color:#fff5db;padding:6px 10px;border-radius:8px;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.jobs-game .j-house-label strong {display:block;color:#ffe08b;}
+.jobs-game .j-factory-map.fallback {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-content:center;gap:20px;padding:230px 24px 24px;background:#78ab75;overflow:auto;pointer-events:auto;}
+.jobs-game .fallback .j-plot-label,.jobs-game .fallback .j-house-label {position:static;transform:none!important;}
+@media(max-width:640px){
+ .jobs-game .j-factory-heading {top:64px;left:10px;max-width:calc(100vw - 20px);padding:8px 12px;}
+ .jobs-game .j-factory-heading h1 {font-size:19px;}
+ .jobs-game .j-factory-heading p {font-size:12px;}
+ .jobs-game .j-plot-label button {max-width:162px;padding:6px;gap:4px;font-size:12px;}
+ .jobs-game .j-plot-label .j-face {width:22px!important;height:22px!important;}
+ .jobs-game .j-plot-label small {font-size:10px;}
+ .jobs-game .j-house-label {position:fixed;top:auto;bottom:12px;transform:none!important;width:calc(33.333vw - 12px);box-sizing:border-box;padding:6px;white-space:normal;pointer-events:none;}
+ .jobs-game .j-house-label span {font-size:10px;}
+ .jobs-game .house-ada {left:6px;bottom:88px;}.jobs-game .house-bola {left:calc(33.333vw + 3px);bottom:88px;}.jobs-game .house-chi {left:66.666vw;bottom:88px;}.jobs-game .house-dayo {left:6px;}.jobs-game .house-you {left:calc(33.333vw + 3px);}.jobs-game .house-f1,.jobs-game .house-f2 {left:66.666vw;}
+ .jobs-game .j-factory-map.fallback {grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:210px 10px 180px;align-content:start;}
+ .jobs-game .fallback .j-house-label {position:fixed;}
+}
+.jobs-game .j-reqpills {top:68px;}
+@media(max-width:640px){
+ .jobs-game .j-plot-label button {max-width:140px;font-size:11px;}
+ .jobs-game .j-tray::after {content:'›';position:sticky;right:0;display:grid;place-items:center;align-self:stretch;min-width:24px;margin-left:-24px;background:linear-gradient(90deg,transparent,#fff9eb 45%);color:#194e45;font-size:28px;pointer-events:none;}
+}
+.jobs-game .j-real-coin {display:block;background:#ffd45e;color:#4c370b;border-radius:50%;padding:12px;text-align:center;font-size:11px;box-shadow:0 4px 12px #63480740;}
+.jobs-game .j-factory-heading {max-width:min(400px,calc(100vw - 48px));}
+.jobs-game .j-chip {flex:0 1 auto;max-width:360px;}
+.jobs-game .j-network {margin-left:auto;}
+@media(max-width:640px){
+ .jobs-game .j-home span {display:inline;font-size:11px;}
+ .jobs-game .j-home svg {width:18px;height:18px;}
+ .jobs-game .j-chip {flex:1;max-width:none;}
+ .jobs-game .j-chip b {font-size:12px;}
+}

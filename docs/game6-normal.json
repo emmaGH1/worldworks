@@ -1,0 +1,19 @@
+{
+  "audio": {
+    "notes": 8,
+    "states": [
+      "running"
+    ]
+  },
+  "info": {
+    "calls": 6,
+    "triangles": 3132,
+    "coins": 28,
+    "customers": 2,
+    "budget": {
+      "calls": 150,
+      "triangles": 120000
+    }
+  },
+  "errors": []
+}
