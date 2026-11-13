@@ -21,6 +21,7 @@ export interface OrderResult {
   tx: TxRef;
   orderId: string;
   pending: boolean;                      // held at an approval Gate
+  observation?: 'unknown';               // live only: tx was sent but its receipt could not be decoded; effects are unknown (not empty), pending is false
   effects: Array<
     | { kind: 'payout'; account: string; amount: Yocto }
     | { kind: 'vault'; name: string; amount: Yocto }
@@ -45,7 +46,7 @@ export interface WorldworksApi {
   getMachine(machineId: string): Promise<{ doc: MachineDoc; owner: string; vaults: Record<string, Yocto> } | null>;
   order(machineId: string, recipient?: string): Promise<OrderResult>;           // pays the CoinSlot price from the session account
   customerOrder(machineId: string): Promise<OrderResult & { customer: string }>; // seeded customer account buys (labeled "seeded customer")
-  approve(machineId: string, orderId: string): Promise<TxRef>;                   // as the bound Worker
+  approve(machineId: string, orderId: string): Promise<ApproveResult>;           // as the bound Worker; effects include Portal payouts released by the approval
   getPayout(payoutId: string): Promise<PayoutView>;
   relay(payoutId: string): Promise<PayoutView>;                                  // broadcasts via app/api/relay
   contractInfo(): Promise<{ contractId: string; portalAddress: string; explorer: string }>;
@@ -53,6 +54,23 @@ export interface WorldworksApi {
 ```
 
 Rules: amounts are always strings; every on-chain thing shown in the UI carries its explorer link; the UI shows pending states honestly and never shows "confirmed" before `PayoutView.status === 'confirmed'`.
+
+## DEPLOY-1 approve result and observation field
+```ts
+export interface ApproveResult {
+  tx: TxRef;
+  effects: OrderResult['effects'];       // what the release routed, incl. Portal payouts (external effects carry payoutId)
+  pending: boolean;                      // still held (e.g. a second Gate downstream)
+  observation?: 'unknown';
+}
+```
+`approve` returns the decoded approve receipt so callers can track Portal payouts
+released by the approval exactly like payouts from `order` (`trackPayout(payoutId)`).
+`observation: 'unknown'` (on OrderResult and ApproveResult) means the transaction
+was submitted (tx is real) but its function receipt could not be decoded: effects
+are `[]` because they are unknown, and `pending` is `false` because we cannot claim
+the order is held. The UI must say "outcome unknown — check the explorer" and must
+not retry blindly. The mock never sets `observation`.
 
 ## G6 receipt and observation contract
 The NEAR submit_order / approve / expire receipt returns

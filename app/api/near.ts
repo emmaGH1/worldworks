@@ -51,7 +51,7 @@ export async function placeOrder(who: Account, machineId: string, recipient = DE
   // Decode the submit receipt itself: detached signer/recovery receipts have
   // their own return values and must never be mistaken for the order result.
   const outcome = receiptResult(result, 'submit_order');
-  if (!outcome) return {tx,orderId,pending:true,effects:[],trace:['Submitted; receipt observation unavailable. Check this transaction before retrying.']};
+  if (!outcome) return {tx,orderId,pending:false,observation:'unknown',effects:[],trace:['Submitted; receipt observation unavailable. Check this transaction before retrying.']};
   return {tx,orderId,...outcome};
 
 }

@@ -1,0 +1,15 @@
+{
+  "name": "worldworks-ui2-concept",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "../../node_modules/.bin/vite --config vite.config.ts",
+    "build": "../../node_modules/.bin/vite build --config vite.config.ts"
+  },
+  "dependencies": {
+    "three": "0.187.0"
+  },
+  "devDependencies": {
+    "@types/three": "0.187.0"
+  }
+}

@@ -2,8 +2,9 @@ import { createHash } from 'node:crypto';
 import { PublicKey } from 'near-api-js';
 import { rpc, txRef } from './near.js';
 import { body, quota, withSpend, envAccount, failure, serialized, type Request, type Response } from './server-common.js';
-// 9 NEAR covers five (0.1 + 1.32) NEAR orders, publish, account storage and gas.
-export const FUNDING = 9_000_000_000_000_000_000_000_000n;
+// 3 NEAR covers one publish (0.40), one own (0.1 + 1.32) NEAR order, account storage and gas;
+// the seeded customer pays for "Run it for real" orders from its own budget.
+export const FUNDING = 3_000_000_000_000_000_000_000_000n;
 export default async function handler(req:Request,res:Response) {
   try {
     const {publicKey,idempotencyKey} = body(req,res,'session');

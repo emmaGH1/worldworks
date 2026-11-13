@@ -465,8 +465,14 @@ function WorkshopInner() {
     setBusy(`Approving as ${held.worker}…`);
     const row = addRow({ kind: 'approve', title: `${held.worker} approved`, detail: [`order ${held.orderId}`, `as ${workers[held.worker] ?? 'worker'}`], status: 'pending', statusText: 'sending' });
     try {
-      const tx = await api.approve(held.machineId, held.orderId);
+      const { tx, effects } = await api.approve(held.machineId, held.orderId);
       updateRow(row, { status: 'confirmed', statusText: 'confirmed', tx });
+      for (const e of effects) {
+        if (e.kind !== 'external') continue;
+        const prow = addRow({ kind: 'payout', title: 'Portal → Sepolia', detail: [`to ${e.recipient.slice(0, 8)}…${e.recipient.slice(-4)}`], amount: eth(e.wei), unit: 'ETH', status: 'pending', statusText: 'signing on NEAR', tx, payoutId: e.payoutId });
+        setActivePayout(e.payoutId);
+        trackPayout(e.payoutId, prow);
+      }
       glint(held.worker);
       const sim = simulateRelease(held.machine, held.gate, held.amount);
       setHighlight(new Set(sim.steps.map(s => s.edge)));

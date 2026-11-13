@@ -87,7 +87,7 @@ test('session validation precedes quota; repeat idempotency key neither creates 
   let exists=false,creates=0,balance=100_000_000_000_000_000_000_000_000n;
   globalThis.fetch=async()=>new Response(JSON.stringify(exists?{result:{amount:'9000000000000000000000000'}}:{error:{message:'UNKNOWN_ACCOUNT'}}));
   Account.prototype.getState=async()=>({balance:{total:balance,available:balance}}) as any;
-  Account.prototype.createAccount=async()=>{creates++;exists=true;balance-=9_000_000_000_000_000_000_000_000n;return {transaction:{hash:'fixture-session-hash'}} as any;};
+  Account.prototype.createAccount=async()=>{creates++;exists=true;balance-=3_000_000_000_000_000_000_000_000n;return {transaction:{hash:'fixture-session-hash'}} as any;};
   try {
     for(let n=0;n<8;n++) {const r=response();await session({method:'POST',body:{publicKey:'bad'},socket:{remoteAddress:'idempotency-test'}},r);assert.equal(r.code,400);}
     const req={method:'POST',body:{publicKey,idempotencyKey:publicKey},socket:{remoteAddress:'idempotency-test'}};
@@ -116,6 +116,7 @@ test('placeOrder returns submitted tx/order when observation is absent; no histo
     const result=await placeOrder(who,'legacy');
     assert.equal(result.tx.hash,'submitted-hash');assert.match(result.orderId,/^[a-z0-9-]{36}$/);
     assert.deepEqual(result.effects,[]);assert.match(result.trace[0],/observation unavailable/);
+    assert.equal(result.observation,'unknown');assert.equal(result.pending,false);
     assert.deepEqual(calls,['get_machine','get_limits']);
   } finally {globalThis.fetch=prior;}
 });
@@ -126,4 +127,33 @@ test('aggregate spend caps use account balance deltas and reject before sending'
   await withSpend('CUSTOMER',who,CUSTOMER_HOURLY_CAP,async()=>{sent++;balance-=CUSTOMER_HOURLY_CAP-1n;});
   await assert.rejects(withSpend('CUSTOMER',who,2n,async()=>{sent++;}),/hourly spend/);
   assert.equal(sent,1);
+});
+
+test('approve surfaces Portal effects from the approve receipt; undecodable receipt is observation unknown, not pending',async()=>{
+  const {LiveApi}=await import('../src/api/live.js');
+  const {Account}=await import('../api/near.js');
+  const mem=new Map<string,string>();
+  const storage={getItem:(k:string)=>mem.get(k)??null,setItem:(k:string,v:string)=>{mem.set(k,v);},removeItem:(k:string)=>{mem.delete(k);}};
+  const api=new LiveApi(storage,'');
+  const workerKey=KeyPair.fromRandom('ed25519');
+  mem.set('worldworks.testnet.worker.key',workerKey.toString());mem.set('worldworks.testnet.session.key',KeyPair.fromRandom('ed25519').toString());
+  (api as any).session=async()=>({accountId:'approver-fixture.testnet',balance:'0',isNew:false,network:'testnet'});
+  const prior=globalThis.fetch, sendTx=Account.prototype.signAndSendTransaction;
+  globalThis.fetch=async()=>new Response(JSON.stringify({result:{permission:{FunctionCall:{receiver_id:CONTRACT,method_names:['approve'],allowance:null}}}}));
+  const data={pending:false,effects:[{kind:'vault',name:'tips',amount:'5'},{kind:'external',payoutId:'15',recipient:'0x'+'22'.repeat(20),wei:'1000',fee:'1000000000'}],trace:['released']};
+  let receipt:any={SuccessValue:Buffer.from(JSON.stringify(data)).toString('base64')};
+  const calls:any[]=[];
+  Account.prototype.signAndSendTransaction=async function(this:Account,args:any){calls.push({signer:this.accountId,...args});return {transaction:{hash:'approve-hash'},transaction_outcome:{outcome:{receipt_ids:['r']}},receipts_outcome:[{id:'r',outcome:{status:receipt}}]} as any;};
+  try {
+    const ok=await api.approve('lemonade','order-1');
+    assert.equal(ok.tx.hash,'approve-hash');assert.equal(ok.pending,false);assert.equal(ok.observation,undefined);
+    assert.deepEqual(ok.effects,data.effects);
+    assert.equal(calls[0].receiverId,CONTRACT);assert.equal(calls[0].actions[0].functionCall.methodName,'approve');
+    assert.equal(JSON.parse(mem.get('worldworks.testnet.payout.15')!).hash,'approve-hash','payout 15 is linked to its approve tx');
+    receipt={SuccessValue:''};
+    const unknown=await api.approve('lemonade','order-2');
+    assert.deepEqual(unknown,{tx:unknown.tx,effects:[],pending:false,observation:'unknown'});assert.equal(unknown.tx.hash,'approve-hash');
+    receipt={Failure:{}};
+    await assert.rejects(api.approve('lemonade','order-3'),/approve failed/);
+  } finally {globalThis.fetch=prior;Account.prototype.signAndSendTransaction=sendTx;}
 });

@@ -1,4 +1,4 @@
-import type { WorldworksApi, MachineDoc, Session, OrderResult, PayoutView, TxRef } from './types.js';
+import type { WorldworksApi, MachineDoc, Session, OrderResult, PayoutView, TxRef, ApproveResult } from './types.js';
 import { account, KeyPair, actions, CONTRACT, DEMO_RECIPIENT, rpc, view, send, price, placeOrder, txRef, limits, checkId, checkLegacyId, receiptResult } from '../../api/near.js';
 import { validateMachine } from '../engine/index.js';
 import { validate as wasmValidate, preview_order } from '../engine/pkg/worldworks_engine_wasm.js';
@@ -78,7 +78,14 @@ export class LiveApi implements WorldworksApi {
   }
   async order(machineId:string,recipient?:string) { return this.remember(await placeOrder(await this.player(),machineId,recipient)); }
   async customerOrder(machineId:string) { return this.remember(await this.post('customer',{machineId})); }
-  async approve(machineId:string,orderId:string) { checkLegacyId(machineId); checkLegacyId(orderId,64); await this.workerPermission(); const {result,tx}=await send(await this.player(true),'approve',{machine_id:machineId,order_id:orderId}); const outcome=receiptResult(result,'approve'); if(outcome) this.remember({tx,orderId,...outcome}); return tx; }
+  async approve(machineId:string,orderId:string):Promise<ApproveResult> {
+    checkLegacyId(machineId); checkLegacyId(orderId,64); await this.workerPermission();
+    const {result,tx}=await send(await this.player(true),'approve',{machine_id:machineId,order_id:orderId});
+    const outcome=receiptResult(result,'approve');
+    if(!outcome) return {tx,effects:[],pending:false,observation:'unknown'};
+    this.remember({tx,orderId,...outcome});
+    return {tx,effects:outcome.effects,pending:outcome.pending};
+  }
   async getPayout(payoutId:string):Promise<PayoutView> {
     let payout = await this.post('payout',{payout_id:payoutId});
     if(payout.status === 'signature_failed' || payout.retryEligible) {

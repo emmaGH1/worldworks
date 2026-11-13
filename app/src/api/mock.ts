@@ -22,7 +22,7 @@ const MOCK_LIMITS: Limits = {
   epochBudgetWei: '10000000000000000',        // 0.01 Sepolia ETH per epoch
   epochRemainingWei: '10000000000000000',
 };
-const SPONSORED = '9000000000000000000000000'; // 9 test NEAR per session, matching live funding
+const SPONSORED = '3000000000000000000000000'; // 3 test NEAR per session, matching live funding
 
 type Stored = {
   account?: string;
@@ -202,17 +202,23 @@ export const mockApi: WorldworksApi & { limits(): Promise<Limits> } = {
     const m = rec.doc.machine as Machine;
     const sim = simulateRelease(m, h.gate, BigInt(h.amount));
     const tx = nearTx();
+    const effects: OrderResult['effects'] = [];
     for (const s of sim.sinks) {
       const p = m.nodes[s.node];
-      if (p?.type === 'Vault') rec.vaults[p.name] = (BigInt(rec.vaults[p.name] ?? '0') + s.amount).toString();
+      if (p?.type === 'Vault') {
+        rec.vaults[p.name] = (BigInt(rec.vaults[p.name] ?? '0') + s.amount).toString();
+        effects.push({ kind: 'vault', name: p.name, amount: s.amount.toString() });
+      }
+      if (p?.type === 'Payout') effects.push({ kind: 'payout', account: p.account === 'buyer.testnet' ? h.payer : p.account, amount: s.amount.toString() });
       if (p?.type === 'Portal' && h.recipient) {
         const payoutId = String(db.nonce++);
         db.payouts[payoutId] = { createdAt: Date.now(), view: { payoutId, status: 'awaiting_signature', recipient: h.recipient, wei: p.wei, portalAddress: MOCK_PORTAL, nonce: Number(payoutId), nearTx: tx } };
+        effects.push({ kind: 'external', payoutId, recipient: h.recipient, wei: p.wei, fee: s.amount.toString() });
       }
     }
     delete db.held[key];
     save();
-    return tx;
+    return { tx, effects, pending: sim.held.length > 0 };
   },
 
   async getPayout(payoutId) {

@@ -17,11 +17,19 @@ export interface OrderResult {
   tx: TxRef;
   orderId: string;
   pending: boolean;                      // held at an approval Gate
+  observation?: 'unknown';               // live only: tx was sent but its receipt could not be decoded; effects are unknown (not empty), pending is false
   effects: Array<
     | { kind: 'payout'; account: string; amount: Yocto }
     | { kind: 'vault'; name: string; amount: Yocto }
     | { kind: 'external'; payoutId: string; recipient: string; wei: string; fee: Yocto }>;
   trace: string[];
+}
+
+export interface ApproveResult {
+  tx: TxRef;
+  effects: OrderResult['effects'];       // what the release routed, incl. Portal payouts (external effects carry payoutId)
+  pending: boolean;                      // still held (e.g. a second Gate downstream)
+  observation?: 'unknown';               // same meaning as OrderResult.observation
 }
 
 export interface PayoutView {
@@ -42,7 +50,7 @@ export interface WorldworksApi {
   getMachine(machineId: string): Promise<{ doc: MachineDoc; owner: string; vaults: Record<string, Yocto> } | null>;
   order(machineId: string, recipient?: string): Promise<OrderResult>;           // pays the CoinSlot price from the session account
   customerOrder(machineId: string): Promise<OrderResult & { customer: string }>; // seeded customer account buys (labeled "seeded customer")
-  approve(machineId: string, orderId: string): Promise<TxRef>;                   // as the bound Worker
+  approve(machineId: string, orderId: string): Promise<ApproveResult>;           // as the bound Worker; effects include Portal payouts released by the approval
   getPayout(payoutId: string): Promise<PayoutView>;
   relay(payoutId: string): Promise<PayoutView>;                                  // broadcasts via app/api/relay
   contractInfo(): Promise<{ contractId: string; portalAddress: string; explorer: string }>;

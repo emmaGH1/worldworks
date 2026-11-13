@@ -1,0 +1,218 @@
+// /m/:machineId — any published machine as a standalone checkout: the same island in the game's visual language,
+// a pay button that places a REAL order from a sponsored testnet session, and the same Portal sequence.
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { api } from '../api';
+import type { MachineDoc, OrderResult, TxRef } from '../api/types';
+import { addRow, ensureSession, trackPayout, useApp } from '../lib/store';
+import { loadLimits, useLimits } from '../lib/limits';
+import { navigate } from '../lib/router';
+import { describe, hasPortal, price, PREVIEW_RECIPIENT, type Machine } from '../lib/machine';
+import { eth, isEvmAddress, near, shortAddr } from '../lib/units';
+import { createWorld, type World } from './world';
+import { displayName, flowFromEffects, liveKind } from './model';
+import { ModePills, PortalCard, Tx, usePortalSync } from './hud';
+import './game.css';
+
+type Loaded = { doc: MachineDoc; owner: string; vaults: Record<string, string> };
+type Receipt = { result: OrderResult; at: number; recipient?: string; payoutId?: string; approved?: TxRef; approveErr?: string };
+const DEMO_RECIPIENT = '0x000000000000000000000000000000000000dEaD';
+
+export function AppPage({ machineId }: { machineId: string }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const tagsRef = useRef<HTMLDivElement>(null);
+  const [world, setWorld] = useState<World | null>(null);
+  const session = useApp(s => s.session);
+  const sessionError = useApp(s => s.sessionError);
+  const { limits, error: limitsError } = useLimits();
+  const [m, setM] = useState<Loaded | null | 'loading' | { error: string }>('loading');
+  const [contract, setContract] = useState<{ contractId: string; portalAddress: string; explorer: string } | null>(null);
+  const [recipient, setRecipient] = useState(DEMO_RECIPIENT);
+  const [paying, setPaying] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [receipts, setReceipts] = useState<Receipt[]>([]);
+
+  useEffect(() => {
+    const w = createWorld(canvasRef.current!, tagsRef.current!, {
+      variant: 'app',
+      margins: (w0, h0, portrait) => (portrait || w0 < 900 ? { t: 64, b: Math.round(h0 * 0.52) + 8, l: 4, r: 4 } : { t: 70, b: 30, l: 20, r: 440 }),
+    });
+    setWorld(w);
+    return () => w.dispose();
+  }, []);
+
+  const reload = () => api.getMachine(machineId).then(r => setM(r), e => setM({ error: (e as Error).message }));
+  useEffect(() => {
+    void reload();
+    void loadLimits();
+    api.contractInfo().then(setContract, () => setContract(null));
+  }, [machineId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const loaded = m && typeof m === 'object' && 'doc' in m ? m : null;
+  const machine = loaded ? (loaded.doc.machine as Machine) : null;
+  const total = machine ? BigInt(price(machine)) : 0n;
+  const fee = limits ? BigInt(limits.orderFee) : null;
+  const portal = machine ? hasPortal(machine) : false;
+  const preview = useMemo(() => { if (!loaded) return null; try { return api.preview(loaded.doc, portal ? PREVIEW_RECIPIENT : undefined); } catch { return null; } }, [loaded, portal]);
+  const rules = useMemo(() => (machine && loaded ? describe(machine, loaded.owner) : []), [machine, loaded]);
+  const recipientOk = !portal || isEvmAddress(recipient);
+  const workerRole = loaded && session ? Object.entries(loaded.doc.workers).find(([, a]) => a === session.accountId)?.[0] : undefined;
+
+  useEffect(() => {
+    if (!world || !machine) return;
+    const types = new Set(Object.values(machine.nodes).map(p => p.type));
+    const vaultNode = Object.values(machine.nodes).find(p => p.type === 'Vault') as { name: string } | undefined;
+    let vaultY = 0n;
+    for (const e of preview?.effects ?? []) if (e.kind === 'vault') vaultY += BigInt(e.amount);
+    const share = total > 0n ? Number((vaultY * 100n) / total) / 100 : 0;
+    const sinks = ['Vault', 'Portal', 'Payout'].filter(t => types.has(t as never)).length;
+    world.setParts({ splitter: types.has('Splitter') || sinks > 1, vault: types.has('Vault'), portal: types.has('Portal'), payout: types.has('Payout'), vaultShare: share, splitLabel: types.has('Splitter') ? `${Math.round(share * 100)}% kept` : 'routes', priceLabel: `${near(total)} NEAR`, vaultName: vaultNode?.name });
+  }, [world, machine, preview, total]);
+
+  const pay = async () => {
+    if (!machine || paying || !recipientOk || !world) return;
+    setPaying(true); setErr(null);
+    world.callRealCustomer(liveKind() === 'mock' ? 'you · MOCK' : 'you · REAL');
+    try {
+      const s = await ensureSession();
+      if (!s) throw new Error('No testnet account yet. Reload to try again.');
+      const rec = portal ? recipient.trim() : undefined;
+      const result = await api.order(machineId, rec);
+      addRow({ kind: 'order', title: `Bought from ${displayName(machineId)}`, detail: [`machine ${machineId}`, ...(fee !== null ? [`price ${near(total)} + storage fee ${near(fee)}`] : [])], amount: near(fee !== null ? total + fee : total), status: 'confirmed', statusText: result.observation === 'unknown' ? 'sent · outcome unknown' : 'confirmed', tx: result.tx });
+      let payoutId: string | undefined;
+      if (result.observation === 'unknown') world.realCustomerLeave();
+      else {
+        world.payReal(flowFromEffects(result.orderId, liveKind(), result.effects, total, result.pending));
+        for (const e of result.effects) {
+          if (e.kind !== 'external') continue;
+          payoutId = e.payoutId;
+          const row = addRow({ kind: 'payout', title: 'Portal → Sepolia', detail: [`to ${shortAddr(e.recipient)}`], amount: eth(e.wei), unit: 'ETH', status: 'pending', statusText: 'signing on NEAR', tx: result.tx, payoutId: e.payoutId });
+          trackPayout(e.payoutId, row);
+        }
+      }
+      setReceipts(r => [{ result, at: Date.now(), recipient: rec, payoutId }, ...r]);
+      void reload();
+    } catch (e) {
+      world.realCustomerLeave();
+      setErr((e as Error).message || 'The payment did not go through.');
+    }
+    setPaying(false);
+  };
+
+  const approve = async (orderId: string) => {
+    try {
+      const res = await api.approve(machineId, orderId);
+      const tx = (res as { tx?: TxRef }).tx ?? (res as unknown as TxRef);
+      const effects = (res as { effects?: OrderResult['effects'] }).effects ?? [];
+      world?.releaseHeld();
+      for (const e of effects) {
+        if (e.kind !== 'external') continue;
+        const row = addRow({ kind: 'payout', title: 'Portal → Sepolia', detail: [`to ${shortAddr(e.recipient)}`], amount: eth(e.wei), unit: 'ETH', status: 'pending', statusText: 'signing on NEAR', tx, payoutId: e.payoutId });
+        trackPayout(e.payoutId, row);
+      }
+      addRow({ kind: 'approve', title: `Approved order ${orderId}`, status: 'confirmed', statusText: 'confirmed', tx });
+      const pid = effects.find(e => e.kind === 'external') as { payoutId: string } | undefined;
+      setReceipts(rs => rs.map(r => (r.result.orderId === orderId ? { ...r, approved: tx, payoutId: r.payoutId ?? pid?.payoutId } : r)));
+      void reload();
+    } catch (e) { setReceipts(rs => rs.map(r => (r.result.orderId === orderId ? { ...r, approveErr: (e as Error).message } : r))); }
+  };
+
+  const vaultTotal = loaded ? Object.values(loaded.vaults).reduce((a, v) => a + BigInt(v), 0n) : 0n;
+  const shares = (preview?.effects ?? []).map(e => ({
+    label: e.kind === 'vault' ? `kept in “${e.name}”` : e.kind === 'payout' ? (e.account === '$payer' ? 'back to you' : `to ${shortAddr(e.account)}`) : 'Portal fee → Sepolia',
+    amount: BigInt(e.kind === 'external' ? e.fee : e.amount), tone: e.kind,
+  }));
+
+  return (
+    <div className="ww-game ww-app" data-testid="app-page">
+      <canvas ref={canvasRef} className="world" aria-label={`3D view of ${displayName(machineId)}`} />
+      <div ref={tagsRef} className="tags" aria-hidden />
+      <div className="vignette" />
+      <header className="g-app-top">
+        <span className="g-app-mark"><span className="dot" aria-hidden />{displayName(machineId)}</span>
+        <span className="sp" />
+        <ModePills />
+      </header>
+
+      <aside className="g-checkout g-card" data-testid="checkout">
+        {m === 'loading' && <p className="g-muted">Reading the machine from {api.mode === 'mock' ? 'the mock API' : 'NEAR testnet'}…</p>}
+        {(!m || (typeof m === 'object' && 'error' in m)) && (
+          <div data-testid="app-missing">
+            <h1>No machine called “{machineId}”.</h1>
+            <p className="g-muted">{m && 'error' in m ? `Could not read it: ${m.error}` : 'It may not be published yet, or the address is mistyped.'}</p>
+            <button type="button" className="btn" onClick={() => navigate('/')}>Build one in the game</button>
+          </div>
+        )}
+        {loaded && machine && (
+          <>
+            <p className="g-eyebrow">Standalone app · runs on NEAR testnet</p>
+            <h1 data-testid="app-title">{displayName(machineId)}</h1>
+            <div className="g-price-row"><b data-testid="app-price">{near(total)}</b><span>NEAR</span></div>
+            {shares.length > 0 && !preview?.pending && (
+              <>
+                <div className="g-share-bar" aria-hidden>{shares.map((s, i) => <i key={i} className={`g-seg ${s.tone}`} style={{ flexGrow: Number((s.amount * 1000n) / (total || 1n)) || 1 }} />)}</div>
+                <ul className="g-share-legend">{shares.map((s, i) => <li key={i}><i className={`g-seg ${s.tone}`} />{near(s.amount)} {s.label}</li>)}</ul>
+              </>
+            )}
+            <div className="g-line"><span>Price</span><span className="mono">{near(total)} NEAR</span></div>
+            <div className="g-line"><span>Storage fee <small>kept by the contract</small></span><span className="mono">{fee !== null ? `${near(fee)} NEAR` : limitsError ? 'unknown' : '…'}</span></div>
+            <div className="g-line total"><span>Total</span><span className="mono" data-testid="app-total">{fee !== null ? `${near(total + fee)} NEAR` : `${near(total)} NEAR + fee`}</span></div>
+            {portal && (
+              <label className="g-evm-field">
+                <span>Sepolia address that receives the ETH</span>
+                <input value={recipient} onChange={e => setRecipient(e.target.value)} placeholder="0x…" spellCheck={false} data-testid="app-recipient" className={recipient && !isEvmAddress(recipient) ? 'bad' : ''} />
+                <small>{recipient && !isEvmAddress(recipient) ? 'Not a 0x address with 40 hex characters.' : recipient.toLowerCase() === DEMO_RECIPIENT.toLowerCase() ? 'Demo burn address. Paste your own Sepolia address to receive it.' : `This machine pays ${preview?.effects.filter(e => e.kind === 'external').map(e => `${eth((e as { wei: string }).wei)} Sepolia ETH`).join(', ') || 'Sepolia ETH'} here.`}</small>
+              </label>
+            )}
+            <button type="button" className="btn pay" onClick={pay} disabled={paying || !recipientOk || !limits} data-testid="app-pay">
+              {paying ? 'Paying on NEAR testnet…' : `Pay ${fee !== null ? near(total + fee) : near(total)} NEAR`}
+            </button>
+            <p className="g-payer g-muted">{session ? <>Paying from <b className="mono">{session.accountId}</b>, a sponsored testnet account made for this browser. No wallet, no real money.</> : sessionError ? <>Could not create a testnet account: {sessionError}</> : 'A sponsored testnet account is created on your first payment. No wallet.'}</p>
+            {err && <p className="warn" role="alert">{err}</p>}
+
+            {receipts.length > 0 && (
+              <section className="g-receipts" data-testid="app-receipts">
+                {receipts.map(r => <ReceiptView key={r.result.orderId} r={r} world={world} total={total} fee={fee} workerRole={workerRole} onApprove={approve} sessionAccount={session?.accountId} />)}
+              </section>
+            )}
+
+            <details className="g-rules">
+              <summary>How this machine works</summary>
+              <ol data-testid="rules">{rules.map((l, i) => <li key={i}>{l}</li>)}{fee !== null && <li>Each order also pays a {near(fee)} NEAR storage fee, kept by the contract.</li>}</ol>
+              <dl className="g-facts">
+                <div><dt>Machine</dt><dd className="mono">{machineId}</dd></div>
+                <div><dt>Owner</dt><dd className="mono">{loaded.owner}</dd></div>
+                <div><dt>In its vaults</dt><dd className="mono" data-testid="app-vaults">{near(vaultTotal)} NEAR</dd></div>
+                {contract && <div><dt>Contract</dt><dd className="mono">{api.mode === 'mock' ? contract.contractId : <a href={`https://testnet.nearblocks.io/address/${contract.contractId}`} target="_blank" rel="noreferrer">{contract.contractId} ↗</a>}</dd></div>}
+              </dl>
+              <p className="g-muted">Any NEAR account can buy without this page: call <code>submit_order</code> on the contract with exactly price + storage fee attached.</p>
+            </details>
+          </>
+        )}
+        <footer className="g-app-foot"><button type="button" className="g-link" onClick={() => navigate('/')}>Built in WORLDWORKS</button> · <button type="button" className="g-link" onClick={() => navigate('/verify')}>What is real here?</button></footer>
+      </aside>
+    </div>
+  );
+}
+
+function ReceiptView({ r, world, total, fee, workerRole, onApprove, sessionAccount }: { r: Receipt; world: World | null; total: bigint; fee: bigint | null; workerRole?: string; onApprove: (id: string) => void; sessionAccount?: string }) {
+  usePortalSync(world, r.result.orderId, r.payoutId ?? null);
+  return (
+    <article className="g-receipt" data-testid="app-receipt">
+      <header><span className="g-ok-dot" aria-hidden /><div><b>Paid {fee !== null ? near(total + fee) : near(total)} NEAR</b><small>order {r.result.orderId} · {new Date(r.at).toLocaleTimeString()}</small></div><Tx tx={r.result.tx} label="NEAR tx" /></header>
+      {r.result.observation === 'unknown' && <p className="warn">Sent, but the outcome could not be read. Check the explorer before paying again.</p>}
+      <ul>
+        {r.result.effects.map((e, i) => (
+          <li key={i}>
+            {e.kind === 'vault' && <>{near(e.amount)} NEAR kept in the “{e.name}” vault</>}
+            {e.kind === 'payout' && <>{near(e.amount)} NEAR paid to {e.account === sessionAccount ? 'you' : e.account}</>}
+            {e.kind === 'external' && <>{near(e.fee)} NEAR Portal fee → {eth(e.wei)} ETH to {shortAddr(e.recipient)} on Sepolia</>}
+          </li>
+        ))}
+        {r.result.pending && !r.approved && <li className="g-held">The rest is held until the Worker approves.{workerRole && <> You are “{workerRole}”. <button type="button" className="g-mini" onClick={() => onApprove(r.result.orderId)}>Approve as {workerRole}</button></>}</li>}
+        {r.approved && <li>Approved. <Tx tx={r.approved} label="approval tx" /></li>}
+        {r.approveErr && <li className="warn">Approval failed: {r.approveErr}</li>}
+      </ul>
+      {r.payoutId && <PortalCard payoutId={r.payoutId} />}
+    </article>
+  );
+}

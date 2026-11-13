@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>WORLDWORKS · Lemonade</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=JetBrains+Mono:wght@500&display=swap" />
+  <link rel="stylesheet" href="./src/hud.css" />
+</head>
+<body>
+  <canvas id="world"></canvas>
+  <div id="tags"></div>
+  <div id="vignette"></div>
+
+  <div id="hud">
+    <section class="level card">
+      <div class="lvl-row">
+        <span class="lvl-num">1</span>
+        <div class="lvl-text">
+          <div class="lvl-title">Lemonade stand</div>
+          <div class="lvl-goal">Keep <b>70%</b> of every sale · <b>10</b> customers</div>
+        </div>
+      </div>
+      <div class="meter" aria-label="Share kept">
+        <div class="meter-fill" id="keptFill"></div>
+        <div class="meter-target"></div>
+      </div>
+      <div class="lvl-stats">
+        <span>kept <b id="keptPct">0%</b></span>
+        <span class="dots" id="custDots"></span>
+      </div>
+    </section>
+
+    <section class="status">
+      <span class="sim-pill" title="Customers are simulated in your browser by the same wasm engine the contract uses. Nothing here touches a chain.">
+        <i></i>SIMULATED<em>browser engine · no chain</em>
+      </span>
+      <button class="icon-btn" id="mute" title="Sound">🔇</button>
+    </section>
+
+    <section class="dock">
+      <div class="parts">
+        <button class="part p-slot on" title="Coin Slot"><span></span><label>Slot</label></button>
+        <button class="part p-split on" title="Splitter"><span></span><label>Split</label></button>
+        <button class="part p-vault on" title="Vault"><span></span><label>Vault</label></button>
+        <button class="part p-gate" title="Gate"><span></span><label>Gate</label></button>
+        <button class="part p-worker" title="Worker"><span></span><label>Worker</label></button>
+        <button class="part p-payout" title="Payout"><span></span><label>Payout</label></button>
+        <button class="part p-portal on" title="Portal"><span></span><label>Portal</label></button>
+      </div>
+      <button class="run" id="run" title="Concept only: not wired in this prototype">
+        <span class="run-main">Run it for real</span><span class="run-sub">testnet · 1 real order</span>
+      </button>
+    </section>
+
+    <div class="toast" id="toast"></div>
+  </div>
+  <script type="module" src="./src/main.ts"></script>
+</body>
+</html>

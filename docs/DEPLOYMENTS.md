@@ -128,3 +128,51 @@ See [interface changes](../contract/USAGE.md#interface-changes-for-the-app) and
 **Not immutable**: FullAccess key remains; `scripts/lock-contract.sh` was written
 and syntax-checked but NOT run. Old contract-owned vaults/escrow are retained;
 resolve/withdraw them before locking if desired. Keys remain outside the repo.
+
+## DEPLOY-1 Vercel production + UI-2 concept preview — 2026-11-13 UTC
+
+Testnet only. Vercel account `emmagh1` (Hobby, Fluid compute on, region `iad1`).
+
+| Project | URL | Source |
+|---|---|---|
+| `worldworks` (root `app/`, framework Vite, functions `app/api/*.ts`) | https://worldworks.vercel.app | `main` @ `8a59c0a` + DEPLOY-1 Part A working-tree diff (API files, `vercel.json`, minimal Workshop/MachineApp approve fix). Built from a clean `git archive` snapshot, so in-progress GAME-1 work is **not** in this deploy. |
+| `worldworks-concept` (static) | https://worldworks-concept.vercel.app | `app/concepts/ui2` built locally (`vite build`), `dist/` uploaded as static files. Simulated engine only, no chain calls. |
+
+`app/vercel.json`: Vite build to `dist`, `functions["api/*.ts"].maxDuration = 60`,
+SPA rewrite `/((?!api/).*) → /index.html` (so `/m/:id`, `/verify` load the app and
+`/api/*` stays on the functions).
+
+### Environment variable names (Production + Preview; values never in the repo)
+Server (encrypted; `*_PRIVATE_KEY` stored as Vercel *sensitive*): `SPONSOR_ACCOUNT_ID`,
+`SPONSOR_PRIVATE_KEY`, `CUSTOMER_ACCOUNT_ID`, `CUSTOMER_PRIVATE_KEY`, `PORTAL_CONTRACT`,
+`SEPOLIA_RPC_URL`, `SEPOLIA_CONFIRM_RPC_1`, `SEPOLIA_CONFIRM_RPC_2`.
+Client (public, no secrets): `VITE_CONTRACT_ID=ww-portal-261112.testnet`,
+`VITE_NEAR_NETWORK=testnet`, `VITE_RELAYER_URL=` (empty → same-origin `/api/*`).
+
+### Smoke test on https://worldworks.vercel.app (wall-clock from this machine)
+| Check | Result | Time |
+|---|---|---|
+| `GET /`, `/verify`, `/m/lemonade-b49a4e8f-16111a8eb144` | 200; headless Chromium renders workshop, verify page and the machine's payment page with no console errors | — |
+| `GET /api/session` | 405 (POST only) | — |
+| `POST /api/session` (new key) | 200, sponsored account `pace61d66a75141907f4d.ww-sponsor-g4-261112.testnet`, [create tx F7AZiDwg…](https://testnet.nearblocks.io/txns/F7AZiDwgMeS7aR2HBrKyos3Y9BVQRavBSViba4Es8gs1); repeat → `isNew:false` | 2.9 s / 0.3 s |
+| `POST /api/payout {15}` | `confirmed`, 2 independent confirmations, [Sepolia 0xe1037289…](https://sepolia.etherscan.io/tx/0xe1037289c605bd67737874942182d66a755ea3b1c74aaa601e818f46614f5eb5) | 1.2 s |
+| `POST /api/relay {15}` | 200 `broadcast` (already on chain; no re-send) | 1.1 s |
+| One smoke-test order: `POST /api/customer` on `lemonade-b49a4e8f-16111a8eb144` | 200, [NEAR tx BiDheSBd…](https://testnet.nearblocks.io/txns/BiDheSBdR7CVNuCqhGtvnaLrBVcZt9juMoemUKH5NkA3), effects: Portal payout `17` (0.001 ETH → `0x…dEaD`, fee 0.03 NEAR) + 0.07 NEAR to vault `reserve` | 9.0 s |
+| Payout 17: poll → `signed` → `POST /api/relay` → `confirmed` | [Sepolia 0xbd56f544…](https://sepolia.etherscan.io/tx/0xbd56f54489ac5e4fa9ff82e78003617507a5852ada7c6ba7e8becab4fc699452), 2 confirmations | 56 s end to end; relay call 1.3 s |
+
+Function durations: the slowest call is `/api/customer` at ~9 s (submit_order with
+`waitUntil:'FINAL'`); the ~14 s Chain Signatures step happens asynchronously and is
+polled by `/api/payout` (~1 s per call), so no function blocks on the MPC signer.
+`maxDuration: 60` leaves >6× headroom and is within the Hobby limit (60 s non-Fluid,
+300 s Fluid).
+
+Sponsor funding: before the session test the sponsor had 2.74 NEAR (< 9.1 needed per
+session). It was topped up from the public NEAR testnet faucet (fresh account
+`ww-fund-mwemuh8z.testnet` → `DeleteAccount` beneficiary sponsor,
+[tx 5DXxnVZZ…](https://testnet.nearblocks.io/txns/5DXxnVZZnoJHHm1JTKSZhmir9Hrtj2qc6bVMEa84T4g9)).
+A second top-up hit faucet rate limit (HTTP 429). **Sponsor now holds ~3.7 NEAR: new
+visitors get `503 Testnet sponsor is low on funds` until it is refilled** (each new
+session costs 9 NEAR + 0.1 reserve).
+
+Redeploy: `vercel deploy --prod` from a clean checkout root linked to project
+`worldworks` (Root Directory `app`), token from `/opt/ww-secrets/vercel.token`.

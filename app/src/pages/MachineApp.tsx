@@ -78,8 +78,13 @@ export function MachineApp({ machineId }: { machineId: string }) {
 
   const approve = async (orderId: string) => {
     try {
-      const tx = await api.approve(machineId, orderId);
-      setReceipts(rs => rs.map(r => (r.result.orderId === orderId ? { ...r, approvedTx: tx } : r)));
+      const { tx, effects } = await api.approve(machineId, orderId);
+      for (const e of effects) {
+        if (e.kind !== 'external') continue;
+        const row = addRow({ kind: 'payout', title: 'Portal → Sepolia', detail: [`to ${shortAddr(e.recipient)}`], amount: eth(e.wei), unit: 'ETH', status: 'pending', statusText: 'signing on NEAR', tx, payoutId: e.payoutId });
+        trackPayout(e.payoutId, row);
+      }
+      setReceipts(rs => rs.map(r => (r.result.orderId === orderId ? { ...r, approvedTx: tx, result: { ...r.result, effects: [...r.result.effects, ...effects] } } : r)));
       void reload();
     } catch (e) { setErr((e as Error).message); }
   };
