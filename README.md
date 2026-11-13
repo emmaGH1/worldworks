@@ -65,7 +65,7 @@ Source: [G6 evidence](docs/EVIDENCE-g6.md) and [contract usage](contract/USAGE.m
 | "Confirmed" in the UI | matching successful transaction and receipt on two independent Sepolia RPC hosts, plus at least 3 blocks on top on both |
 | Server funding caps | 35 test NEAR/h sponsor, 20 test NEAR/h customer, per server process |
 
-Payouts 0–14 above were 0.001 ETH under the earlier 100 gwei fee snapshot. Payouts 15 and 16 were made at the 3 gwei / 0.0001 ETH settings during the demo recording, e.g. payout 15: [NEAR order](https://testnet.near.rocks/tx/Gah48XxvFzjks1uDVrN5Poi3DYMc8XPp7KzRyL4csGBe), [Sepolia](https://eth-sepolia.blockscout.com/tx/0xe1037289c605bd67737874942182d66a755ea3b1c74aaa601e818f46614f5eb5) (see docs/demo/RECORDING-LOG.md). If the Sepolia base fee rises above 3 gwei, payouts signed with this cap wait in the mempool until the owner raises the cap for later payouts.
+Payouts 0–14 above were 0.001 ETH under the earlier 100 gwei fee snapshot. Payouts 15 and 16 were made at the 3 gwei / 0.0001 ETH settings during the demo recording, e.g. payout 15: [NEAR order](https://testnet.near.rocks/tx/Gah48XxvFzjks1uDVrN5Poi3DYMc8XPp7KzRyL4csGBe), [Sepolia](https://eth-sepolia.blockscout.com/tx/0xe1037289c605bd67737874942182d66a755ea3b1c74aaa601e818f46614f5eb5) (see docs/demo/RECORDING-LOG.md). If the Sepolia base fee rises above 3 gwei, payouts already signed with this cap keep their signed fee and wait in the mempool until network fees fall back under it; because nonces are sequential, later payouts wait behind them. Raising the cap only affects payouts signed afterwards.
 
 ## How NEAR is used
 
@@ -151,7 +151,7 @@ API_PORT=4198 node --import tsx scripts/dev-api.ts     # the log always prints p
 curl -s -X POST http://127.0.0.1:4198/api/session -d '{}'    # {"error":"ed25519 public key required"}
 ```
 
-A funded live deployment needs `SPONSOR_ACCOUNT_ID`, `SPONSOR_PRIVATE_KEY`, `CUSTOMER_ACCOUNT_ID` and `CUSTOMER_PRIVATE_KEY` in the server environment (never as `VITE_` variables), and a frontend built with `VITE_CONTRACT_ID=ww-portal-261112.testnet VITE_NEAR_NETWORK=testnet VITE_RELAYER_URL=<api origin>`. `app/.env.example` lists the three `VITE_` variables but is not committed (`.gitignore` excludes `.env.*`). Live browsing sends testnet transactions. [`docs/OPERATING.md`](docs/OPERATING.md) has deployment notes.
+A funded live deployment needs `SPONSOR_ACCOUNT_ID`, `SPONSOR_PRIVATE_KEY`, `CUSTOMER_ACCOUNT_ID` and `CUSTOMER_PRIVATE_KEY` in the server environment (never as `VITE_` variables), and a frontend built with `VITE_CONTRACT_ID=ww-portal-261112.testnet VITE_NEAR_NETWORK=testnet VITE_RELAYER_URL=<api origin>`. `app/.env.example` (committed) lists the three `VITE_` variables. Live browsing sends testnet transactions. [`docs/OPERATING.md`](docs/OPERATING.md) has deployment notes.
 
 ## Architecture
 
