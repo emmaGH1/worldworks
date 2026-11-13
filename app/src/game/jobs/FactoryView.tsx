@@ -5,28 +5,44 @@ import { JOBS, PEOPLE, fmtN, fmtE, type Ctx, type PersonId } from './jobs';
 import { addTotals, plotsFor, realTotals, simulatedSale, type FactoryProgress, type HouseTotals } from './factory';
 import { createFactoryScene } from './factoryScene';
 import { Face } from './Face';
+import { simClock } from './simClock';
+import { exact, partReason } from './reasoning';
 import { sound } from './sound';
-export function FactoryView({progress,ctx,onOpen,caption,balance,storageKey}:{progress:FactoryProgress;ctx:Ctx;onOpen:(n:number)=>void;caption:string;balance?:string;storageKey:string}) {
+export function FactoryView({progress,ctx,onOpen,caption,balance,storageKey,fast,setFast,live}:{progress:FactoryProgress;ctx:Ctx;onOpen:(n:number)=>void;caption:string;balance?:string;storageKey:string;fast:boolean;setFast:(value:boolean)=>void;live:boolean}) {
   const canvas=useRef<HTMLCanvasElement>(null), overlay=useRef<HTMLDivElement>(null);
+  const contextRef=useRef(ctx);contextRef.current=ctx;
   const scene=useRef<ReturnType<typeof createFactoryScene>|null>(null);
   const plots=useMemo(()=>plotsFor(progress),[progress]);
   const [totals,setTotals]=useState<HouseTotals>(()=>{try {return JSON.parse(localStorage.getItem(storageKey)??'{}',(_k,v)=>typeof v==='string'&&/^\d+n$/.test(v)?BigInt(v.slice(0,-1)):v);}catch{return {};}});
   useEffect(()=>{try{localStorage.setItem(storageKey,JSON.stringify(totals,(_k,v)=>typeof v==='bigint'?`${v}n`:v));}catch{/* storage unavailable */}},[totals,storageKey]);
+  const [intro,setIntro]=useState(()=>{try{return !localStorage.getItem(storageKey+'-meaning');}catch{return true;}});
+  const [shownTotals,setShownTotals]=useState(totals);
+  const shownRef=useRef(totals);
+  useEffect(()=>{const from=shownRef.current;let step=0;const timer=setInterval(()=>{step++;const next:HouseTotals={};for(const id of Object.keys(totals) as PersonId[]){const a=from[id]??{near:0n,wei:0n},b=totals[id]!;next[id]={near:a.near+(b.near-a.near)*BigInt(step)/4n,wei:a.wei+(b.wei-a.wei)*BigInt(step)/4n};}shownRef.current=next;setShownTotals(next);if(step===4)clearInterval(timer);},45);return()=>clearInterval(timer);},[totals]);
   const [customers,setCustomers]=useState(0);
   const ledger=useApp(s=>s.ledger);
   const real=useMemo(()=>realTotals(ledger,progress,ctx),[ledger,progress,ctx]);
   const houses=[...new Set<PersonId>(['ada','bola','chi','dayo','you',...(ctx.friends??[])])];
   const abroad=ctx.friends?.find(f=>!!ctx.evm?.[f]);
   useEffect(()=>{
-    const sc=createFactoryScene(canvas.current!,overlay.current!,plots,abroad);scene.current=sc;
+    const sc=createFactoryScene(canvas.current!,overlay.current!,plots,abroad,api.mode!=='mock',()=>contextRef.current);scene.current=sc;
     sound.ambience(true);
     return ()=>{sc.dispose();scene.current=null;sound.ambience(false);};
   },[plots,abroad]);
+  const previewSales=useMemo(()=>plots.filter(p=>p.state==='solved').map(p=>simulatedSale(p.n,p.build,api,ctx)),[plots,ctx]);
+  const previewTotal=useMemo(()=>previewSales.reduce(addTotals,{}),[previewSales]);
   useEffect(()=>{
-    const sales=plots.filter(p=>p.state==='solved').map(p=>simulatedSale(p.n,p.build,api,ctx));
-    const timer=setInterval(()=>{if(document.hidden)return;setTotals(t=>sales.reduce(addTotals,t));setCustomers(c=>c+sales.length);},6000);
+    const sales=previewSales;
+    let elapsed=5.85, last=performance.now();
+    const timer=setInterval(()=>{const now=performance.now(),dt=(now-last)/1000;last=now;if(document.hidden)return;elapsed+=simClock.delta(dt,true);if(elapsed<6)return;elapsed%=6;
+      const incoming=sales.reduce(addTotals,{});scene.current?.arrive(incoming);sound.play('coin');
+      // Persist the complete WASM sale immediately; only the displayed counter interpolates.
+      setTotals(t=>addTotals(t,incoming));
+      setCustomers(c=>c+sales.length);
+    },50);
     return ()=>clearInterval(timer);
-  },[plots,ctx]);
+  },[plots,ctx,previewSales]);
+  useEffect(()=>{scene.current?.setTotals(totals);},[totals]);
   const observedRows=useRef(new Set(ledger.filter(r=>r.status==='confirmed').map(r=>r.id)));
   useEffect(()=>{
     const ships=[...Object.entries(progress.shipped),...Object.entries(progress.factoryHistory??{}).flatMap(([n,ss])=>ss.map(s=>[n,s] as const))];
@@ -41,13 +57,14 @@ export function FactoryView({progress,ctx,onOpen,caption,balance,storageKey}:{pr
   const open=async(n:number)=>{sound.play('tap');await scene.current?.fly(n);onOpen(n);};
   return <section className="j-factory-view" data-testid="factory-view">
     <canvas ref={canvas} className="j-canvas" aria-hidden />
-    <div className="j-factory-heading"><h1>Your factory</h1><p>Simulated customers · not real money</p><small>{customers} simulated purchases · {plots.filter(p=>p.state==='solved').length} machines running</small>{caption&&<p role="status">{caption}</p>}</div>
+    <div className="j-factory-heading"><h1>Your factory</h1>{!plots.some(p=>p.state==='solved')&&<p>Demo preview · solve a job to run your own machine</p>}<p>Simulated customers · not real money</p><button className="j-mini j-fast" data-testid="factory-fast-forward" aria-pressed={fast && !live} disabled={live} title={live?"Real transactions run at network speed":"Speeds simulated time only"} onClick={()=>setFast(!fast)}>⏩ 4×{fast&&!live?" · SIMULATED":""}</button><small>{customers} simulated purchases · {plots.filter(p=>p.state==='solved').length} machines running</small>{intro&&<p className="j-counter-meaning">Simulated customers buy at your shops; real money shows in gold. <button aria-label="Dismiss counter explanation" onClick={()=>{setIntro(false);try{localStorage.setItem(storageKey+'-meaning','1');}catch{/* unavailable */}}}>×</button></p>}{caption&&<p role="status">{caption}</p>}</div>
     <div ref={overlay} className="j-factory-map">
       {plots.map(p=><div className={`j-plot-label ${p.state}`} key={p.n} data-factory-anchor={`plot:${p.n}`}>
         <button disabled={p.state==='locked'} onClick={()=>void open(p.n)} data-testid={`plot-${p.n}`}>{p.state==='locked'?<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>:<Face id={JOBS[p.n-1].client} size={26}/>}<span><b>{p.n===5?'Your shop':`${p.n}. ${JOBS[p.n-1].title}`}</b><small>{p.state==='locked'?'Locked':p.state==='next'?'Next job':p.state==='solved'?'★'.repeat(p.stars)+' · Edit machine':'Build your shop'}</small></span></button>
-        {p.shipped&&<a href={p.shipped.link??`/m/${p.shipped.machineId}`}>{api.mode==='mock'?'MOCK':'TESTNET'} · Open app ↗</a>}
+        {p.shipped&&<a href={p.shipped.link??`/m/${p.shipped.machineId}`}>{api.mode==='mock'?'MOCK':'⚑ TESTNET'} · Open app ↗</a>}
       </div>)}
-      {houses.map(id=><div className={`j-house-label house-${id}`} key={id} data-factory-anchor={`house:${id}`} data-testid={`house-${id}`}><b>{PEOPLE[id].name}{id==='chi'&&progress.solved[3]?' · Ethereum':''}</b><span>Sim: {fmtN(totals[id]?.near??0n)} NEAR{(totals[id]?.wei??0n)>0n?` · ${fmtE(totals[id]!.wei)} ETH`:''}</span><span>Real: {fmtN(real[id]?.near??0n)} NEAR{(real[id]?.wei??0n)>0n?` · ${fmtE(real[id]!.wei)} ETH`:''}</span>{id==='you'&&balance&&<span>Observed balance: {fmtN(BigInt(balance))} NEAR{api.mode==='mock'?' · MOCK':''}</span>}</div>)}
+      {plots.filter(p=>p.state==='solved').flatMap(p=>Object.entries(p.build).filter(([,part])=>part).map(([id])=><button key={`${p.n}:${id}`} className="j-factory-hit" aria-label={`Inspect ${p.build[id]!.kind}`} data-factory-anchor={`part:${p.n}:${id}`} data-reason={partReason(p.build,id,ctx)} />))}
+      {houses.map(id=><div data-reason={`${PEOPLE[id].name}: one delivered simulated purchase at each running shop pays ${exact(previewTotal[id]?.near??0n)} NEAR and ${exact(previewTotal[id]?.wei??0n,18)} ETH. Real totals require confirmed receipts.`} className={`j-house-label house-${id}`} key={id} data-factory-anchor={`house:${id}`} data-testid={`house-${id}`}><b>{PEOPLE[id].name}{id==='chi'&&progress.solved[3]?' · Ethereum':''}</b><span>Sim: {fmtN(shownTotals[id]?.near??0n)} NEAR{(shownTotals[id]?.wei??0n)>0n?` · ${fmtE(shownTotals[id]!.wei)} ETH`:''}</span><span className="j-real-total">Real: {fmtN(real[id]?.near??0n)} NEAR{(real[id]?.wei??0n)>0n?` · ${fmtE(real[id]!.wei)} ETH`:''}</span>{id==='you'&&balance&&<span>Observed balance: {fmtN(BigInt(balance))} NEAR{api.mode==='mock'?' · MOCK':''}</span>}</div>)}
     </div>
   </section>;
 }

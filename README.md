@@ -97,8 +97,8 @@ facts:
   games_prompt:
     loop: implemented; timings are design horizons, not measured guarantees
     readable_rules: docs/RULES.md
-    reasoning_tooltip: partial; requirement titles and failure explanations, no general reasoning inspector
-    fast_forward: absent as a player control
+    reasoning_tooltip: implemented; hover or touch-hold routing and exact preview amounts
+    fast_forward: 4x simulated time only; disabled during unresolved live runs
     no_wallet_popups: implemented through browser keys and sponsored testnet accounts
   limitations:
     - Testnet only; unaudited prototype
@@ -140,8 +140,8 @@ For the official Games prompt:
 
 - **30-second loop:** place or change a part, Test, inspect a reason, change the build. **Five-minute loop:** solve a job, improve stars and optionally Ship. **Session loop:** unlock the jobs, build Your shop, revisit the saved factory and share an app. These are intended play horizons, not measured completion times.
 - **Rules:** provided in [docs/RULES.md](docs/RULES.md).
-- **Reasoning tooltip: partial.** Requirement pills have native title text; failed Tests show specific amount/ratio explanations with an inspect prompt. There is no general per-part reasoning inspector.
-- **Fast-forward: missing.** Test runs a short scripted sequence; `lowfx` reduces effects and deterministic stepping is for tests. Neither is a player-facing fast-forward mode.
+- **Reasoning tooltips:** hover or touch-hold placed parts, belts, people and requirement pills for routing explanations and exact simulated preview amounts. Portal explanations distinguish its NEAR fee from the separately funded ETH treasury.
+- **Fast-forward: simulated only.** The ⏩ 4× toggle speeds factory traffic and Test pacing; unresolved live runs disable it. Real transactions run at network speed. Reduced effects and deterministic capture stepping remain separate controls.
 - **No wallet popups:** browser-generated keys and sponsored accounts handle live actions. Build/Test needs no wallet or sponsored session; Ship/Pay consumes finite test funds. The demo player holds job 4's real Worker key, even though the puzzle calls the role “customer”.
 
 ## Architecture and why NEAR

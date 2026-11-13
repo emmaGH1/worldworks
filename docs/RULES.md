@@ -11,7 +11,7 @@ Build a money machine that meets a person's goals. Test it locally, improve it, 
 5. **Ship** is optional and real in live mode: create/reuse a sponsored NEAR testnet account, publish the graph and submit a seeded-customer order. Watch the actual status and inspect receipt links. A pending order or signature is not a payment.
 6. Open the machine's `/m/<id>` app, share the URL, or return to **Factory** to edit saved builds and open the next plot. Paying in a live standalone app sends another testnet order.
 
-The short loop is build → Test → inspect → change. A longer loop is solve → improve stars → optionally Ship. A session builds a saved factory and a shareable shop. There is no player-facing fast-forward control. Reduced effects and automated test stepping do not accelerate the chain.
+The short loop is build → Test → inspect → change. A longer loop is solve → improve stars → optionally Ship. A session builds a saved factory and a shareable shop. The ⏩ 4× toggle accelerates simulated customers, coins and Test pacing only. It is disabled during unresolved live runs; real transactions run at network speed. Hover or touch-hold parts, belts, people and requirement pills to inspect money routing and exact preview amounts.
 
 ## Parts
 

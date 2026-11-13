@@ -1,0 +1,11 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {SimClock} from '../src/game/jobs/simClock.js';
+import {partReason,inflow,exact,requirementReason} from '../src/game/jobs/reasoning.js';
+import {JOBS,type Build} from '../src/game/jobs/jobs.js';
+test('4x accelerates simulated time only; live runs force network speed',()=>{const c=new SimClock();assert.equal(c.delta(2,true),2);c.fast=true;assert.equal(c.delta(2,true),8);assert.equal(c.delta(2,false),2);c.live=true;assert.equal(c.delta(2,true),2);assert.equal(c.delta(2,false),2);});
+test('reasoning keeps exact split amounts, including rounding and chained branches',()=>{const b:Build={r:{uid:'s',kind:'Splitter',shares:[60,20,20]}};assert.equal(partReason(b,'r'),'Splitter 60/20/20: of 0.1 NEAR, sends 0.06 to belt 1, 0.02 to belt 2, 0.02 to belt 3.');b['r.1']={uid:'s2',kind:'Splitter',shares:[75,25]};assert.equal(inflow(b,'r.1.0'),15000000000000000000000n);assert.equal(exact(1n),'0.000000000000000000000001');});
+test('Gate, Vault, Payout, Worker and Portal explain money without currency conversion',()=>{const b:Build={r:{uid:'s',kind:'Splitter',shares:[80,20]},'r.1':{uid:'g',kind:'Gate'},'r.1.k':{uid:'k',kind:'Worker',person:'customer'}};assert.match(partReason(b,'r.1'),/holds 0.02 NEAR.*100 blocks/);assert.match(partReason(b,'r.1.k'),/receives no money/);b['r.1']={uid:'v',kind:'Vault'};assert.match(partReason(b,'r.1'),/keeps 0.02 NEAR/);b['r.1']={uid:'p',kind:'Payout',person:'dayo'};assert.match(partReason(b,'r.1'),/0.02 NEAR for Dayo/);b['r.1']={uid:'o',kind:'Portal',wei:'500000000000000'};assert.match(partReason(b,'r.1'),/minimum 0.0005.*0.0005 Sepolia ETH.*No currency conversion/);});
+test('failing requirement gives its exact checker explanation and repair target',()=>{const result={totals:{near:{ada:10000000000000000000000n,bola:20000000000000000000000n,chi:20000000000000000000000n}}} as any;assert.match(requirementReason(JOBS[0],'ada',result,'r'),/Ada got 0.01.*0.06.*Change the part at r/);});
+
+test('unconfigured parts do not invent a recipient or approval permission',()=>{const b:Build={r:{uid:'g',kind:'Gate'}};assert.match(partReason(b,'r'),/none is set/);b.r={uid:'p',kind:'Payout'};assert.match(partReason(b,'r'),/no recipient is selected/);b.r={uid:'k',kind:'Worker'};assert.match(partReason(b,'r'),/cannot approve delivery/);});

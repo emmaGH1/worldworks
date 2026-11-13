@@ -2,6 +2,7 @@
 // (chained Splitters, Gate exits, a Portal anywhere). Nothing moves unless the game asks: one customer, one sale,
 // coins travelling flow by flow along the belts. Interaction is DOM: the scene only positions elements that carry
 // data-anchor="<id>" inside the overlay, so the 2D fallback keeps every control.
+import { simClock } from './simClock';
 import { sound } from './sound';
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
@@ -105,7 +106,7 @@ export function createJobScene(canvas: HTMLCanvasElement, overlay: HTMLElement, 
   return create2D(canvas, overlay, opts);
 }
 
-const wait = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
+
 
 // ------------------------------------------------------------------ anchors (DOM positioning)
 function placeAnchors(overlay: HTMLElement, project: (id: string) => { x: number; y: number; visible: boolean } | null) {
@@ -118,6 +119,7 @@ function placeAnchors(overlay: HTMLElement, project: (id: string) => { x: number
 }
 function anchorPoint(L: Layout, id: string): V3 | null {
   const i = id.indexOf(':'); const kind = i < 0 ? id : id.slice(0, i), key = i < 0 ? '' : id.slice(i + 1);
+  if(kind==='belt'){const parent=key.slice(0,key.lastIndexOf('.'));const a=L.nodes[parent],b=L.nodes[key];return a&&b?a.clone().lerp(b,.5).setY(.5):null;}
   if (kind === 'socket') {
     if (L.nodes[key]) return L.nodes[key].clone().setY(key === 'r' ? 1.3 : 1.15);
     if (L.keys[key]) return L.keys[key].clone().setY(0.9);
@@ -565,7 +567,7 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
     customer.visible = true; custGone = false;
     customer.position.set(Lo.customer.x - 2.6, FLOOR, Lo.customer.z + 1.8);
     custWant = Lo.customer.clone().setY(FLOOR);
-    await wait(700);
+    await simClock.wait(700);
   }
   async function runFlows(flows: Flow[], kind: CoinKind, start: (f: Flow) => { from: V3; pts: V3[]; gate?: string }, onLand?: (f: Flow) => void) {
     let k = 0;
@@ -589,7 +591,7 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
     if (plan.cancelled?.()) return;
     if (standG) kick(standG, 5);
     await runFlows(plan.flows, plan.kind, f => { const pts = pathPts(f.path, true, f.dest.type === 'gate'); return { from: pts[0], pts }; }, onLand);
-    await wait(200);
+    await simClock.wait(200);
   }
   function arrived(f: Flow) {
     const Lo = L!; const d = f.dest;
@@ -615,7 +617,7 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
     if (rec) kick(rec.o, 5);
     await runFlows(flows, kind, f => { const pts = pathPts(f.path, false, false); return { from: nodeAt(gate).clone().setY(1.9), pts }; }, onLand);
     if (bar) setTimeout(() => { bar.rotation.x = 0; }, 600);
-    await wait(200);
+    await simClock.wait(200);
   }
   function customerLeave() { if (customer && !custGone) { custWant = V(-13.5, FLOOR, -2.5); custGone = true; } }
 
@@ -720,7 +722,7 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
   function frame(now: number) {
     if (disposed) return;
     const real = Math.min(0.1, Math.max(0, (now - last) / 1000)); last = now;
-    let left = real; while (left > 1e-6) { const d = Math.min(1 / 30, left); step(d); left -= d; }
+    let left = simClock.delta(real,simClock.testing); while (left > 1e-6) { const d = Math.min(1 / 30, left); step(d); left -= d; }
     draw();
     raf = requestAnimationFrame(frame);
   }
@@ -729,7 +731,7 @@ function createWebGL(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: Scen
   // Explicit deterministic capture mode: the existing advance hook owns rendering.
   // Normal play always uses requestAnimationFrame.
   if (params.get('step') !== '1') raf = requestAnimationFrame(n => { last = n; frame(n); });
-  (window as unknown as { __ww2: unknown }).__ww2 = { renderScale: (ratio: number) => { renderer.setPixelRatio(Math.max(0.25, Math.min(1, ratio))); draw(); }, state: () => ({ coins: coins.length, held: coins.filter(c => c.gate).length, portal: portalPhase, gem: gem.visible, customer: customer?.visible ?? false, mode }), advance: (s: number) => { for (let i = 0; i < Math.round(s * 30); i++) step(1 / 30); draw(); } };
+  (window as unknown as { __ww2: unknown }).__ww2 = { renderScale: (ratio: number) => { renderer.setPixelRatio(Math.max(0.25, Math.min(1, ratio))); draw(); }, state: () => ({ coins: coins.length, held: coins.filter(c => c.gate).length, portal: portalPhase, gem: gem.visible, customer: customer?.visible ?? false, mode }), advance: (s: number) => { for (let i = 0; i < Math.round(simClock.delta(s,simClock.testing) * 30); i++) step(1 / 30); draw(); } };
 
   return {
     is2d: false,
@@ -806,8 +808,8 @@ function create2D(canvas: HTMLCanvasElement, overlay: HTMLElement, opts: SceneOp
     setJob(j, w) { job = j; world = w; L = layoutFor(j, { r: null }, w); fit(); },
     setBuild(b) { if (job) { L = layoutFor(job, b, world); draw(); } },
     setGlow() { /* DOM sockets carry the highlight */ },
-    async playSale(plan, onLand) { await wait(700); for (const f of plan.flows) { if(plan.cancelled?.()) return; await wait(150); onLand?.(f); } },
-    async release(_g, flows, _k, onLand) { await wait(400); for (const f of flows) onLand?.(f); },
+    async playSale(plan, onLand) { await simClock.wait(700); for (const f of plan.flows) { if(plan.cancelled?.()) return; await simClock.wait(150); onLand?.(f); } },
+    async release(_g, flows, _k, onLand) { await simClock.wait(400); for (const f of flows) onLand?.(f); },
     stopSim() { /* static fallback; cancellation is checked by playSale */ },
     customerLeave() { /* nothing animated */ },
     setPortal() { /* the HUD card shows the phase */ },

@@ -2,7 +2,7 @@
 import {launch,watchErrors} from './common.mjs';
 import {mkdirSync,writeFileSync} from 'node:fs';
 const BASE=process.env.UI_BASE??'http://127.0.0.1:4266';
-const DIR=new URL('../../docs/design/screens/',import.meta.url).pathname;mkdirSync(DIR,{recursive:true});
+const DIR=process.env.UI_SHOTS??'/tmp/worldworks-game7-ui/';mkdirSync(DIR,{recursive:true});
 const errors=[],metrics=[];
 process.on('uncaughtException',async e=>{console.error(e);if(globalThis.page){console.error(await globalThis.page.locator('body').innerText());await globalThis.page.screenshot({path:'/tmp/g6-failed.png'});}process.exit(1);});
 const check=(v,m)=>{if(!v)throw Error(m);console.log('ok',m);};
@@ -20,11 +20,11 @@ for(const width of (process.env.UI_WIDTH?[Number(process.env.UI_WIDTH)]:[1366,19
  const place=async(k,s)=>{await T(`tray-${k}`).first().click();await T(`socket-${s}`).click();};
  const pay=async(s,p)=>{await place('Payout',s);await T(`who-${p}`).click();};
  const split=async(s,w)=>{await place('Splitter',s);if(w.length===3)await T('belt-add').click();for(let i=0;i<w.length;i++){let current=Number((await T(`share-${i}`).locator('b').innerText()).replace('%',''));while(current!==w[i]){await T(`share-${i}-${current<w[i]?'plus':'minus'}`).click();current+=current<w[i]?5:-5;}}await T('sheet-done').click();};
- await split('r',[60,20,20]);await pay('r.0','ada');await pay('r.1','bola');await pay('r.2','chi');await T('test').click();await T('factory-view').waitFor({timeout:90000});
- check((await T('factory-view').innerText()).includes('1 machines running'),label+' solved pulls out');
+ await split('r',[60,20,20]);await pay('r.0','ada');await pay('r.1','bola');await pay('r.2','chi');await T('fast-forward').click();check(await T('fast-forward').getAttribute('aria-pressed')==='true',label+' 4x simulated enabled');await T('test').click();await T('factory-view').waitFor({timeout:90000});
+ check(await T('factory-fast-forward').getAttribute('aria-pressed')==='true',label+' factory shares simulated clock');check((await T('factory-view').innerText()).includes('1 machines running'),label+' solved pulls out');
  await page.screenshot({path:`${DIR}g6-factory-one-${label}.png`});
  await T('plot-2').click();await T('card-go').click();if(await page.locator('.j-new-hint button').count())await page.locator('.j-new-hint button').click();
- await split('r',[50,50]);await pay('r.0','ada');await split('r.1',[75,25]);await pay('r.1.0','bola');await pay('r.1.1','chi');await T('test').click();await T('ship').waitFor({timeout:90000});
+ await split('r',[50,50]);await pay('r.0','ada');await split('r.1',[75,25]);await pay('r.1.0','bola');await pay('r.1.1','chi');await T('socket-r').hover();await page.getByRole('tooltip').waitFor();check((await page.getByRole('tooltip').innerText()).includes('0.05 to belt 1'),label+' exact splitter tooltip');await T('test').click();await T('ship').waitFor({timeout:90000});
  await T('menu').click();await T('help').click();await T('help-sheet').waitFor();check(await T('jobs-game').getAttribute('data-job')==='2',label+' contextual help stays job 2');await page.screenshot({path:`${DIR}g6-help-${label}.png`});await T('help-sheet').getByRole('button',{name:'Show me again'}).click();check(await page.locator('.j-new-hint').count()===1,label+' job 2 hint replay');await page.locator('.j-new-hint button').click();
  await T('menu').click();for(const name of ['Jobs','Real transactions','Help','Replay tutorial','Restart this job','Title screen','Close'])check(await T('menu-sheet').getByRole('button',{name,exact:true}).count()===1,label+' menu '+name);await T('menu-sheet').getByRole('button',{name:'Close',exact:true}).click();
  await T('sound').click();await T('sound-popover').getByLabel('Music',{exact:true}).check();await T('sound-popover').getByLabel('Effects',{exact:true}).uncheck();await T('sound-popover').getByRole('slider').fill('0.3');await page.screenshot({path:`${DIR}g6-sound-${label}.png`});await T('sound-popover').getByRole('button',{name:'Close'}).click();
@@ -39,4 +39,4 @@ for(const width of (process.env.UI_WIDTH?[Number(process.env.UI_WIDTH)]:[1366,19
  }
  await browser.close();
 }
-writeFileSync(new URL('../../docs/game6-ui.json',import.meta.url),JSON.stringify({errors,metrics},null,2));check(errors.length===0,JSON.stringify(errors));console.log('PASS GAME-6');
+writeFileSync(new URL('../../docs/game7-ui.json',import.meta.url),JSON.stringify({errors,metrics},null,2));check(errors.length===0,JSON.stringify(errors));console.log('PASS GAME-6');

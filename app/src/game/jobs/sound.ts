@@ -17,7 +17,7 @@ function pulse() {
   tone(notes[beat%8]*(testing?1.5:1), .9, 0, .026, true);
   if(beat%4===0) tone(portalOn?103.83:130.81,2.8,0,.023,true,'triangle',portalOn?110:130.81);
   if(portalOn) tone(110, .9,0,.025,false,'triangle',116);
-  if(factory && beat%2===0) tone(180,.12,0,.012,false,'triangle');
+  if(factory) {tone(90,.9,0,.009,false,'triangle',91);if(beat%2===0)tone(880,.12,0,.012,false,'sine',1320);}
   beat++;
 }
 export const sound = {

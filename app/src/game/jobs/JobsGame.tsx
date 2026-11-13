@@ -23,6 +23,9 @@ import { Face } from './Face';
 import { Spotlight } from './Spotlight';
 import { sound } from './sound';
 import { FACTORY_ENABLED } from './factory';
+import { simClock } from './simClock';
+import { partReason, personReason, requirementReason } from './reasoning';
+import { ReasonTooltip } from './ReasonTooltip';
 import { FactoryView } from './FactoryView';
 import { checkPortalGas } from './portalPreflight';
 
@@ -126,6 +129,7 @@ function fixTarget(job: Job, build: Build, r: TestResult): string {
 // ------------------------------------------------------------------ the game
 export function JobsGame() {
   const [prog, setProg] = useState<Progress>(loadProgress);
+  const [fast,setFast] = useState(false);
   const [overview, setOverview] = useState(()=>FACTORY_ENABLED && !!loadProgress().solved[1] && !new URLSearchParams(location.search).has('job'));
   const [factoryCaption,setFactoryCaption] = useState('');
   const job = jobByN(prog.at);
@@ -276,6 +280,8 @@ export function JobsGame() {
     overlayRef.current?.querySelectorAll<HTMLElement>('[data-socket]').forEach(el => { const r = el.getBoundingClientRect(); const d = Math.hypot(r.x + r.width / 2 - x, r.y + r.height / 2 - y); if (d < bd) { bd = d; best = el.dataset.socket!; } });
     return best;
   };
+  const liveClock = !!run && !['done','error'].includes(run.phase);
+  simClock.fast=fast; simClock.live=liveClock; simClock.testing=test.running && !liveClock;
   const busy = test.running || (!!run && run.job === job.n && !['done', 'error'].includes(run.phase));
   const onChipDown = (e: RPE, item: TrayItem) => {
     if (busy) return;
@@ -302,6 +308,7 @@ export function JobsGame() {
   };
 
   // ---------- TEST (simulated) ----------
+  const reasoningPreview=useMemo(()=>runTest(job,build,api,ctx),[job,build,ctx]);
   const sinks = useMemo(() => sinkFlows(build), [build]);
   const simLabel = (f: SinkFlow) => (f.kind === 'Payout' && f.person ? `+${fmtN(f.amount)}` : f.kind === 'Vault' ? `kept ${fmtN(f.amount)}` : undefined);
   const reveal = (ids: string[]) => setTest(x => ({ ...x, revealed: [...new Set([...x.revealed, ...ids])] }));
@@ -320,9 +327,9 @@ export function JobsGame() {
     if (plan.flows.some(f => f.dest.type === 'portal')) {
       const pf = sinks.find(f => f.kind === 'Portal'); const w = BigInt(build[pf!.path[pf!.path.length - 1]]?.wei ?? '0');
       setTest(x => ({ ...x, caption: 'Portal: NEAR signs an Ethereum payment… (simulated)' }));
-      sc.setPortal('swirl', 'sim'); await sleep(i === 0 ? 1000 : 500);
-      sc.setPortal('beam', 'sim'); await sleep(i === 0 ? 1200 : 700);
-      sc.setPortal('pop', 'sim'); await sleep(1100);
+      sc.setPortal('swirl', 'sim'); await simClock.wait(i === 0 ? 1000 : 500);
+      sc.setPortal('beam', 'sim'); await simClock.wait(i === 0 ? 1200 : 700);
+      sc.setPortal('pop', 'sim'); await simClock.wait(1100);
       if (abroad) sc.floater(`person:${abroad}`, `+${fmtE(w)} ETH`, 'good eth');
       sc.setPortal('idle', 'sim');
       if (i === 0) revealFor(abroad);
@@ -337,7 +344,7 @@ export function JobsGame() {
         await sc.release(g, releaseFlows(build, sinks, g, true, simLabel), 'sim', land);
       } else {
         setTest(x => ({ ...x, caption: holder ? 'This bread never arrived. Nobody confirms…' : 'Nobody holds the Key. Nobody can confirm…' }));
-        await sleep(1300);
+        await simClock.wait(1300);
         setTest(x => ({ ...x, caption: 'Time is up: the Gate sends the money down its “time up” exit.' }));
         await sc.release(g, releaseFlows(build, sinks, g, false, simLabel), 'sim', land);
       }
@@ -345,7 +352,7 @@ export function JobsGame() {
     sc.customerLeave();
     if (i === 0) reveal(job.requirements.filter(q => q.id !== 'refund').map(q => q.id));
     setTest(x => ({ ...x, shown: i + 1 }));
-    await sleep(300);
+    await simClock.wait(300);
   };
   const startTest = async () => {
     if (busy || todos.length) return;
@@ -675,14 +682,16 @@ export function JobsGame() {
 
   return (
     <div className={`ww-game jobs-game ${new URLSearchParams(location.search).get('lowfx') === '1' ? 'lowfx' : ''} ${is2d ? 'is-2d' : ''} ${test.running || shipping ? 'is-running' : ''} ${momentOn ? 'is-moment' : ''} ${!prog.intro || title ? 'is-title' : ''} ${overview && prog.intro && !title ? 'is-factory' : ''}`} onClickCapture={e => { if ((e.target as HTMLElement).closest('button')) sound.play('tap'); if ((e.target as HTMLElement).closest('[data-testid="fail-why"]')) setReviewedFail(true); }} data-testid="jobs-game" data-job={job.n} data-next={next}>
+      <ReasonTooltip />
       <canvas ref={canvasRef} className="j-canvas" aria-hidden />
       <div ref={overlayRef} className="j-overlay">
+        {active.filter(s=>s.parent && s.role==='node').map(s=><div key={`belt:${s.id}`} className="j-anchor" data-anchor={`belt:${s.id}`}><button className="j-belt-hit" aria-label={`Inspect belt ${s.id}`} data-reason={`Belt to ${s.id}: ${partReason(build,s.id,ctx)}`} /></div>)}
         {active.map(s => {
           const p = build[s.id];
           const fits = !!selectedKind && s.accepts.includes(selectedKind);
           return (
             <div key={s.id} className="j-anchor" data-anchor={`socket:${s.id}`}>
-              <button type="button" data-socket={s.id} data-testid={`socket-${s.id}`} disabled={busy}
+              <button data-reason={p ? partReason(build,s.id,ctx) : undefined} type="button" data-socket={s.id} data-testid={`socket-${s.id}`} disabled={busy}
                 className={`j-sock r-${s.role} d-${s.depth} ${p ? `filled k-${p.kind}` : 'empty'} ${s.port === 'p' ? 'port-p' : s.port === 'f' ? 'port-f' : ''} ${fits ? 'fits' : ''} ${target === s.id ? 'targeted' : ''} ${shake === s.id ? 'shake' : ''} ${editing === s.id ? 'editing' : ''}${isNext(`socket:${s.id}`)}`}
                 onClick={() => onSocket(s.id)} aria-label={p ? `${PART_INFO[p.kind].name}: ${shortLabel(p, job, who)}` : `Empty spot: ${s.hint}`}>
                 {p ? <><PartChip kind={p.kind} small /><span className="lbl">{shortLabel(p, job, who)}</span></> : <><b>+</b>{s.hint !== 'empty' && <span className="lbl">{s.hint}</span>}</>}
@@ -692,20 +701,20 @@ export function JobsGame() {
         })}
         {people.map(id => (
           <div key={id} className="j-anchor" data-anchor={`person:${id}`}>
-            <div className={`j-person ${id === job.client ? 'client' : ''}`} data-testid={`person-${id}`}>
+            <div data-reason={personReason(id,result??reasoningPreview)} className={`j-person ${id === job.client ? 'client' : ''}`} data-testid={`person-${id}`}>
               <Face id={id} size={26} /><b>{who(id)}</b>
               {id === abroad && <small>on Ethereum</small>}
               {(id === 'f1' || id === 'f2') && id !== abroad && <small>{shortAddr(friends[id].trim())}</small>}
             </div>
           </div>
         ))}
-        {(test.running || runHere) && <div className="j-anchor" data-anchor="person:customer"><div className="j-person cust"><b>{runHere ? (api.mode === 'mock' ? 'Customer (mock)' : 'Real customer') : `Customer ${test.sale || 1}`}</b></div></div>}
-        <div className="j-anchor" data-anchor="stand"><div className="j-stand"><b>{job.n === 5 ? 'Your shop' : job.shop}</b><small>0.10 NEAR a loaf</small></div></div>
+        {(test.running || runHere) && <div className="j-anchor" data-anchor="person:customer"><div data-reason="Customer: pays 0.10 NEAR per sale. Test customers and their money are simulated; real orders run at network speed." className="j-person cust"><b>{runHere ? (api.mode === 'mock' ? 'Customer (mock)' : 'Real customer') : `Customer ${test.sale || 1}`}</b></div></div>}
+        <div className="j-anchor" data-anchor="stand"><div data-reason="Coin Slot: each simulated customer pays 0.10 NEAR. Order storage fees are separate from the money routed through the machine." className="j-stand"><b>{job.n === 5 ? 'Your shop' : job.shop}</b><small>0.10 NEAR a loaf</small></div></div>
         {job.abroad && <div className="j-anchor" data-anchor="home"><div className="j-sign">{pname(job.abroad)} moved abroad</div></div>}
         {abroad && <div className="j-anchor" data-anchor="isle"><div className="j-isle">Ethereum<small>another blockchain</small></div></div>}
       </div>
 
-      {FACTORY_ENABLED && overview && prog.intro && !title && <FactoryView progress={prog} ctx={factoryCtx} onOpen={openJob} caption={factoryCaption} storageKey={`ww-factory6-${scope()}`} balance={run?.job===5?run.balanceAfter:undefined} />}
+      {FACTORY_ENABLED && overview && prog.intro && !title && <FactoryView progress={prog} ctx={factoryCtx} onOpen={openJob} caption={factoryCaption} fast={fast} setFast={setFast} live={liveClock} storageKey={`ww-factory6-${scope()}`} balance={run?.job===5?run.balanceAfter:undefined} />}
       {/* top bar: job chip + requirement pills */}
       <header className="j-top">
         <button type="button" className="j-home j-mini" aria-label="Factory" data-testid="factory-home" disabled={test.running} onClick={() => { if(FACTORY_ENABLED) {dismissGuide();setOverview(true);setHelp(false);setMenu(false);setEditing(null);setCardOpen(false);setRunClosed(true);setMomentClosed(true);} else setLevels(true); }}><HudIcon kind="home" /><span>Factory</span></button>
@@ -719,7 +728,7 @@ export function JobsGame() {
       {!cardOpen && (
         <ul className="j-reqpills" data-testid="requirements" onClick={() => setCardOpen(true)}>
           {reqRows.map(r => (
-            <li key={r.id} className={r.ok === null ? '' : r.ok ? 'ok' : 'bad'} data-testid={`req-${r.id}`} data-ok={r.ok === null ? '' : String(r.ok)} title={r.text}>
+            <li key={r.id} className={r.ok === null ? '' : r.ok ? 'ok' : 'bad'} data-testid={`req-${r.id}`} data-ok={r.ok === null ? '' : String(r.ok)} data-reason={requirementReason(job,r.id,result,result?fixTarget(job,build,result):'r')} title={r.text}>
               <i>{r.ok === null ? '○' : r.ok ? '✓' : '✗'}</i>{r.pill}{r.amount && <em>{r.amount}</em>}
             </li>
           ))}
@@ -933,6 +942,7 @@ export function JobsGame() {
           </div>
         )}
         <div className="j-actions">
+          <button className="j-mini j-fast" data-testid="fast-forward" aria-pressed={fast && !liveClock} disabled={liveClock} title={liveClock?"Real transactions run at network speed":"Speeds simulated time only"} onClick={()=>setFast(f=>!f)}>⏩ 4×{fast && !liveClock?" · SIMULATED":""}</button>
           {!shipped && !passed && (
             <button type="button" className={`j-btn test${isNext('test')}`} disabled={busy || todos.length > 0} onClick={startTest} data-testid="test">
               Test <small>{test.running ? `customer ${test.sale} of 3 · simulated` : `3 customers · simulated · ${parts} part${parts === 1 ? '' : 's'}`}</small>

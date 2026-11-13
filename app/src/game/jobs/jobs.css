@@ -393,3 +393,27 @@
  .jobs-game .j-chip {flex:1;max-width:none;}
  .jobs-game .j-chip b {font-size:12px;}
 }
+/* GAME-7 presentation: bounded instanced miniatures and money reasoning. */
+.jobs-game .j-reason-tooltip {position:fixed;z-index:100;width:min(320px,calc(100vw - 24px));box-sizing:border-box;padding:12px 15px;background:#173d40;color:#fff5db;border-radius:12px;box-shadow:0 8px 24px #132f3655;font-size:13px;line-height:1.5;pointer-events:none;}
+.jobs-game .j-fast {min-height:44px;white-space:normal;}
+.jobs-game .j-fast[aria-pressed=true] {background:#ffe08b;color:#173d40;}
+.jobs-game .j-factory-heading .j-fast {float:right;margin-left:12px;}
+.jobs-game .j-factory-heading > small {display:block;}
+.jobs-game .j-counter-meaning {max-width:340px;}
+.jobs-game .j-counter-meaning button {background:none;color:inherit;border:0;font-size:18px;}
+.jobs-game .j-real-total {color:#ffe08b;}
+.jobs-game .j-factory-hit {position:absolute;left:0;top:0;width:25px;height:25px;padding:0;pointer-events:auto;border:0;border-radius:50%;background:transparent;}
+.jobs-game .j-factory-hit:focus-visible {outline:2px solid #ffe08b;}
+.jobs-game .fallback .j-factory-hit {display:none;}
+.jobs-game .j-sim-arrival {position:absolute;bottom:100%;left:0;white-space:nowrap;animation:j-arrival 1.8s ease-out forwards;color:#ffdf71;}
+@keyframes j-arrival {to {translate:0 -30px;opacity:0;}}
+@media(max-width:640px) {.jobs-game .j-actions {flex-wrap:wrap;}.jobs-game .j-actions .j-fast {font-size:11px;min-width:64px;padding:6px;}.jobs-game .j-factory-heading {max-width:calc(100vw - 20px);}.jobs-game .j-factory-heading .j-fast {font-size:11px;}.jobs-game .j-counter-meaning {font-size:11px;}}
+.jobs-game .j-belt-hit {width:35px;height:22px;border:0;background:transparent;pointer-events:auto;}
+@media(max-width:640px){.jobs-game .j-house-label {pointer-events:auto;}}
+@media(max-width:640px){.jobs-game .j-plot-label button {max-width:98px;gap:2px;font-size:10px;padding:5px;}.jobs-game .j-plot-label small {font-size:9px;}.jobs-game .j-plot-label .j-face {display:none;}.jobs-game .j-sim-arrival {font-size:11px;}}
+.jobs-game .j-factory-belt-hit {width:12px;height:12px;z-index:0;}
+.jobs-game .j-factory-hit:not(.j-factory-belt-hit) {z-index:1;}
+@media(max-width:640px){.jobs-game .j-factory-hit {width:10px;height:10px;}.jobs-game .j-factory-belt-hit {width:8px;height:8px;}}
+@keyframes j-arrival-phone {to {opacity:0;}}
+@media(max-width:640px){.jobs-game .j-sim-arrival {bottom:auto;top:2px;left:auto;right:3px;font-size:9px;animation:j-arrival-phone 1.8s ease-out forwards;}}
+@media(max-width:640px){.jobs-game .house-f1 {left:66.666vw;bottom:12px;}.jobs-game .house-f2 {left:66.666vw;bottom:164px;}}

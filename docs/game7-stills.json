@@ -1,0 +1,44 @@
+{
+  "fixtureOnly": true,
+  "errors": [],
+  "metrics": [
+    {
+      "label": "1920",
+      "state": "all",
+      "calls": 11,
+      "triangles": 21236,
+      "coins": 128,
+      "customers": 10,
+      "budget": {
+        "calls": 150,
+        "triangles": 120000
+      }
+    },
+    {
+      "label": "1920-2d",
+      "state": "all",
+      "fallback": true,
+      "calls": 0,
+      "triangles": 0
+    },
+    {
+      "label": "390",
+      "state": "all",
+      "calls": 11,
+      "triangles": 21236,
+      "coins": 128,
+      "customers": 10,
+      "budget": {
+        "calls": 150,
+        "triangles": 120000
+      }
+    },
+    {
+      "label": "390-2d",
+      "state": "all",
+      "fallback": true,
+      "calls": 0,
+      "triangles": 0
+    }
+  ]
+}
