@@ -6,7 +6,7 @@
 
 *Mock build · simulated Test; no chain transaction.*
 
-[Play live](https://worldworks.vercel.app) · [Demo video](https://youtu.be/8MuObVqI0sE) · [X post](https://x.com/_HEISEMMA/status/2121620678306660850)
+[Play live](https://worldworks.vercel.app) · [Demo video](https://youtu.be/8MuObVqI0sE) · [X post](https://x.com/_HEISEMMA/status/2121627619451982265)
 
 - **Build, Test, ship:** solve people's money problems with Splitters, Gates, Vaults and Portals.
 - **Real on NEAR:** `ww-portal-261112.testnet` runs the rules; Chain Signatures pays Ethereum Sepolia ([NEAR order](https://testnet.near.rocks/tx/Wckcgn6SAXC8bvfMN9KBmfkxpfdbAf4uKfj8oCkw4G8) → [ETH receipt](https://sepolia.etherscan.io/tx/0xe0d34930bb80261cab1a9c8d488551e29e94f106c7e68a11e234c5db3ddc8d7a)).
