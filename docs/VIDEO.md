@@ -2,6 +2,18 @@
 
 Replaces TRAILER-1 (rated 2/10). Spec: `specs/TRAILER-2.md`. An edited product film cut to a narration in the user's own voice, not a playthrough. Nothing was uploaded or committed.
 
+## Music swap (2026-11-14)
+
+The final uploads `worldworks-demo-cc0music.mp4` and `worldworks-demo-30s-cc0music.mp4` replace the HeyGen track with **"Happy Clappy Loop" by OwlishMedia** (https://opengameart.org/content/happy-clappy-loop, CC0). This is the same track the game ships, recorded in `app/public/sounds/CREDITS.md`. The 17.4 s loop is repeated to 100 s and loudness-matched to the old bed.
+
+Only the soundtrack was re-rendered: the original HyperFrames audio graph, with the same voice, effects, ducking automation and carve, but no picture. The video stream was copied unchanged from the cuts described below.
+
+Loudness:
+- full cut: −14.4 LUFS, peak −0.9 dBFS
+- 30 s cut: −14.1 LUFS, peak −1.3 dBFS
+
+The HeyGen-track notes below now describe only the superseded files.
+
 ## Outputs
 
 | File | ffprobe | Notes |
