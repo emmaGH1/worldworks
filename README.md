@@ -1,8 +1,53 @@
-# WORLDWORKS
+<p align="center"><img src="docs/screens/logo.webp" alt="WORLDWORKS" width="420"></p>
 
-WORLDWORKS is “Factorio for programmable money”: wire parts into money machines that run on NEAR testnet and open as standalone payment apps.
+**Factorio for programmable money:** wire parts into money machines that run on NEAR testnet and open as standalone payment apps.
 
-**Live:** https://worldworks.vercel.app · [Demo video]({{DEMO_VIDEO_URL}}) · [X post]({{DEMO_POST_URL}})
+![A finished money machine during Test — mock build, simulated coins](docs/screens/hero.jpg)
+
+*Mock build · simulated Test; no chain transaction.*
+
+[Play live](https://worldworks.vercel.app) · [Demo video]({{DEMO_VIDEO_URL}}) · [X post]({{DEMO_POST_URL}})
+
+- **Build, Test, ship:** solve people's money problems with Splitters, Gates, Vaults and Portals.
+- **Real on NEAR:** `ww-portal-261112.testnet` runs the rules; Chain Signatures pays Ethereum Sepolia ([NEAR order](https://testnet.near.rocks/tx/Wckcgn6SAXC8bvfMN9KBmfkxpfdbAf4uKfj8oCkw4G8) → [ETH receipt](https://sepolia.etherscan.io/tx/0xe0d34930bb80261cab1a9c8d488551e29e94f106c7e68a11e234c5db3ddc8d7a)).
+- **Why NEAR:** a no-wallet way in; players can leave with a working, shareable payment app.
+
+| What is real | What is simulated |
+|---|---|
+| Live publishing, orders and NEAR settlement on testnet | Test customers, coins, characters and factory Sim totals |
+| Recorded Chain Signatures payout on Ethereum Sepolia | All payments and hashes in the labeled MOCK build |
+| Standalone `/m/<id>` checkout using the published graph | Screenshots below: mock build, seeded saved progress, no real transactions |
+
+Test money only. A signature or animation is not proof of payment; follow the receipts above.
+
+## See the game
+
+| Start | Build and Test | Saved factory |
+|---|---|---|
+| ![Title screen](docs/screens/splash.jpg) | ![Finished machine in Test](docs/screens/editor-test.jpg) | ![Four solved plots](docs/screens/factory.jpg) |
+| Title screen · mock build | Simulated customers and requirement pills · mock build | Seeded solved builds; Sim totals · mock build |
+
+| Cross-chain moment | Outside the game |
+|---|---|
+| ![Portal moment](docs/screens/portal.jpg) | ![Standalone checkout](docs/screens/standalone.jpg) |
+| Mock re-enactment, not a new payout | `/m/<id>` from mock Ship; checkout is simulated |
+
+<details>
+<summary>Coins in motion · mock build, simulated Test (3.6 s loop)</summary>
+
+![Simulated coins flowing through the 60/20/20 machine](docs/screens/coins.gif)
+
+</details>
+
+## Games-track fit
+
+| Ask | Where to see it |
+|---|---|
+| 30 s / 5 min / session loop | Edit → Test → reason → retry / solve and optionally Ship / saved factory and shareable shop. Design horizons, not measured completion times. |
+| Readable rules | [docs/RULES.md](docs/RULES.md): goals, scoring, rounding and failures. |
+| Reasoning tooltips | Hover, focus or touch-hold parts, belts, people and requirement pills for routing and exact simulated preview amounts. |
+| Fast-forward | ⏩ 4× for Test pacing and factory simulation; disabled during unresolved live runs. Network speed is unchanged. |
+| No wallet popups | Build/Test needs no account; live Ship/Pay uses browser keys and finite sponsored testnet funding. |
 
 ## Try it in 30 seconds — no wallet
 
@@ -18,7 +63,7 @@ The quick path is a starting point, not a measured completion-time promise. The 
 
 ## Verify in 30 seconds without spending anything
 
-Run from the repository root with Bash, `curl`, `jq` and GNU `base64`. These commands only read public state. Timing depends on RPC availability. IDs and transaction links come from [GAME-3 evidence](docs/EVIDENCE-game3.md); outputs below were read again for this documentation pass on 2026-11-13.
+Run from the repository root with Bash, `curl`, `jq` and GNU `base64`. These commands only read public state. Timing depends on RPC availability. IDs and transaction links come from [GAME-3 evidence](docs/EVIDENCE-game3.md); outputs below were read again from a fresh clone on 2026-11-14 ([transcript summary](docs/EVIDENCE-readme2.md)).
 
 ```sh
 near_view() {
@@ -64,7 +109,8 @@ This means “included on Sepolia, seen by two RPCs”, not Ethereum finality or
 ```yaml
 facts:
   product: WORLDWORKS
-  reviewed_head: "c73585d"  # later commits fix audit findings, see docs/EVIDENCE-game7.md
+  reviewed_head: "da3915ef0cc6e6262c10c889b640fb2378877f34"  # source reviewed; this docs pass is uncommitted
+  app_tests: 69  # npm test: 68 script tests + WASM/native parity
   network: NEAR testnet
   payout_network: Ethereum Sepolia
   evm_chain_id: 11155111
@@ -92,7 +138,7 @@ facts:
     - CARGO_TARGET_DIR=/opt/ww-target cargo test --manifest-path engine/Cargo.toml
     - cd app && npm run typecheck
     - cd app && npx tsc --noEmit -p api/tsconfig.json
-    - cd app && node --import tsx --test scripts/*.test.ts
+    - cd app && npm test
     - cd app && VITE_CONTRACT_ID= npm run build
   simulated: [Test customers and effects, factory customer stream and Sim totals, characters and coin motion, all mock-mode payments and hashes]
   games_prompt:
@@ -135,15 +181,9 @@ facts:
 | Payout | Request a NEAR transfer to an account, or to the payer on a refund route. |
 | Portal | Spend NEAR as a fee to request a fixed Sepolia ETH transfer from the shared treasury to the order's recipient. No automatic NEAR→ETH swap. |
 
+**Stay in control:** skip Test animation to reveal its computed result; skip intros, camera flights and the Portal animation with remembered preferences. Close overlays with ×, Escape, outside tap or browser Back. Closing a live status view keeps tracking; it does not cancel a transaction. Sound has separate master, music and effects controls. [Control and audio evidence](docs/EVIDENCE-game9.md).
+
 [Readable game rules](docs/RULES.md) cover building, scoring, rounding and failure states. [Machine format](engine/MACHINE_FORMAT.md) describes the lower-level graph rules; the editor exposes a subset.
-
-For the official Games prompt:
-
-- **30-second loop:** place or change a part, Test, inspect a reason, change the build. **Five-minute loop:** solve a job, improve stars and optionally Ship. **Session loop:** unlock the jobs, build Your shop, revisit the saved factory and share an app. These are intended play horizons, not measured completion times.
-- **Rules:** provided in [docs/RULES.md](docs/RULES.md).
-- **Reasoning tooltips:** hover or touch-hold placed parts, belts, people and requirement pills for routing explanations and exact simulated preview amounts. Portal explanations distinguish its NEAR fee from the separately funded ETH treasury.
-- **Fast-forward: simulated only.** The ⏩ 4× toggle speeds factory traffic and Test pacing; unresolved live runs disable it. Real transactions run at network speed. Reduced effects and deterministic capture stepping remain separate controls.
-- **No wallet popups:** browser-generated keys and sponsored accounts handle live actions. Build/Test needs no wallet or sponsored session; Ship/Pay consumes finite test funds. The demo player holds job 4's real Worker key, even though the puzzle calls the role “customer”.
 
 ## Architecture and why NEAR
 
@@ -166,7 +206,7 @@ NEAR supplies the machine runtime, accounts that can be sponsored without wallet
 
 ## Run locally
 
-From this checkout, with Node/npm (checked here with Node 22.23.3 and npm 10.9.9):
+From this checkout, with Node/npm (checked here with Node 22.23.3 and npm 10.9.9). The compiled Rust/WASM browser engine is checked in; Rust is only needed for native tests and rebuilding it:
 
 ```sh
 cd app
@@ -181,7 +221,7 @@ Open the printed local URL. Empty `VITE_CONTRACT_ID` selects mock mode, labeled 
 curl --fail --silent --output /dev/null --write-out '%{http_code}\n' http://127.0.0.1:4197/
 ```
 
-This pass: install succeeded, mock build succeeded, preview served HTTP `200`. The existing large-chunk build warning remains.
+Fresh-clone install and mock build pass; preview serves HTTP `200`. The existing large-chunk warning remains. See [reproducibility evidence](docs/EVIDENCE-readme2.md).
 
 Live mode requires separately provisioned, funded testnet credentials. Do not run it for a free reproducibility check. The public client configuration names in [app/.env.example](app/.env.example) are **`VITE_CONTRACT_ID`, `VITE_NEAR_NETWORK`, `VITE_RELAYER_URL`**. Configure them in `app/.env.local` for the contract/network above and local API origin, then run these in separate shells from `app/`:
 
@@ -192,15 +232,13 @@ npm run dev -- --host 127.0.0.1
 
 Supply the server environment separately: `SPONSOR_ACCOUNT_ID`, `SPONSOR_PRIVATE_KEY`, `CUSTOMER_ACCOUNT_ID`, `CUSTOMER_PRIVATE_KEY`. Optional server overrides are `PORTAL_CONTRACT`, `SEPOLIA_RPC_URL`, `SEPOLIA_CONFIRM_RPC_1`, `SEPOLIA_CONFIRM_RPC_2`; these server names are documented in [DEPLOYMENTS](docs/DEPLOYMENTS.md), not in the three-variable client example. Private keys must never use a `VITE_` prefix. The local API listens on its default port or `API_PORT`. No credential values are included here. Live startup was not run in this pass.
 
-Tests (no remote sends):
+Tests (no remote sends; Rust/Cargo required for engine tests and the WASM/native comparison in `npm test`):
 
 ```sh
 # Repository root
 CARGO_TARGET_DIR=/opt/ww-target cargo test --manifest-path engine/Cargo.toml
-# app/
-npm run typecheck
-npx tsc --noEmit -p api/tsconfig.json
-node --import tsx --test scripts/*.test.ts
+# Repository root; app checks run in a subshell
+(cd app && npm run typecheck && npx tsc --noEmit -p api/tsconfig.json && npm test)
 ```
 
 Contract sandbox checks need Rust, cargo-near, a local NEAR sandbox and writable `/opt/ww-target`; the tests currently use fixed artifact paths:
@@ -213,11 +251,11 @@ cargo near build non-reproducible-wasm --manifest-path contract/tests/mock-signe
 cargo test --manifest-path contract/Cargo.toml -- --nocapture
 ```
 
-Those contract commands are recorded in [G6 evidence](docs/EVIDENCE-g6.md); they were not rerun for this documentation change. Browser test instructions/results are in [GAME-6](docs/EVIDENCE-game6.md) and [GAME-7 evidence](docs/EVIDENCE-game7.md). Its scripts use machine-specific Playwright/Chromium paths and write evidence/screenshots; `npm ci` alone does not install those browser prerequisites.
+Contract sandbox results and prerequisites are recorded in [G6 evidence](docs/EVIDENCE-g6.md); see [this fresh-clone check](docs/EVIDENCE-readme2.md) for current results. Browser test instructions/results are in [GAME-6](docs/EVIDENCE-game6.md) and [GAME-7 evidence](docs/EVIDENCE-game7.md). Its scripts use machine-specific Playwright/Chromium paths and write evidence/screenshots; `npm ci` alone does not install those browser prerequisites.
 
 ## Honest limitations
 
-- **Testnet only, unaudited prototype.** The contract still has a FullAccess deployment key (read again this pass); it can be redeployed. No immutability or exclusive signing-authority claim.
+- **Testnet only, unaudited prototype.** The contract still has a FullAccess deployment key ([recorded access-key check](docs/CLAIMS.md)); it can be redeployed. No immutability or exclusive signing-authority claim.
 - **Fresh Sepolia recipients:** observed fresh addresses need more than 21,000 gas, while Portal signs exactly 21,000. Both game and standalone checkout preflight refuse incompatible recipients and fail closed on RPC errors. Arbitrary contract recipients are unsupported.
 - **The payer chooses the Ethereum recipient per order.** `?to=` suggests an address; it does not bind it in the published graph. Your shop supports at most one Ethereum friend. Friend names are owner-local; shared pages show addresses.
 - **Finite funding:** each new sponsored session receives 4.5 test NEAR. Publish recommends 0.40 NEAR with unused storage deposit refunded; each order retains a 1.32 NEAR storage fee in addition to its price. Sponsor exhaustion can prevent Ship/Pay. Older evidence lists larger grants; current `app/api/session.ts` sets 4.5 NEAR. Quotas are best-effort, per-process memory, not durable distributed abuse protection.
@@ -237,6 +275,6 @@ Built with AI coding agents: Claude and GPT models orchestrated by the author fo
 
 The hackathon window starts **October 19, 2026**, with submission deadline **November 14, 2026 at 23:59 UTC** (author-supplied event dates). Repository history starts **November 12, 2026**; it does not establish October 19 as the first code date. Work described here was built during that window. The initial commit contains a project-starter README and icon; no pre-event WORLDWORKS implementation is claimed.
 
-Runtime dependencies used by the app are React/React DOM, Three.js, near-api-js and viem; @xyflow/react, d3-sankey, howler and motion remain declared in app/package.json but are not imported by the current app; Vite/TypeScript/tsx tooling; Rust near-sdk, omni-transaction, serde/serde_json, sha2, bs58 and wasm-bindgen; near-workspaces, tokio, anyhow, proptest and Playwright for tests. See [app manifest](app/package.json), [engine manifest](engine/Cargo.toml), [contract manifest](contract/Cargo.toml), [WASM manifest](engine-wasm/Cargo.toml) and lockfiles for exact dependencies. Sounds are synthesized ([credits](app/public/sounds/CREDITS.md)); fonts load Bricolage Grotesque, Fredoka, Nunito and JetBrains Mono ([font declarations](app/index.html)). The earlier [Chain Signatures probe](probes/chainsig/) is repository work, separate from the production Portal treasury.
+Runtime dependencies used by the app are React/React DOM, Three.js, near-api-js and viem; @xyflow/react, d3-sankey, howler and motion remain declared in app/package.json but are not imported by the current app; Vite/TypeScript/tsx tooling; Rust near-sdk, omni-transaction, serde/serde_json, sha2, bs58 and wasm-bindgen; near-workspaces, tokio, anyhow, proptest and Playwright for tests. See [app manifest](app/package.json), [engine manifest](engine/Cargo.toml), [contract manifest](contract/Cargo.toml), [WASM manifest](engine-wasm/Cargo.toml) and lockfiles for exact dependencies. Sound uses CC0 Kenney effects and the CC0 *Happy Clappy Loop* by OwlishMedia, with procedural music as a load-failure fallback ([credits](app/public/sounds/CREDITS.md)); fonts load Bricolage Grotesque, Fredoka, Nunito and JetBrains Mono ([font declarations](app/index.html)). The earlier [Chain Signatures probe](probes/chainsig/) is repository work, separate from the production Portal treasury.
 
 [MIT License](LICENSE). Dependencies retain their own licenses.

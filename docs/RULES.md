@@ -13,6 +13,12 @@ Build a money machine that meets a person's goals. Test it locally, improve it, 
 
 The short loop is build → Test → inspect → change. A longer loop is solve → improve stars → optionally Ship. A session builds a saved factory and a shareable shop. The ⏩ 4× toggle accelerates simulated customers, coins and Test pacing only. It is disabled during unresolved live runs; real transactions run at network speed. Hover or touch-hold parts, belts, people and requirement pills to inspect money routing and exact preview amounts.
 
+## Skipping and dismissal
+
+**Skip animation · show test result** reveals the already-computed Test outcome and saves a passing build; it does not change the rules or send a transaction. Intro, camera-flight and Portal skips remember the preference locally. **Skip to the next job** lets a passing player continue without shipping. Factory preview is endless; its next-job/shop button is available without waiting for traffic.
+
+Overlays support close buttons, Escape, outside tap and browser Back, with the current overlay dismissed first. During Test, dismissal skips the animation to its result. Closing or skipping a live Portal/status view keeps tracking in the background; it does not cancel a payment or accelerate network confirmation. Use **?** for help. Sound controls separately adjust master, music and effects; mute and reduced effects are available.
+
 ## Parts
 
 | Part | Rules |
@@ -61,4 +67,4 @@ Solved saved builds appear as factory plots. Their miniature parts and moving co
 
 ## Sources
 
-Rules checked against `app/src/game/jobs/jobs.ts` (jobs, scoring, compiler and Test), `JobsGame.tsx` (progression and live flow), `factory.ts` / `FactoryView.tsx` (Sim/Real separation), `reasoning.ts` / `simClock.ts` (tooltips and simulated-only 4×), [machine format](../engine/MACHINE_FORMAT.md), [contract interface](../contract/USAGE.md), and [GAME-3](EVIDENCE-game3.md), [GAME-4](EVIDENCE-game4.md), [GAME-5](EVIDENCE-game5.md), [GAME-6](EVIDENCE-game6.md), [GAME-7 evidence](EVIDENCE-game7.md). See [CLAIMS](CLAIMS.md) for evidence locations and verification limits.
+Rules checked against `app/src/game/jobs/jobs.ts` (jobs, scoring, compiler and Test), `JobsGame.tsx` (progression and live flow), `factory.ts` / `FactoryView.tsx` (Sim/Real separation), `reasoning.ts` / `simClock.ts` (tooltips and simulated-only 4×), [machine format](../engine/MACHINE_FORMAT.md), [contract interface](../contract/USAGE.md), and [GAME-3](EVIDENCE-game3.md), [GAME-4](EVIDENCE-game4.md), [GAME-5](EVIDENCE-game5.md), [GAME-6](EVIDENCE-game6.md), [GAME-7 evidence](EVIDENCE-game7.md), [GAME-9/10 controls and sound evidence](EVIDENCE-game9.md). See [CLAIMS](CLAIMS.md) for evidence locations and verification limits.
