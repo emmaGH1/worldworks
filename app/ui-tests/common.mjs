@@ -13,5 +13,8 @@ export async function launch() {
 export function watchErrors(page, sink) {
   page.on('console', m => { if (m.type() === 'error') sink.push(`console: ${m.text()} ${m.location()?.url ?? ''}`); });
   page.on('pageerror', e => sink.push(`pageerror: ${e.message}`));
-  page.on('requestfailed', r => { if (!/fonts\.(googleapis|gstatic)/.test(r.url())) sink.push(`requestfailed: ${r.url()} ${r.failure()?.errorText}`); });
+  page.on('requestfailed', r => {
+    // Chromium may cancel an icon fetch when a fixture reloads or its context closes.
+    if (r.failure()?.errorText === 'net::ERR_ABORTED' && /\/brand\/mark-(64|180)\.png$/.test(r.url())) return;
+    if (!/fonts\.(googleapis|gstatic)/.test(r.url())) sink.push(`requestfailed: ${r.url()} ${r.failure()?.errorText}`); });
 }

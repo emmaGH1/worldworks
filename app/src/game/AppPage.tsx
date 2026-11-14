@@ -194,7 +194,7 @@ export function AppPage({ machineId }: { machineId: string }) {
       <div ref={tagsRef} className="tags" aria-hidden />
       <div className="vignette" />
       <header className="g-app-top">
-        <span className="g-app-mark"><span className="dot" aria-hidden />{displayName(machineId)}</span>
+        <button type="button" className="g-app-brand" onClick={() => navigate('/')}><img src="/brand/mark-64.png" alt="" width="32" height="32" /><span>Built in <b>WORLDWORKS</b></span></button>
         <span className="sp" />
         <ModePills />
       </header>

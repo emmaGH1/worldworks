@@ -329,3 +329,6 @@
 /* Unobserved results carry no success or failure cue. */
 .lr.unknown .lr-st, .lr-st.unknown { color: var(--muted, #66716b); }
 canvas[data-fallback="2d"] { background: #3f979d; }
+.ww-game .g-app-brand {display:flex;align-items:center;gap:8px;background:none;border:0;color:#07272b;font:600 12px Nunito,sans-serif;cursor:pointer;text-align:left;padding:0;min-width:0;}
+.ww-game .g-app-brand b {display:block;font-size:13px;}
+.ww-game .g-app-brand:focus-visible {outline:3px solid #16726b;outline-offset:4px;}

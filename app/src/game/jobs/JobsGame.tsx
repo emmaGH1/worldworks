@@ -684,6 +684,16 @@ export function JobsGame() {
     return PART_INFO[p.kind].name;
   };
   const shareText = job.n === 5 ? 'I built a money machine in WORLDWORKS. Buy a loaf for 0.10 test NEAR and it pays me (and my friends) automatically on NEAR testnet:' : `I solved “${job.title}” in WORLDWORKS. This shop splits every sale on NEAR testnet by itself:`;
+  useEffect(() => {
+    if ((prog.intro && !title) || help) return;
+    const startOnEnter = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && !e.repeat && !(e.target instanceof Element && e.target.closest('button,a,input'))) {
+        e.preventDefault(); update({intro:true}); setTitle(false);
+      }
+    };
+    window.addEventListener('keydown', startOnEnter);
+    return () => window.removeEventListener('keydown', startOnEnter);
+  }, [prog.intro, title, help]);
   const share = async () => { try { if (navigator.share) { await navigator.share({ title: 'WORLDWORKS shop', text: shareText, url: shopUrl }); return; } } catch { /* cancelled */ } void navigator.clipboard?.writeText(`${shareText} ${shopUrl}`).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }, () => {}); };
 
   return (
@@ -723,7 +733,7 @@ export function JobsGame() {
       {FACTORY_ENABLED && overview && prog.intro && !title && <FactoryView progress={prog} ctx={factoryCtx} onOpen={openJob} caption={factoryCaption} fast={fast} setFast={setFast} live={liveClock} storageKey={`ww-factory6-${scope()}`} balance={run?.job===5?run.balanceAfter:undefined} />}
       {/* top bar: job chip + requirement pills */}
       <header className="j-top">
-        <button type="button" className="j-home j-mini" aria-label="Factory" data-testid="factory-home" disabled={test.running} onClick={() => { if(FACTORY_ENABLED) {dismissGuide();setOverview(true);setHelp(false);setMenu(false);setEditing(null);setCardOpen(false);setRunClosed(true);setMomentClosed(true);} else setLevels(true); }}><HudIcon kind="home" /><span>Factory</span></button>
+        <button type="button" className="j-home j-mini" aria-label="Factory" data-testid="factory-home" disabled={test.running} onClick={() => { if(FACTORY_ENABLED) {dismissGuide();setOverview(true);setHelp(false);setMenu(false);setEditing(null);setCardOpen(false);setRunClosed(true);setMomentClosed(true);} else setLevels(true); }}><img className="j-brand-mark" src="/brand/mark-64.png" alt="" width="28" height="28" /><span className="j-home-brand"><img src="/brand/wordmark.webp" alt="WORLDWORKS" width="100" height="20" /><span>Factory</span></span></button>
         <button type="button" className={`j-chip${cardOpen ? '' : isNext('card')}`} onClick={() => { setRunClosed(true); setCardOpen(o => !o); }} data-testid="job-chip" aria-expanded={cardOpen}>
           <Face id={job.client} size={24} /><span><b>{job.n < 5 ? `${job.n}. ` : ''}{job.title}</b>{prog.solved[job.n] ? <em className="j-stars">{stars(prog.solved[job.n])}</em> : null}</span>
         </button>
@@ -972,13 +982,24 @@ export function JobsGame() {
 
       {(!prog.intro || title) && (
         <div className="j-intro" role="dialog" aria-modal aria-label="Welcome to WORLDWORKS" data-testid="intro">
-          <div className="g-card">
-            <h1>WORLDWORKS</h1>
-            <p className="point" data-testid="point">Money that runs itself: solve a real person's money problem with parts, then ship it as a real payment app on NEAR.</p>
-
-            <button type="button" className="j-btn wide is-next" data-testid="start" onClick={() => { update({ intro: true }); setTitle(false); }}>{prog.intro ? `Continue: job ${job.n}` : 'Start job 1'}</button>
-            {runHere && <button className="j-title-link" onClick={()=>{update({intro:true});setTitle(false);setRunClosed(false);}}>View the real run</button>}
+          <picture className="j-splash-art" aria-hidden="true">
+            <source media="(max-width: 640px)" srcSet="/brand/keyart-mobile.webp" />
+            <img src="/brand/keyart.webp" alt="" width="1920" height="1080" />
+          </picture>
+          <div className="j-portal-glow" aria-hidden="true" />
+          <div className="j-splash-content">
+            <h1><img className="j-splash-logo" src="/brand/logo.webp" alt="WORLDWORKS" width="900" height="182" /></h1>
+            <p className="j-splash-tagline">Money that runs itself.</p>
+            <p className="j-splash-description" data-testid="point">Solve real people's money problems with parts, then ship them as real payment apps on NEAR.</p>
+            <nav className="j-splash-menu" aria-label="Title menu">
+              <button type="button" className="j-splash-start" data-testid="start" autoFocus onClick={() => { update({ intro: true }); setTitle(false); setHelp(false); }}>{prog.intro ? `Continue: job ${job.n}` : 'Start job 1'}<span aria-hidden="true">→</span></button>
+              {prog.intro && FACTORY_ENABLED && <button type="button" onClick={() => {setTitle(false);setOverview(true);setHelp(false);}}>Factory</button>}
+              <button type="button" onClick={() => setHelp(true)}>How it works</button>
+              {runHere && <button type="button" onClick={()=>{update({intro:true});setTitle(false);setRunClosed(false);}}>View a real run</button>}
+              <button type="button" aria-pressed={audio.music || audio.effects} onClick={() => {const on=!(audio.music || audio.effects);configureAudio({music:on,effects:on});}}><HudIcon kind={audio.music || audio.effects ? 'sound' : 'muted'} />Sound {audio.music || audio.effects ? 'on' : 'off'}</button>
+            </nav>
           </div>
+          <footer className="j-splash-credits"><span>Built on NEAR · testnet</span><span>NEAR Hackathon 2026</span></footer>
         </div>
       )}
       {guideStep && <Spotlight target={guideStep.target} text={guideStep.text} onSkip={dismissGuide} />}

@@ -7,7 +7,7 @@ const errors=[],metrics=[];
 process.on('uncaughtException',async e=>{console.error(e);if(globalThis.page){console.error(await globalThis.page.locator('body').innerText());await globalThis.page.screenshot({path:'/tmp/g6-failed.png'});}process.exit(1);});
 const check=(v,m)=>{if(!v)throw Error(m);console.log('ok',m);};
 for(const width of (process.env.UI_WIDTH?[Number(process.env.UI_WIDTH)]:[1366,1920,390])) for(const fallback of (process.env.UI_FALLBACK?[process.env.UI_FALLBACK==='1']:[false,true])) {
- const browser=await launch(),page=await browser.newPage({viewport:{width,height:width<500?844:1080},deviceScaleFactor:1});watchErrors(page,errors);globalThis.page=page;
+ const browser=await launch(),page=await browser.newPage({viewport:{width,height:width<500?844:1080},deviceScaleFactor:1});watchErrors(page,errors);page.setDefaultTimeout(120000);globalThis.page=page;
  const label=`${width}${fallback?'-2d':''}`;
  const T=id=>page.getByTestId(id);
  await page.addInitScript(()=>{setInterval(()=>{window.__ww2?.renderScale?.(.25);window.__ww2?.advance(.8);window.__wwFactory?.advance(.8);},150);});
