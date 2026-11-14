@@ -1,0 +1,3 @@
+PASS ogg {"loops":[{"duration":17.44063492063492,"end":17.44063492063492},{"duration":17.44063492063492,"end":17.44063492063492}],"oscillators":1}
+PASS mp3 {"loops":[{"duration":17.44063492063492,"end":17.44063492063492},{"duration":17.44063492063492,"end":17.44063492063492}],"oscillators":1}
+PASS procedural {"loops":[],"oscillators":23}

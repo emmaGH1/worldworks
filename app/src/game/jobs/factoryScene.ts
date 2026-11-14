@@ -109,14 +109,17 @@ export function createFactoryScene(canvas:HTMLCanvasElement,overlay:HTMLElement,
   const opened=performance.now();
   function resize(){
     r.setSize(innerWidth,innerHeight,false);camera.updateMatrixWorld();
-    const pts=phone()?[V(-13,0,-18),V(22,0,-18),V(-13,0,19),V(22,0,19)]:[V(-18,0,-16),V(29,0,-16),V(-18,0,16),V(29,0,16)];
+    const pts=phone()?[V(-14,3,-22),V(plots[2].state==='solved'?22:14,3,-22),V(-14,0,21),V(plots[2].state==='solved'?22:14,0,21)]:[V(-18,0,-16),V(plots[2].state==='solved'||abroad?29:18,0,-16),V(-18,0,16),V(plots[2].state==='solved'||abroad?29:18,0,16)];
     const projected=pts.map(p=>p.clone().applyMatrix4(camera.matrixWorldInverse));
     const minX=Math.min(...projected.map(p=>p.x)),maxX=Math.max(...projected.map(p=>p.x)),minY=Math.min(...projected.map(p=>p.y)),maxY=Math.max(...projected.map(p=>p.y));
-    const heading=canvas.parentElement?.querySelector('.j-factory-heading')?.getBoundingClientRect();const top=Math.max(phone()?205:220,(heading?.bottom??0)+10),bottom=phone()?275:110,side=phone()?30:80;
+    const heading=canvas.parentElement?.querySelector('.j-factory-heading')?.getBoundingClientRect();const top=Math.max(phone()?205:220,(heading?.bottom??0)+10),bottom=phone()?285:200,side=phone()?18:100;
     const scale=Math.max((maxX-minX)/(innerWidth-side*2),(maxY-minY)/Math.max(200,innerHeight-top-bottom));
     const cx=(minX+maxX)/2,cy=(minY+maxY)/2+(top-bottom)/2*scale;
     camera.left=cx-innerWidth/2*scale;camera.right=cx+innerWidth/2*scale;camera.top=cy+innerHeight/2*scale;camera.bottom=cy-innerHeight/2*scale;camera.updateProjectionMatrix();
   }
+  const leaders=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  leaders.classList.add('j-plot-leaders');leaders.setAttribute('aria-hidden','true');overlay.prepend(leaders);
+  const lines=plots.map(()=>{const line=document.createElementNS('http://www.w3.org/2000/svg','line');leaders.append(line);return line;});
   function draw(dt=0) {
     if(disposed)return;
     if(!document.hidden&&!low&&!paused)t+=simClock.delta(dt,true);
@@ -135,15 +138,26 @@ export function createFactoryScene(canvas:HTMLCanvasElement,overlay:HTMLElement,
     r.render(scene,camera);
     // Hit areas follow actual belt segments and walking people; no extra draw calls.
     paths.forEach((path,i)=>{positions.set(`belt:${i}`,path.a.clone().lerp(path.b,.5).setY(.6));const hit=overlay.querySelector<HTMLElement>(`[data-factory-anchor="belt:${i}"]`);if(hit)hit.dataset.reason='Belt · simulated preview: '+path.reason();});
-    overlay.querySelectorAll<HTMLElement>('[data-factory-anchor]').forEach(el=>{const pos=positions.get(el.dataset.factoryAnchor!);if(!pos)return;const v=pos.clone().add(V(0,el.dataset.factoryAnchor!.startsWith('plot')?2.8:2.7,el.dataset.factoryAnchor!.startsWith('plot')?-3.3:0)).project(camera);el.style.transform=`translate(${(v.x*.5+.5)*innerWidth}px,${(-v.y*.5+.5)*innerHeight}px) translate(-50%,-50%)`;});
+    overlay.querySelectorAll<HTMLElement>('[data-factory-anchor]').forEach(el=>{const pos=positions.get(el.dataset.factoryAnchor!);if(!pos)return;const v=pos.clone().add(V(0,el.dataset.factoryAnchor!.startsWith('plot')?2.8:2.7,el.dataset.factoryAnchor!.startsWith('plot')?-3.3:0)).project(camera);let x=(v.x*.5+.5)*innerWidth,y=(-v.y*.5+.5)*innerHeight;
+      if(el.dataset.factoryAnchor!.startsWith('plot:')){
+        const i=Number(el.dataset.factoryAnchor!.slice(5))-1;
+        const heading=canvas.parentElement?.querySelector('.j-factory-heading')?.getBoundingClientRect();
+        const top=(heading?.bottom??220)+25,bottom=innerHeight-(phone()?290:210);
+        const left=phone()?i%2===0:[0,3,4].includes(i),row=phone()?Math.floor(i/2):(left?[0,3,4]:[1,2]).indexOf(i),w=el.offsetWidth,h=el.offsetHeight;
+        const sx=left?w/2+(phone()?8:32):innerWidth-w/2-(phone()?8:32);
+        const sy=top+h/2+row*Math.max(h+10,(bottom-top-h)/2);
+        const line=lines[i];line.setAttribute('x1',String(sx+(left?1:-1)*w/2));line.setAttribute('y1',String(sy));line.setAttribute('x2',String(x));line.setAttribute('y2',String(y));
+        x=sx;y=sy;
+      }
+      el.style.transform=`translate(${x}px,${y}px) translate(-50%,-50%)`;});
   }
   let last=performance.now();function loop(now:number){const dt=Math.min(.05,(now-last)/1000);last=now;if(!document.hidden)draw(dt);raf=requestAnimationFrame(loop);}
   const hitAreas:HTMLElement[]=[];
   paths.forEach((path,i)=>{const el=document.createElement('button');el.className='j-factory-hit j-factory-belt-hit';el.dataset.factoryAnchor=`belt:${i}`;el.setAttribute('aria-label','Inspect factory belt');el.dataset.reason='Belt · simulated preview: '+path.reason();overlay.append(el);hitAreas.push(el);});
   for(let i=0;i<count;i++){const el=document.createElement('button');el.className='j-factory-hit';el.dataset.factoryAnchor=`customer:${i}`;el.setAttribute('aria-label','Inspect simulated customer');el.dataset.reason='Simulated customer: buys one loaf for 0.10 NEAR. Factory traffic never submits real orders.';overlay.append(el);hitAreas.push(el);}
   resize();draw();if(!stepped)raf=requestAnimationFrame(loop);
-  const observer=new ResizeObserver(()=>{resize();draw();});observer.observe(canvas);
+  const observer=new ResizeObserver(()=>{resize();draw();});observer.observe(canvas);const headingElement=canvas.parentElement?.querySelector('.j-factory-heading');if(headingElement)observer.observe(headingElement);
   (window as unknown as {__wwFactory:unknown}).__wwFactory={advance:(s:number)=>draw(s),info:()=>({calls:r.info.render.calls,triangles:r.info.render.triangles,coins:coinCount,customers:count,budget:{calls:150,triangles:120000}})};
   const timers:ReturnType<typeof setTimeout>[]=[];
-  return {setPaused(on:boolean){paused=on;},setTotals(totals:HouseTotals){savedTotals=totals;draw();},arrive(totals:HouseTotals){for(const [id,value] of Object.entries(totals)){if(!value)continue;arrivals.set(id as PersonId,t);const el=overlay.querySelector(`[data-factory-anchor="house:${id}"]`);if(el){el.querySelector('.j-sim-arrival')?.remove();const tag=document.createElement('strong');tag.className='j-sim-arrival';tag.textContent=value.wei>0n?`+${exact(value.wei,18)} ETH`:`+${exact(value.near)} NEAR`;el.append(tag);timers.push(setTimeout(()=>tag.remove(),1800));}}},fly(n:number){if(low||stepped)return Promise.resolve();return new Promise<void>(resolve=>{flyTo=positions.get(`plot:${n}`);flyStart=performance.now();flyResolve=resolve;});},confirmed(id:PersonId,plotNumber?:number){const plot=plotNumber?plots.find(p=>p.n===plotNumber):plots.filter(p=>p.shipped&&housesFor(p.build,p.n===5?abroad:'chi').some(h=>h.person===id)).at(-1);const el=overlay.querySelector(`[data-factory-anchor="${plot?'plot:'+plot.n:'house:'+id}"]`);if(!el)return;const tag=document.createElement('strong');tag.className='j-real-coin';tag.textContent='TESTNET · confirmed';el.append(tag);timers.push(setTimeout(()=>tag.remove(),4000));},dispose(){flyResolve?.();disposed=true;cancelAnimationFrame(raf);observer.disconnect();timers.forEach(clearTimeout);hitAreas.forEach(el=>el.remove());resources.forEach(v=>v.dispose());r.dispose();if(!canvas.isConnected)r.forceContextLoss();}};
+  return {setPaused(on:boolean){paused=on;},setTotals(totals:HouseTotals){savedTotals=totals;draw();},arrive(totals:HouseTotals){for(const [id,value] of Object.entries(totals)){if(!value)continue;arrivals.set(id as PersonId,t);const el=overlay.querySelector(`[data-factory-anchor="house:${id}"]`);if(el){el.querySelector('.j-sim-arrival')?.remove();const tag=document.createElement('strong');tag.className='j-sim-arrival';tag.textContent=value.wei>0n?`+${exact(value.wei,18)} ETH`:`+${exact(value.near)} NEAR`;el.append(tag);timers.push(setTimeout(()=>tag.remove(),1800));}}},fly(n:number){if(low||stepped)return Promise.resolve();return new Promise<void>(resolve=>{flyTo=positions.get(`plot:${n}`);flyStart=performance.now();flyResolve=resolve;});},confirmed(id:PersonId,plotNumber?:number){const plot=plotNumber?plots.find(p=>p.n===plotNumber):plots.filter(p=>p.shipped&&housesFor(p.build,p.n===5?abroad:'chi').some(h=>h.person===id)).at(-1);const el=overlay.querySelector(`[data-factory-anchor="${plot?'plot:'+plot.n:'house:'+id}"]`);if(!el)return;const tag=document.createElement('strong');tag.className='j-real-coin';tag.textContent='TESTNET · confirmed';el.append(tag);timers.push(setTimeout(()=>tag.remove(),4000));},dispose(){flyResolve?.();disposed=true;cancelAnimationFrame(raf);observer.disconnect();timers.forEach(clearTimeout);hitAreas.forEach(el=>el.remove());leaders.remove();resources.forEach(v=>v.dispose());r.dispose();if(!canvas.isConnected)r.forceContextLoss();}};
 }

@@ -1,4 +1,4 @@
-// Sample-first effects and an original four-part score. All sources share a limited mix bus.
+// CC0 recorded loop and sample-first effects; procedural music is a loading-failure fallback.
 export type Settings = { music: boolean; effects: boolean; volume: number; musicVolume: number; effectsVolume: number };
 export const DEFAULT_AUDIO: Settings = {music:true,effects:true,volume:.8,musicVolume:.7,effectsVolume:.85};
 const low = new URLSearchParams(location.search).get('lowfx') === '1';
@@ -7,7 +7,7 @@ try { const saved=JSON.parse(localStorage.getItem('ww-audio6')??'null'); if(save
 if(low)settings.music=settings.effects=false;
 export function createMix(context: BaseAudioContext) {
   const master=context.createGain(), music=context.createGain(), effects=context.createGain(), limiter=context.createDynamicsCompressor();
-  limiter.threshold.value=-3;limiter.knee.value=0;limiter.ratio.value=20;limiter.attack.value=.002;limiter.release.value=.12;
+  limiter.threshold.value=-4.5;limiter.knee.value=0;limiter.ratio.value=20;limiter.attack.value=.001;limiter.release.value=.12;
   music.connect(master);effects.connect(master);master.connect(limiter);limiter.connect(context.destination);
   return {master,music,effects,limiter};
 }
@@ -16,6 +16,8 @@ const samples: Record<Kind,string>={coin:'glass_001',place:'drop_002',pass:'conf
 let ctx: AudioContext|undefined, mix: ReturnType<typeof createMix>|undefined, timer:ReturnType<typeof setInterval>|undefined;
 let beat=0, factory=false, testing=false, ducked=false, loading=false;
 let buildLayer:GainNode|undefined,factoryLayer:GainNode|undefined;
+let musicStatus:'idle'|'loading'|'recorded'|'fallback'='idle';
+let musicSources:AudioBufferSourceNode[]=[];
 const buffers=new Map<string,AudioBuffer>(), last=new Map<string,number>();
 function apply() { if(!ctx||!mix)return;const at=ctx.currentTime;mix.master.gain.setTargetAtTime(settings.volume,at,.025);mix.music.gain.setTargetAtTime(settings.music?settings.musicVolume*(ducked?.22:1):0,at,.25);mix.effects.gain.setTargetAtTime(settings.effects?settings.effectsVolume:0,at,.025); }
 function note(freq:number,duration:number,volume:number,type:OscillatorType='sine',delay=0,end=freq,music=true,layer?:GainNode) {
@@ -24,7 +26,7 @@ function note(freq:number,duration:number,volume:number,type:OscillatorType='sin
  g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(volume*(music?2:1),at+.008);g.gain.exponentialRampToValueAtTime(.0001,at+duration);o.connect(g).connect(music?(layer??mix.music):mix.effects);o.start(at);o.stop(at+duration+.01);o.onended=()=>{o.disconnect();g.disconnect();};
 }
 function pulse(){
- if(!ctx||document.hidden)return;
+ if(!ctx||document.hidden||musicStatus!=='fallback')return;
  const roots=[130.81,110,174.61,196],root=roots[Math.floor(beat/8)%4];
  // Two synchronized arrangements; sustaining chords crossfade on scene changes.
  for(const bright of [false,true]) {
@@ -39,6 +41,25 @@ function pulse(){
  }
  beat++;
 }
+async function loadMusic(context:AudioContext){
+ musicStatus='loading';
+ for(const ext of ['ogg','mp3'])try{
+  const response=await fetch(`/sounds/happy-clappy.${ext}`);if(!response.ok)continue;
+  const buffer=await context.decodeAudioData(await response.arrayBuffer());
+  if(ctx!==context)return;
+  const at=context.currentTime+.03;
+  [buildLayer,factoryLayer].forEach((layer,i)=>{
+   if(!layer)return;
+   const source=context.createBufferSource(),filter=context.createBiquadFilter();
+   source.buffer=buffer;source.loop=true;source.loopStart=0;source.loopEnd=buffer.duration;
+   filter.type='lowpass';filter.frequency.value=i?12000:1800;filter.Q.value=.3;
+   source.connect(filter).connect(layer);source.start(at);musicSources.push(source);
+   source.onended=()=>{source.disconnect();filter.disconnect();};
+  });
+  musicStatus='recorded';return;
+ }catch{/* try the other codec before procedural fallback */}
+ if(ctx===context)musicStatus='fallback';
+}
 async function preload(){
  if(loading||!ctx)return;loading=true;const context=ctx;
  await Promise.all([...new Set(Object.values(samples))].map(async name=>{
@@ -49,7 +70,7 @@ export const sound={
  get settings(){return {...settings};},get muted(){return !settings.music&&!settings.effects;},
  configure(patch:Partial<Settings>){settings={...settings,...patch};for(const key of ['volume','musicVolume','effectsVolume'] as const)settings[key]=Math.max(0,Math.min(1,settings[key]));try{localStorage.setItem('ww-audio6',JSON.stringify(settings));}catch{/* unavailable */}apply();},
  mute(value:boolean){this.configure({music:!value,effects:!value});},
- unlock(){try{if(!ctx){ctx=new AudioContext();mix=createMix(ctx);buildLayer=ctx.createGain();factoryLayer=ctx.createGain();buildLayer.connect(mix.music);factoryLayer.connect(mix.music);buildLayer.gain.value=factory?0:1;factoryLayer.gain.value=factory?1:0;apply();const silent=ctx.createBufferSource();silent.buffer=ctx.createBuffer(1,1,ctx.sampleRate);silent.connect(mix.master);silent.start();void preload();}if(ctx.state==='suspended')void ctx.resume().catch(()=>{});if(!timer){pulse();timer=setInterval(pulse,375);}}catch{/* no audio */}},
+ unlock(){try{if(!ctx){ctx=new AudioContext();mix=createMix(ctx);buildLayer=ctx.createGain();factoryLayer=ctx.createGain();buildLayer.connect(mix.music);factoryLayer.connect(mix.music);buildLayer.gain.value=factory?0:1;factoryLayer.gain.value=factory?1:0;apply();const silent=ctx.createBufferSource();silent.buffer=ctx.createBuffer(1,1,ctx.sampleRate);silent.connect(mix.master);silent.start();void preload();void loadMusic(ctx);}if(ctx.state==='suspended')void ctx.resume().catch(()=>{});if(!timer){pulse();timer=setInterval(pulse,375);}}catch{/* no audio */}},
  test(on:boolean){testing=on;},ambience(on:boolean){factory=on;if(ctx&&buildLayer&&factoryLayer){buildLayer.gain.setTargetAtTime(on?0:1,ctx.currentTime,.3);factoryLayer.gain.setTargetAtTime(on?1:0,ctx.currentTime,.3);}},
  portal(on:boolean){ducked=on;apply();},
  play(kind:Kind,amount=1){
@@ -58,7 +79,7 @@ export const sound={
   const b=buffers.get(samples[kind]);if(b){const s=ctx.createBufferSource();s.buffer=b;s.playbackRate.value=1+(Math.random()-.5)*.08+(kind==='coin'?Math.min(amount,10)*.006:0);s.connect(mix.effects);s.start();s.onended=()=>s.disconnect();}
   else note(kind==='fail'?100:kind==='coin'?880:440,.16,.3,'triangle',0,kind==='fail'?60:660,false);
  },
- stop(){clearInterval(timer);timer=undefined;void ctx?.close().catch(()=>{});ctx=undefined;mix=undefined;buildLayer=factoryLayer=undefined;buffers.clear();last.clear();loading=false;ducked=factory=testing=false;beat=0;},
+ stop(){musicSources.forEach(s=>s.stop());musicSources=[];musicStatus='idle';clearInterval(timer);timer=undefined;void ctx?.close().catch(()=>{});ctx=undefined;mix=undefined;buildLayer=factoryLayer=undefined;buffers.clear();last.clear();loading=false;ducked=factory=testing=false;beat=0;},
  // Read-only diagnostics for browser audio checks. No network or receipt state.
- inspect(){return {sampleCount:buffers.size,state:ctx?.state,master:mix?.master.gain.value,music:mix?.music.gain.value,effects:mix?.effects.gain.value,limiter:mix?.limiter.threshold.value};},
+ inspect(){return {sampleCount:buffers.size,musicStatus,musicLoops:musicSources.length,state:ctx?.state,master:mix?.master.gain.value,music:mix?.music.gain.value,effects:mix?.effects.gain.value,limiter:mix?.limiter.threshold.value};},
 };

@@ -511,3 +511,52 @@
 }
 @media(min-width:641px) and (max-width:950px){.jobs-game .j-house-label{width:18%;}.jobs-game .house-ada{left:1%;}.jobs-game .house-bola{left:21%;}.jobs-game .house-chi{left:41%;}.jobs-game .house-dayo{left:61%;}.jobs-game .house-you,.jobs-game .house-f1,.jobs-game .house-f2{left:81%;}}
 .jobs-game .j-card,.jobs-game .j-sheet,.jobs-game .j-ship,.jobs-game .j-inside,.jobs-game .j-levels,.jobs-game .ledger {background:#fff8e9;}
+/* GAME-10: reserved HUD rails, linked plot slots and compact audio mixer. */
+.jobs-game .j-factory-heading {display:grid;grid-template-columns:1fr auto;column-gap:24px;max-width:none;width:calc(100% - 48px);box-sizing:border-box;padding:14px 18px;}
+.jobs-game .j-factory-heading h1 {grid-column:1;}
+.jobs-game .j-factory-heading p,.jobs-game .j-factory-heading > small {grid-column:1;}
+.jobs-game .j-preview-controls {grid-column:2;grid-row:1 / 5;display:flex;align-items:center;gap:8px;}
+.jobs-game .j-factory-heading .j-mini {margin:0;float:none;min-width:128px;min-height:44px;}
+.jobs-game .j-counter-meaning {display:flex;align-items:center;gap:8px;max-width:none;justify-content:flex-start;}
+.jobs-game .j-counter-meaning button {display:grid;place-items:center;width:44px;height:44px;padding:0;}
+.jobs-game .j-plot-label {z-index:3;width:218px;}
+.jobs-game .j-plot-label button {width:100%;max-width:none;}
+.jobs-game .j-plot-leaders {position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;}
+.jobs-game .j-plot-leaders line {stroke:#fff3cf;stroke-width:2;stroke-opacity:.8;}
+.jobs-game .j-house-label {padding-bottom:26px;}
+.jobs-game .j-sim-arrival {top:auto;bottom:5px;left:10px;right:auto;font-size:11px;animation:j-arrival-attached 1.8s ease-out forwards;}
+@keyframes j-arrival-attached {0%,65%{opacity:1;}100%{opacity:0;}}
+.jobs-game .j-sound-panel {width:320px;padding:18px;}
+.jobs-game .j-sound-panel header {display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.jobs-game .j-sound-panel h2 {font-size:24px;margin:0;}
+.jobs-game .j-sound-channel {display:grid;grid-template-columns:44px 1fr auto;gap:4px 12px;align-items:center;margin:16px 0;}
+.jobs-game .j-sound-panel label {display:block;margin:0;font-weight:700;}
+.jobs-game .j-sound-channel input {grid-column:2 / 4;}
+.jobs-game .j-sound-panel output {font-size:13px;font-variant-numeric:tabular-nums;color:#215c62;}
+.jobs-game .j-sound-panel .j-icon {margin:0;padding:0;display:grid;place-items:center;width:44px;height:44px;border-radius:10px;}
+.jobs-game .j-sound-channel .j-icon {grid-row:1 / 3;background:#215c62;color:#fff8e9;}
+.jobs-game .j-sound-channel .j-icon[aria-pressed=false] {background:#d9d4bf;color:#385956;}
+.jobs-game .j-sound-master {display:grid;grid-template-columns:1fr auto;align-items:center;border-top:1px solid #c6cdb8;padding-top:18px;margin-top:18px;}
+.jobs-game .j-sound-master input {grid-column:1 / 3;}
+.jobs-game .j-sound-panel input[type=range] {appearance:none;-webkit-appearance:none;width:100%;min-height:32px;margin:0;background:transparent;cursor:pointer;}
+.jobs-game .j-sound-panel input[type=range]::-webkit-slider-runnable-track {height:7px;border-radius:4px;background:linear-gradient(to right,#215c62 var(--level),#d8d6c3 var(--level));}
+.jobs-game .j-sound-panel input[type=range]::-webkit-slider-thumb {appearance:none;width:22px;height:22px;border-radius:7px;background:#ffd45e;border:2px solid #215c62;margin-top:-7px;box-shadow:0 2px 4px #173d4033;}
+.jobs-game .j-sound-panel input[type=range]::-moz-range-track {height:7px;border-radius:4px;background:#d8d6c3;}
+.jobs-game .j-sound-panel input[type=range]::-moz-range-progress {height:7px;background:#215c62;}
+.jobs-game .j-sound-panel input[type=range]::-moz-range-thumb {width:18px;height:18px;border-radius:7px;background:#ffd45e;border:2px solid #215c62;}
+@media(max-width:640px){
+ .jobs-game .j-factory-heading {left:12px;width:calc(100% - 24px);display:block;padding:10px 12px;}
+ .jobs-game .j-preview-controls {display:flex;margin:8px 0;}
+ .jobs-game .j-factory-heading .j-mini {flex:1;min-width:0;}
+ .jobs-game .j-plot-label {width:116px;}
+ .jobs-game .j-plot-label button {font-size:11px;padding:6px;}
+ .jobs-game .j-house-label {padding-bottom:23px;}
+ .jobs-game .j-sim-arrival {left:6px;bottom:4px;top:auto;right:auto;font-size:9px;}
+ .jobs-game .j-sound-panel {width:calc(100vw - 24px);box-sizing:border-box;}
+}
+.jobs-game .j-sound-panel label {padding:0;min-height:0;background:transparent;}
+@media(min-width:641px){
+ .jobs-game .j-factory-heading .j-preview-controls {grid-row:1 / 3;justify-content:flex-end;}
+ .jobs-game .j-factory-heading .j-counter-meaning {grid-column:2;grid-row:3;margin:0;justify-content:flex-end;}
+ .jobs-game .j-factory-heading > small {grid-row:3;align-self:center;}
+}

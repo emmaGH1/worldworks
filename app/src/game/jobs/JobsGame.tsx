@@ -814,14 +814,14 @@ export function JobsGame() {
         <button onClick={()=>{setTitle(true);setMenu(false);}}>Title screen</button>
         <button onClick={()=>setMenu(false)}>Close</button>
       </section>}
-      {soundOpen && <section className="j-hud-sheet g-card" data-testid="sound-popover" aria-label={`Sound settings: ${audio.music?'music on':'music off'}, ${audio.effects?'effects on':'effects off'}`}><OverlayClose onClose={()=>setSoundOpen(false)} />
-        <label><input type="checkbox" checked={audio.music} onChange={e=>configureAudio({music:e.target.checked})} />Music</label>
-        <label><input type="checkbox" checked={audio.effects} onChange={e=>configureAudio({effects:e.target.checked})} />Effects</label>
-        <label>Volume <input aria-label="Volume" type="range" min="0" max="1" step="0.05" value={audio.volume} onChange={e=>{configureAudio({volume:Number(e.target.value)});sound.play('coin');}} /></label>
-        <label>Music volume <input aria-label="Music volume" type="range" min="0" max="1" step="0.05" value={audio.musicVolume} onChange={e=>configureAudio({musicVolume:Number(e.target.value),music:true})} /></label>
-        <label>Effects volume <input aria-label="Effects volume" type="range" min="0" max="1" step="0.05" value={audio.effectsVolume} onChange={e=>{configureAudio({effectsVolume:Number(e.target.value),effects:true});sound.play('coin');}} /></label>
-        <button aria-pressed={!audio.music&&!audio.effects} onClick={()=>configureAudio({music:!audio.music&&!audio.effects,effects:!audio.music&&!audio.effects})}>Mute / unmute</button>
-        <button onClick={()=>setSoundOpen(false)}>Close</button>
+      {soundOpen && <section className="j-hud-sheet j-sound-panel g-card" data-testid="sound-popover" aria-label="Sound settings">
+        <header><h2>Sound</h2><button className="j-icon" aria-label="Close" onClick={()=>setSoundOpen(false)}>✕</button></header>
+        {(['music','effects'] as const).map(channel=><div className="j-sound-channel" key={channel}>
+          <button className="j-icon" aria-label={channel==='music'?'Music':'Effects'} aria-pressed={audio[channel]} onClick={()=>configureAudio({[channel]:!audio[channel]})}><HudIcon kind={audio[channel]?'sound':'muted'} /></button>
+          <label htmlFor={`sound-${channel}`}>{channel==='music'?'Music':'Effects'}</label><output>{Math.round(audio[channel==='music'?'musicVolume':'effectsVolume']*100)}%</output>
+          <input id={`sound-${channel}`} aria-label={channel==='music'?'Music volume':'Effects volume'} type="range" min="0" max="1" step="0.05" value={audio[channel==='music'?'musicVolume':'effectsVolume']} style={{'--level':`${audio[channel==='music'?'musicVolume':'effectsVolume']*100}%`} as React.CSSProperties} onChange={e=>configureAudio({[channel==='music'?'musicVolume':'effectsVolume']:Number(e.target.value),[channel]:true})} onPointerUp={()=>{if(channel==='effects')sound.play('tap');}} onKeyUp={()=>{if(channel==='effects')sound.play('tap');}} />
+        </div>)}
+        <div className="j-sound-master"><label htmlFor="sound-master">Master</label><output>{Math.round(audio.volume*100)}%</output><input id="sound-master" aria-label="Volume" type="range" min="0" max="1" step="0.05" value={audio.volume} style={{'--level':`${audio.volume*100}%`} as React.CSSProperties} onChange={e=>configureAudio({volume:Number(e.target.value)})} /></div>
       </section>}
       {help && <section className="j-hud-sheet j-help g-card" role="dialog" aria-label={`Help: ${job.title}`} data-testid="help-sheet"><OverlayClose onClose={()=>setHelp(false)} />
         <h2>{overview?'Your factory':`Job ${job.n}: ${job.title}`}</h2>{overview&&<p>Choose the yellow Next job button to keep building. Customers run an endless simulated preview, which you can pause. Gold Real totals need confirmed receipts.</p>}

@@ -1,0 +1,1 @@
+PASS GAME-9 [{"width":1366,"height":768,"playthrough":"jobs 1–5 played with real UI and WASM checks; animations skipped","overlayModes":"Esc/outside/Back on menu, sound, help, jobs, ledger"},{"width":390,"height":844,"playthrough":"jobs 1–5 played with real UI and WASM checks; animations skipped","overlayModes":"Esc/outside/Back on menu, sound, help, jobs, ledger"}]
