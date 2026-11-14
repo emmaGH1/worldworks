@@ -271,6 +271,8 @@ Contract sandbox results and prerequisites are recorded in [G6 evidence](docs/EV
 
 ## Disclosure and license
 
+**Other hackathon entry:** the author also submitted [Subsidized State](https://github.com/emmaGH1/subsidized-state), a separate investment thesis measuring NEAR mainnet state collateral and token value capture. WORLDWORKS is an independent game and testnet payment application, with its own repository and deliverables.
+
 Built with AI coding agents: Claude and GPT models orchestrated by the author for planning, implementation, review, tests and documentation ([process](docs/OPERATING.md)).
 
 The hackathon window starts **October 19, 2026**, with submission deadline **November 14, 2026 at 23:59 UTC** (author-supplied event dates). Repository history starts **November 12, 2026**; it does not establish October 19 as the first code date. Work described here was built during that window. The initial commit contains a project-starter README and icon; no pre-event WORLDWORKS implementation is claimed.
