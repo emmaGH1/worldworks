@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "relay": "npx tsx scripts/relay.ts",
-    "confirm": "npx tsx scripts/confirm.ts"
+    "confirm": "npx tsx scripts/confirm.ts",
+    "test": "tsx --test scripts/*.test.ts src/engine/engine.test.ts"
   },
   "dependencies": {
     "@xyflow/react": "12.12.1",

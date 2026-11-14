@@ -25,7 +25,7 @@ export function createFactoryScene(canvas:HTMLCanvasElement,overlay:HTMLElement,
   if(!renderer) {
     canvas.hidden=true;overlay.classList.add('fallback');
     (window as unknown as {__wwFactory:unknown}).__wwFactory={info:()=>({fallback:true,calls:0,triangles:0}),advance:()=>{}};
-    return {dispose(){overlay.classList.remove('fallback');},fly:async(_n:number)=>{},setTotals(_t:HouseTotals){},arrive(_t:HouseTotals){},confirmed(_id:PersonId,_plot?:number){}};
+    return {setPaused(_on:boolean){},dispose(){overlay.classList.remove('fallback');},fly:async(_n:number)=>{},setTotals(_t:HouseTotals){},arrive(_t:HouseTotals){},confirmed(_id:PersonId,_plot?:number){}};
   }
   const r=renderer, scene=new THREE.Scene();scene.background=new THREE.Color('#3f979d');
   r.setPixelRatio(Math.min(devicePixelRatio,low?1:1.5));r.outputColorSpace=THREE.SRGBColorSpace;
@@ -43,7 +43,7 @@ export function createFactoryScene(canvas:HTMLCanvasElement,overlay:HTMLElement,
   }
   function belt(a:THREE.Vector3,b:THREE.Vector3,plot:number,portal=false,reason=()=> 'Coin Slot: 0.10 NEAR per simulated sale; real orders are separate.') { if(portal) {const start=a.clone().setY(1.2),mid=a.clone().add(b).multiplyScalar(.5).setY(5),end=b.clone().setY(1.2);segment(start,mid,'#ac94f2',.13);segment(mid,end,'#ac94f2',.13);paths.push({a:start,b:mid,plot,portal,reason},{a:mid,b:end,plot,portal,reason});return;} const elbow=V(b.x,.36,a.z);const start=a.clone().setY(.36),end=b.clone().setY(.36);segment(start,elbow,portal?'#8e73de':'#5e6966');segment(elbow,end,portal?'#8e73de':'#5e6966');paths.push({a:start,b:elbow,plot,portal,reason},{a:elbow,b:end,plot,portal,reason}); }
   box(V(0,-.9,0),V(90,.3,90),'#358d98');box(V(-1,-.35,0),phone()?V(27,1,40):V(35,1,31),'#d8bf96');box(V(-1,.16,0),phone()?V(26,.2,39):V(34,.2,30),'#89bd69');
-  box(V(phone()?17:24,0,-6),V(8,1.2,10),'#adb9df');
+  if(plots[2].state==='solved')box(V(phone()?17:24,0,-6),V(8,1.2,10),'#adb9df');
   const roadA=phone()?V(0,.29,-18):V(-16,.29,0),roadB=phone()?V(0,.29,18):V(16,.29,0);segment(roadA,roadB,'#dac7a4',1.5);
   for(const p of plots) {
     const at=positions.get(`plot:${p.n}`)!;
@@ -103,6 +103,7 @@ export function createFactoryScene(canvas:HTMLCanvasElement,overlay:HTMLElement,
   let savedTotals:HouseTotals={};const arrivals=new Map<PersonId,number>();
   const piles=own(new THREE.InstancedMesh(own(new THREE.CylinderGeometry(.19,.19,.09,10)),own(new THREE.MeshStandardMaterial({color:'#ffda55',metalness:.35,roughness:.5})),houseIds.length*18));scene.add(piles);
   const arrows=own(new THREE.InstancedMesh(own(new THREE.ConeGeometry(.10,.24,3)),own(new THREE.MeshBasicMaterial({color:'#e5e2c2'})),paths.length*3));scene.add(arrows);
+  let paused=false;
   let t=1.7,raf=0,disposed=false,flyTo:THREE.Vector3|undefined,flyStart=0,flyResolve:(()=>void)|undefined;
   const origin=camera.position.clone(),target=phone()?V():V(3,0,0);
   const opened=performance.now();
@@ -111,14 +112,14 @@ export function createFactoryScene(canvas:HTMLCanvasElement,overlay:HTMLElement,
     const pts=phone()?[V(-13,0,-18),V(22,0,-18),V(-13,0,19),V(22,0,19)]:[V(-18,0,-16),V(29,0,-16),V(-18,0,16),V(29,0,16)];
     const projected=pts.map(p=>p.clone().applyMatrix4(camera.matrixWorldInverse));
     const minX=Math.min(...projected.map(p=>p.x)),maxX=Math.max(...projected.map(p=>p.x)),minY=Math.min(...projected.map(p=>p.y)),maxY=Math.max(...projected.map(p=>p.y));
-    const top=phone()?205:220,bottom=phone()?185:65,side=phone()?30:80;
+    const heading=canvas.parentElement?.querySelector('.j-factory-heading')?.getBoundingClientRect();const top=Math.max(phone()?205:220,(heading?.bottom??0)+10),bottom=phone()?275:110,side=phone()?30:80;
     const scale=Math.max((maxX-minX)/(innerWidth-side*2),(maxY-minY)/Math.max(200,innerHeight-top-bottom));
     const cx=(minX+maxX)/2,cy=(minY+maxY)/2+(top-bottom)/2*scale;
     camera.left=cx-innerWidth/2*scale;camera.right=cx+innerWidth/2*scale;camera.top=cy+innerHeight/2*scale;camera.bottom=cy-innerHeight/2*scale;camera.updateProjectionMatrix();
   }
   function draw(dt=0) {
     if(disposed)return;
-    if(!document.hidden&&!low)t+=simClock.delta(dt,true);
+    if(!document.hidden&&!low&&!paused)t+=simClock.delta(dt,true);
     const animate=!low&&!document.hidden;
     beltTexture.offset.y=-t*.4;
     rings.forEach((ring,i)=>{dummy.position.copy(ring.p);dummy.scale.copy(ring.s);dummy.rotation.set(0,0,t*.7);dummy.updateMatrix();ringMesh.setMatrixAt(i,dummy.matrix);});ringMesh.instanceMatrix.needsUpdate=true;
@@ -144,5 +145,5 @@ export function createFactoryScene(canvas:HTMLCanvasElement,overlay:HTMLElement,
   const observer=new ResizeObserver(()=>{resize();draw();});observer.observe(canvas);
   (window as unknown as {__wwFactory:unknown}).__wwFactory={advance:(s:number)=>draw(s),info:()=>({calls:r.info.render.calls,triangles:r.info.render.triangles,coins:coinCount,customers:count,budget:{calls:150,triangles:120000}})};
   const timers:ReturnType<typeof setTimeout>[]=[];
-  return {setTotals(totals:HouseTotals){savedTotals=totals;draw();},arrive(totals:HouseTotals){for(const [id,value] of Object.entries(totals)){if(!value)continue;arrivals.set(id as PersonId,t);const el=overlay.querySelector(`[data-factory-anchor="house:${id}"]`);if(el){el.querySelector('.j-sim-arrival')?.remove();const tag=document.createElement('strong');tag.className='j-sim-arrival';tag.textContent=value.wei>0n?`+${exact(value.wei,18)} ETH`:`+${exact(value.near)} NEAR`;el.append(tag);timers.push(setTimeout(()=>tag.remove(),1800));}}},fly(n:number){if(low||stepped)return Promise.resolve();return new Promise<void>(resolve=>{flyTo=positions.get(`plot:${n}`);flyStart=performance.now();flyResolve=resolve;});},confirmed(id:PersonId,plotNumber?:number){const plot=plotNumber?plots.find(p=>p.n===plotNumber):plots.filter(p=>p.shipped&&housesFor(p.build,p.n===5?abroad:'chi').some(h=>h.person===id)).at(-1);const el=overlay.querySelector(`[data-factory-anchor="${plot?'plot:'+plot.n:'house:'+id}"]`);if(!el)return;const tag=document.createElement('strong');tag.className='j-real-coin';tag.textContent='TESTNET · confirmed';el.append(tag);timers.push(setTimeout(()=>tag.remove(),4000));},dispose(){disposed=true;cancelAnimationFrame(raf);observer.disconnect();timers.forEach(clearTimeout);hitAreas.forEach(el=>el.remove());resources.forEach(v=>v.dispose());r.dispose();if(!canvas.isConnected)r.forceContextLoss();}};
+  return {setPaused(on:boolean){paused=on;},setTotals(totals:HouseTotals){savedTotals=totals;draw();},arrive(totals:HouseTotals){for(const [id,value] of Object.entries(totals)){if(!value)continue;arrivals.set(id as PersonId,t);const el=overlay.querySelector(`[data-factory-anchor="house:${id}"]`);if(el){el.querySelector('.j-sim-arrival')?.remove();const tag=document.createElement('strong');tag.className='j-sim-arrival';tag.textContent=value.wei>0n?`+${exact(value.wei,18)} ETH`:`+${exact(value.near)} NEAR`;el.append(tag);timers.push(setTimeout(()=>tag.remove(),1800));}}},fly(n:number){if(low||stepped)return Promise.resolve();return new Promise<void>(resolve=>{flyTo=positions.get(`plot:${n}`);flyStart=performance.now();flyResolve=resolve;});},confirmed(id:PersonId,plotNumber?:number){const plot=plotNumber?plots.find(p=>p.n===plotNumber):plots.filter(p=>p.shipped&&housesFor(p.build,p.n===5?abroad:'chi').some(h=>h.person===id)).at(-1);const el=overlay.querySelector(`[data-factory-anchor="${plot?'plot:'+plot.n:'house:'+id}"]`);if(!el)return;const tag=document.createElement('strong');tag.className='j-real-coin';tag.textContent='TESTNET · confirmed';el.append(tag);timers.push(setTimeout(()=>tag.remove(),4000));},dispose(){flyResolve?.();disposed=true;cancelAnimationFrame(raf);observer.disconnect();timers.forEach(clearTimeout);hitAreas.forEach(el=>el.remove());resources.forEach(v=>v.dispose());r.dispose();if(!canvas.isConnected)r.forceContextLoss();}};
 }

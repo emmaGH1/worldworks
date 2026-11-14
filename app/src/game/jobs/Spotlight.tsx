@@ -17,7 +17,7 @@ export function Spotlight({ target, text, onSkip }: { target: string; text: stri
   const left = Math.max(12, Math.min(innerWidth - 262, (x + right) / 2 - 125));
   return <div className="j-guide" data-testid="tutorial" data-guide-target={target}>
     <div className="j-guide-hole" style={{left:x,top:y,width:right-x,height:bottom-y}} />
-    {[{left:0,top:0,width:'100%',height:y},{left:0,top:bottom,width:'100%',bottom:0},{left:0,top:y,width:x,height:bottom-y},{left:right,right:0,top:y,height:bottom-y}].map((style,i)=><div key={i} className="j-guide-shield" style={style} onPointerDown={e=>{e.preventDefault();e.stopPropagation();}} />)}
+    {[{left:0,top:0,width:'100%',height:y},{left:0,top:bottom,width:'100%',bottom:0},{left:0,top:y,width:x,height:bottom-y},{left:right,right:0,top:y,height:bottom-y}].map((style,i)=><div key={i} className="j-guide-shield" style={style} onPointerDown={e=>{e.preventDefault();e.stopPropagation();onSkip();}} />)}
     <div className={`j-guide-bubble ${below ? 'below' : 'above'}`} style={{left,top:below?bottom+14:Math.max(62,y-100)}} role="status"><span aria-hidden="true">{below?'↑':'↓'}</span>{text}</div>
     <button type="button" className="j-guide-skip" data-testid="tutorial-skip" onClick={onSkip}>Skip tutorial</button>
   </div>;

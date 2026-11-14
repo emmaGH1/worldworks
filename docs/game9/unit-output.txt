@@ -1,0 +1,428 @@
+
+> worldworks-app@0.0.0 test
+> tsx --test scripts/*.test.ts src/engine/engine.test.ts
+
+TAP version 13
+# Subtest: job 1: Ada keeps 3× each helper — one 3-way Splitter is ★★★, a chain is ★★
+ok 1 - job 1: Ada keeps 3× each helper — one 3-way Splitter is ★★★, a chain is ★★
+  ---
+  duration_ms: 31.152938
+  type: 'test'
+  ...
+# Subtest: job 1: wrong builds fail with a one-line reason
+ok 2 - job 1: wrong builds fail with a one-line reason
+  ---
+  duration_ms: 9.341659
+  type: 'test'
+  ...
+# Subtest: job 1: a Vault keeping coins fails "every coin is paid out"
+ok 3 - job 1: a Vault keeping coins fails "every coin is paid out"
+  ---
+  duration_ms: 0.74431
+  type: 'test'
+  ...
+# Subtest: job 2: half to Ada, then Bola 3× Chi needs a chain (5 parts ★★★; 6 parts ★★)
+ok 4 - job 2: half to Ada, then Bola 3× Chi needs a chain (5 parts ★★★; 6 parts ★★)
+  ---
+  duration_ms: 0.80945
+  type: 'test'
+  ...
+# Subtest: job 2: one Splitter cannot do it; wrong builds explain why
+ok 5 - job 2: one Splitter cannot do it; wrong builds explain why
+  ---
+  duration_ms: 4.36084
+  type: 'test'
+  ...
+# Subtest: job 3: exact Portal fee is ★★★, a 5% Portal share passes with waste ★
+ok 6 - job 3: exact Portal fee is ★★★, a 5% Portal share passes with waste ★
+  ---
+  duration_ms: 1.73277
+  type: 'test'
+  ...
+# Subtest: job 3: wrong builds — Chi on NEAR, Portal underfunded, Bola wrong
+ok 7 - job 3: wrong builds — Chi on NEAR, Portal underfunded, Bola wrong
+  ---
+  duration_ms: 5.806079
+  type: 'test'
+  ...
+# Subtest: job 4: Gate on Dayo’s share is ★★★; Gate on the whole sale is ★★
+ok 8 - job 4: Gate on Dayo’s share is ★★★; Gate on the whole sale is ★★
+  ---
+  duration_ms: 2.21195
+  type: 'test'
+  ...
+# Subtest: job 4: wrong builds — paid early, refund trapped in a Vault, rider holds the Key, refund to Dayo
+ok 9 - job 4: wrong builds — paid early, refund trapped in a Vault, rider holds the Key, refund to Dayo
+  ---
+  duration_ms: 6.3131
+  type: 'test'
+  ...
+# Subtest: your shop: you + a NEAR friend + an Ethereum friend
+ok 10 - your shop: you + a NEAR friend + an Ethereum friend
+  ---
+  duration_ms: 6.567729
+  type: 'test'
+  ...
+# Subtest: sockets: chained Splitter adds child sockets; removing returns the subtree; depth is bounded
+ok 11 - sockets: chained Splitter adds child sockets; removing returns the subtree; depth is bounded
+  ---
+  duration_ms: 0.32577
+  type: 'test'
+  ...
+# Subtest: machine ids are contract-valid and the shop reads chained shares back from the machine
+ok 12 - machine ids are contract-valid and the shop reads chained shares back from the machine
+  ---
+  duration_ms: 0.71654
+  type: 'test'
+  ...
+# Subtest: contract effect bounds hold for every best build (≤4 NEAR transfers, ≤1 Portal on any path)
+ok 13 - contract effect bounds hold for every best build (≤4 NEAR transfers, ≤1 Portal on any path)
+  ---
+  duration_ms: 0.35512
+  type: 'test'
+  ...
+# Subtest: live Portal preflight blocks gas-incompatible recipients and fails closed on an unreadable estimate
+ok 14 - live Portal preflight blocks gas-incompatible recipients and fails closed on an unreadable estimate
+  ---
+  duration_ms: 18.979529
+  type: 'test'
+  ...
+# Subtest: expiry uses finalized chain height, boundary is inclusive, resolved orders never qualify; refusal sends no transaction
+ok 15 - expiry uses finalized chain height, boundary is inclusive, resolved orders never qualify; refusal sends no transaction
+  ---
+  duration_ms: 17.381609
+  type: 'test'
+  ...
+# Subtest: 1: gas preflight fails closed and admission rejects budget, cap and fee
+ok 16 - 1: gas preflight fails closed and admission rejects budget, cap and fee
+  ---
+  duration_ms: 22.001569
+  type: 'test'
+  ...
+# Subtest: 2: settlement needs matching descendant transfer and recovery proof; true false unknown
+ok 17 - 2: settlement needs matching descendant transfer and recovery proof; true false unknown
+  ---
+  duration_ms: 0.48944
+  type: 'test'
+  ...
+# Subtest: 3/5: persisted trace reconstructs ordinary sinks and resolution without claiming settlement
+ok 18 - 3/5: persisted trace reconstructs ordinary sinks and resolution without claiming settlement
+  ---
+  duration_ms: 0.822659
+  type: 'test'
+  ...
+# Subtest: 4: definitive clears intent; ambiguity bounds checks; explicit resend preserves id
+ok 19 - 4: definitive clears intent; ambiguity bounds checks; explicit resend preserves id
+  ---
+  duration_ms: 1.00581
+  type: 'test'
+  ...
+# Subtest: 4/10: post preserves safe structured errors and adds timeout
+ok 20 - 4/10: post preserves safe structured errors and adds timeout
+  ---
+  duration_ms: 0.52337
+  type: 'test'
+  ...
+# Subtest: 5: approval intent survives lost response, preventing repeat approval
+ok 21 - 5: approval intent survives lost response, preventing repeat approval
+  ---
+  duration_ms: 0.23738
+  type: 'test'
+  ...
+# Subtest: 9: unrelated shops require payer wallet, Chi jobs default, valid suggestion wins
+ok 22 - 9: unrelated shops require payer wallet, Chi jobs default, valid suggestion wins
+  ---
+  duration_ms: 0.18925
+  type: 'test'
+  ...
+# Subtest: 3: ordinary order read returns recovered effects even with no transaction hash
+ok 23 - 3: ordinary order read returns recovered effects even with no transaction hash
+  ---
+  duration_ms: 1.14178
+  type: 'test'
+  ...
+# Subtest: 1: admission includes Portal fees on approval and expiry paths
+ok 24 - 1: admission includes Portal fees on approval and expiry paths
+  ---
+  duration_ms: 0.42616
+  type: 'test'
+  ...
+# Subtest: factory plots: fresh, solved, next, locked and independent Your shop
+ok 25 - factory plots: fresh, solved, next, locked and independent Your shop
+  ---
+  duration_ms: 1.13289
+  type: 'test'
+  ...
+# Subtest: house mapping follows the saved tree, Portal recipient and refund path
+ok 26 - house mapping follows the saved tree, Portal recipient and refund path
+  ---
+  duration_ms: 0.2886
+  type: 'test'
+  ...
+# Subtest: simulation uses wasm preview, has exact amounts and never changes real totals
+ok 27 - simulation uses wasm preview, has exact amounts and never changes real totals
+  ---
+  duration_ms: 6.239659
+  type: 'test'
+  ...
+# Subtest: real totals exclude mock, unsettled, failed, unknown, duplicate and another contract receipts
+ok 28 - real totals exclude mock, unsettled, failed, unknown, duplicate and another contract receipts
+  ---
+  duration_ms: 0.46271
+  type: 'test'
+  ...
+# Subtest: Ethereum real total requires a confirmed scoped payout and never mixes NEAR/ETH
+ok 29 - Ethereum real total requires a confirmed scoped payout and never mixes NEAR/ETH
+  ---
+  duration_ms: 0.18782
+  type: 'test'
+  ...
+# Subtest: 4x accelerates simulated time only; live runs force network speed
+ok 30 - 4x accelerates simulated time only; live runs force network speed
+  ---
+  duration_ms: 0.55023
+  type: 'test'
+  ...
+# Subtest: reasoning keeps exact split amounts, including rounding and chained branches
+ok 31 - reasoning keeps exact split amounts, including rounding and chained branches
+  ---
+  duration_ms: 0.34662
+  type: 'test'
+  ...
+# Subtest: Gate, Vault, Payout, Worker and Portal explain money without currency conversion
+ok 32 - Gate, Vault, Payout, Worker and Portal explain money without currency conversion
+  ---
+  duration_ms: 0.33927
+  type: 'test'
+  ...
+# Subtest: failing requirement gives its exact checker explanation and repair target
+ok 33 - failing requirement gives its exact checker explanation and repair target
+  ---
+  duration_ms: 0.28372
+  type: 'test'
+  ...
+# Subtest: unconfigured parts do not invent a recipient or approval permission
+ok 34 - unconfigured parts do not invent a recipient or approval permission
+  ---
+  duration_ms: 0.16395
+  type: 'test'
+  ...
+# Subtest: gold flag: a plot counts as confirmed only with a settled, confirmed, non-mock receipt of its own machine
+ok 35 - gold flag: a plot counts as confirmed only with a settled, confirmed, non-mock receipt of its own machine
+  ---
+  duration_ms: 1.13628
+  type: 'test'
+  ...
+# Subtest: audio routes music/effects through master then a safety compressor
+ok 36 - audio routes music/effects through master then a safety compressor
+  ---
+  duration_ms: 1.07898
+  type: 'test'
+  ...
+# Subtest: 504 after customer acceptance resolves by orderId, with no second submission
+ok 37 - 504 after customer acceptance resolves by orderId, with no second submission
+  ---
+  duration_ms: 1.39723
+  type: 'test'
+  ...
+# Subtest: unknown receipt resolves and preserves the submitted transaction link
+ok 38 - unknown receipt resolves and preserves the submitted transaction link
+  ---
+  duration_ms: 0.27672
+  type: 'test'
+  ...
+# Subtest: signature retries are gated and bounded to two per payout per page
+ok 39 - signature retries are gated and bounded to two per payout per page
+  ---
+  duration_ms: 0.23957
+  type: 'test'
+  ...
+# Subtest: queued payout advances predecessor; five read failures stop until manual Retry
+ok 40 - queued payout advances predecessor; five read failures stop until manual Retry
+  ---
+  duration_ms: 16.164069
+  type: 'test'
+  ...
+# Subtest: balance check reserves price, order fee and gas; funding supports two standard purchases
+ok 41 - balance check reserves price, order fee and gas; funding supports two standard purchases
+  ---
+  duration_ms: 0.34873
+  type: 'test'
+  ...
+# Subtest: customer repeat checks contract order before spend or quota and returns existing external receipt
+ok 42 - customer repeat checks contract order before spend or quota and returns existing external receipt
+  ---
+  duration_ms: 46.185187
+  type: 'test'
+  ...
+# Subtest: payout status reads never submit retry_signature; post checks HTTP and content type
+ok 43 - payout status reads never submit retry_signature; post checks HTTP and content type
+  ---
+  duration_ms: 2.86822
+  type: 'test'
+  ...
+# Subtest: reload after a successful response returns the durable result without a second spend, until UI acknowledgement
+ok 44 - reload after a successful response returns the durable result without a second spend, until UI acknowledgement
+  ---
+  duration_ms: 0.23434
+  type: 'test'
+  ...
+# Subtest: recovered orders and payouts retain a single ledger row across reload recovery
+ok 45 - recovered orders and payouts retain a single ledger row across reload recovery
+  ---
+  duration_ms: 0.34072
+  type: 'test'
+  ...
+# Subtest: two independent matching receipts required; missing, altered, reverted and offline responses cannot confirm
+ok 46 - two independent matching receipts required; missing, altered, reverted and offline responses cannot confirm
+  ---
+  duration_ms: 93.830124
+  type: 'test'
+  ...
+# Subtest: session rejects malformed keys; customer rejects oversized identifiers and invalid recipients
+ok 47 - session rejects malformed keys; customer rejects oversized identifiers and invalid recipients
+  ---
+  duration_ms: 0.59984
+  type: 'test'
+  ...
+# Subtest: per-IP session rate limit rejects sixth request and method guard rejects GET
+ok 48 - per-IP session rate limit rejects sixth request and method guard rejects GET
+  ---
+  duration_ms: 0.42824
+  type: 'test'
+  ...
+# Subtest: structured receipt effects preserve names that broke trace parsing and never query post-order history
+ok 49 - structured receipt effects preserve names that broke trace parsing and never query post-order history
+  ---
+  duration_ms: 0.95568
+  type: 'test'
+  ...
+# Subtest: unsigned target has its own state after signed predecessors advance
+ok 50 - unsigned target has its own state after signed predecessors advance
+  ---
+  duration_ms: 0.39745
+  type: 'test'
+  ...
+# Subtest: trusted Vercel client identities are distinct; malformed JSON consumes no quota
+ok 51 - trusted Vercel client identities are distinct; malformed JSON consumes no quota
+  ---
+  duration_ms: 0.62382
+  type: 'test'
+  ...
+# Subtest: session validation precedes quota; repeat idempotency key neither creates nor funds twice
+ok 52 - session validation precedes quota; repeat idempotency key neither creates nor funds twice
+  ---
+  duration_ms: 25.097559
+  type: 'test'
+  ...
+# Subtest: placeOrder returns submitted tx/order when observation is absent; no history RPC or trace parsing
+ok 53 - placeOrder returns submitted tx/order when observation is absent; no history RPC or trace parsing
+  ---
+  duration_ms: 2.55823
+  type: 'test'
+  ...
+# Subtest: aggregate spend caps use account balance deltas and reject before sending
+ok 54 - aggregate spend caps use account balance deltas and reject before sending
+  ---
+  duration_ms: 0.73984
+  type: 'test'
+  ...
+# Subtest: approve surfaces Portal effects from the approve receipt; undecodable receipt is observation unknown, not pending
+ok 55 - approve surfaces Portal effects from the approve receipt; undecodable receipt is observation unknown, not pending
+  ---
+  duration_ms: 16.39716
+  type: 'test'
+  ...
+# Subtest: live signature recovers contract-derived address and fixes transaction fields
+ok 56 - live signature recovers contract-derived address and fixes transaction fields
+  ---
+  duration_ms: 31.498158
+  type: 'test'
+  ...
+# Subtest: relayer rejects altered recipient
+ok 57 - relayer rejects altered recipient
+  ---
+  duration_ms: 0.39212
+  type: 'test'
+  ...
+# Subtest: relayer rejects altered wei
+ok 58 - relayer rejects altered wei
+  ---
+  duration_ms: 0.11462
+  type: 'test'
+  ...
+# Subtest: relayer rejects altered nonce
+ok 59 - relayer rejects altered nonce
+  ---
+  duration_ms: 0.08966
+  type: 'test'
+  ...
+# Subtest: relayer rejects altered chain_id
+ok 60 - relayer rejects altered chain_id
+  ---
+  duration_ms: 0.19105
+  type: 'test'
+  ...
+# Subtest: relayer rejects altered max_fee_per_gas
+ok 61 - relayer rejects altered max_fee_per_gas
+  ---
+  duration_ms: 0.41029
+  type: 'test'
+  ...
+# Subtest: relayer rejects altered gas_limit
+ok 62 - relayer rejects altered gas_limit
+  ---
+  duration_ms: 0.11604
+  type: 'test'
+  ...
+# Subtest: relayer rejects unsigned payout
+ok 63 - relayer rejects unsigned payout
+  ---
+  duration_ms: 0.07611
+  type: 'test'
+  ...
+# Subtest: broadcast returns deterministic hash and known-transaction rebroadcast is idempotent
+ok 64 - broadcast returns deterministic hash and known-transaction rebroadcast is idempotent
+  ---
+  duration_ms: 2.05499
+  type: 'test'
+  ...
+# Subtest: unaccepted broadcast preserves RPC failure
+ok 65 - unaccepted broadcast preserves RPC failure
+  ---
+  duration_ms: 1.06837
+  type: 'test'
+  ...
+# Subtest: wrong RPC chain cannot broadcast
+ok 66 - wrong RPC chain cannot broadcast
+  ---
+  duration_ms: 0.71942
+  type: 'test'
+  ...
+# Subtest: broadcast rejects a provider returning another hash
+ok 67 - broadcast rejects a provider returning another hash
+  ---
+  duration_ms: 0.55852
+  type: 'test'
+  ...
+# Subtest: relay walks signed predecessors in nonce order and stops before an unsigned gap
+ok 68 - relay walks signed predecessors in nonce order and stops before an unsigned gap
+  ---
+  duration_ms: 0.23868
+  type: 'test'
+  ...
+# Subtest: WASM matches native vending simulation
+ok 69 - WASM matches native vending simulation
+  ---
+  duration_ms: 94.757284
+  type: 'test'
+  ...
+1..69
+# tests 69
+# suites 0
+# pass 69
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1416.091156

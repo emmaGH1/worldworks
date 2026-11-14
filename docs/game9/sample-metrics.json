@@ -1,0 +1,62 @@
+[
+  {
+    "file": "click_003.ogg",
+    "peakDb": -1.2,
+    "meanDb": -14.4,
+    "bytes": 3726
+  },
+  {
+    "file": "confirmation_002.ogg",
+    "peakDb": -3.6,
+    "meanDb": -17.6,
+    "bytes": 6547
+  },
+  {
+    "file": "drop_002.ogg",
+    "peakDb": -0.0,
+    "meanDb": -16.9,
+    "bytes": 4778
+  },
+  {
+    "file": "error_004.ogg",
+    "peakDb": -0.0,
+    "meanDb": -13.3,
+    "bytes": 4708
+  },
+  {
+    "file": "glass_001.ogg",
+    "peakDb": -1.0,
+    "meanDb": -20.3,
+    "bytes": 5184
+  },
+  {
+    "file": "maximize_003.ogg",
+    "peakDb": -1.8,
+    "meanDb": -20.9,
+    "bytes": 5792
+  },
+  {
+    "file": "open_002.ogg",
+    "peakDb": -4.4,
+    "meanDb": -18.1,
+    "bytes": 6540
+  },
+  {
+    "file": "scroll_002.ogg",
+    "peakDb": -0.9,
+    "meanDb": -22.0,
+    "bytes": 11856
+  },
+  {
+    "file": "select_002.ogg",
+    "peakDb": 0.0,
+    "meanDb": -13.1,
+    "bytes": 3990
+  },
+  {
+    "file": "tick_002.ogg",
+    "peakDb": -3.8,
+    "meanDb": -19.5,
+    "bytes": 3782
+  }
+]

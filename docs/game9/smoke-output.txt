@@ -1,0 +1,12 @@
+pc errors: 0 
+phone errors: 0 
+crash page: false | title shown: false
+after start has job card: true
+pageerrors: 0 
+load ms 130
+raf fps 23.5 eval ms 2099
+shot ms 685
+errors 0 
+job card: true | start building: true
+tray visible: true
+errors 0 

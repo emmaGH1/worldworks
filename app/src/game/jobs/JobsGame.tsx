@@ -22,6 +22,7 @@ import './jobs.css';
 import { Face } from './Face';
 import { Spotlight } from './Spotlight';
 import { sound } from './sound';
+import { useDismiss, OverlayClose } from './useDismiss';
 import { FACTORY_ENABLED } from './factory';
 import { simClock } from './simClock';
 import { partReason, personReason, requirementReason } from './reasoning';
@@ -145,6 +146,8 @@ export function JobsGame() {
   const [cardOpen, setCardOpen] = useState(() => !loadProgress().seen[loadProgress().at]);
   const [restarting,setRestarting] = useState(false);
   const [help, setHelp] = useState(false);
+  const [tipClose,setTipClose]=useState<(()=>void)|null>(null);
+  const reportTip=useCallback((close:(()=>void)|null)=>setTipClose(()=>close),[]);
   const [guide, setGuide] = useState(() => !loadProgress().intro && lsGet(`ww-guide4-${scope()}`) !== 'done');
   const [tutorialReplay, setTutorialReplay] = useState(false);
   const [reviewedFail, setReviewedFail] = useState(false);
@@ -238,7 +241,7 @@ export function JobsGame() {
     setOverview(false); setRestarting(false);
     const j = jobByN(n);
     setSt(initialState(j)); setSelected(null); setTarget(null); setEditing(null); setLevels(false);
-    setCardOpen(!prog.seen[n]);
+    setCardOpen(!prog.seen[n] && lsGet('ww-skip-intros')!=='1');
     setTest(freshTest);
     tapResolve.current = null;
     sceneRef.current?.setPortal('idle', 'sim'); sceneRef.current?.focus('all');
@@ -287,6 +290,7 @@ export function JobsGame() {
     return best;
   };
   const liveClock = !!run && !['done','error'].includes(run.phase);
+  useTick(liveClock,1000);
   simClock.fast=fast; simClock.live=liveClock; simClock.testing=test.running && !liveClock;
   const busy = test.running || (!!run && run.job === job.n && !['done', 'error'].includes(run.phase));
   const onChipDown = (e: RPE, item: TrayItem) => {
@@ -317,7 +321,7 @@ export function JobsGame() {
   const reasoningPreview=useMemo(()=>runTest(job,build,api,ctx),[job,build,ctx]);
   const sinks = useMemo(() => sinkFlows(build), [build]);
   const simLabel = (f: SinkFlow) => (f.kind === 'Payout' && f.person ? `+${fmtN(f.amount)}` : f.kind === 'Vault' ? `kept ${fmtN(f.amount)}` : undefined);
-  const reveal = (ids: string[]) => setTest(x => ({ ...x, revealed: [...new Set([...x.revealed, ...ids])] }));
+  const reveal = (ids: string[]) => {sound.play(ids.some(id=>test.result?.rows.find(r=>r.id===id)?.ok===false)?'fail':'tick');setTest(x => ({ ...x, revealed: [...new Set([...x.revealed, ...ids])] }));};
   const revealFor = (tag?: PersonId, dest?: LaneDest) => {
     const ids = job.requirements.filter(r => (tag && r.who?.includes(tag)) || (dest?.type === 'vault' && (r.id === 'all' || r.id === 'rest')) || (dest?.type === 'portal' && r.who?.includes(abroad ?? 'chi'))).map(r => r.id);
     if (ids.length) reveal(ids);
@@ -325,17 +329,19 @@ export function JobsGame() {
   const playOne = async (i: number, r: TestResult) => {
     const sc = sceneRef.current; if (!sc || !mounted.current) return;
     const s = r.sales[i];
+    const epoch=testEpoch.current;const cancelled=()=>epoch!==testEpoch.current||!mounted.current;
     setTest(x => ({ ...x, sale: i + 1, caption: `Customer ${i + 1} of 3 pays 0.10 NEAR` }));
     sound.play('belt');
     const plan = salePlan(build, sinks, simLabel);
     const land = (f: Flow) => { sound.play('coin',f.coins); sound.play('tick'); if (i === 0 || (!s.delivered && f.tag === 'customer')) revealFor(f.tag as PersonId | undefined, f.dest); };
-    await sc.playSale({ kind: 'sim', flows: plan.flows }, land);
+    await sc.playSale({ kind: 'sim', flows: plan.flows,cancelled }, land);
+    if(cancelled())return;
     if (plan.flows.some(f => f.dest.type === 'portal')) {
       const pf = sinks.find(f => f.kind === 'Portal'); const w = BigInt(build[pf!.path[pf!.path.length - 1]]?.wei ?? '0');
       setTest(x => ({ ...x, caption: 'Portal: NEAR signs an Ethereum payment… (simulated)' }));
-      sc.setPortal('swirl', 'sim'); await simClock.wait(i === 0 ? 1000 : 500);
-      sc.setPortal('beam', 'sim'); await simClock.wait(i === 0 ? 1200 : 700);
-      sc.setPortal('pop', 'sim'); await simClock.wait(1100);
+      sc.setPortal('swirl', 'sim'); await simClock.wait(i === 0 ? 1000 : 500);if(cancelled())return;
+      sound.play('beam');sc.setPortal('beam', 'sim'); await simClock.wait(i === 0 ? 1200 : 700);if(cancelled())return;
+      sc.setPortal('pop', 'sim'); await simClock.wait(1100);if(cancelled())return;
       if (abroad) sc.floater(`person:${abroad}`, `+${fmtE(w)} ETH`, 'good eth');
       sc.setPortal('idle', 'sim');
       if (i === 0) revealFor(abroad);
@@ -345,16 +351,17 @@ export function JobsGame() {
       if (s.delivered && holder) {
         setTest(x => ({ ...x, caption: 'The money waits at the Gate. Did the bread arrive?', waitTap: 'approve' }));
         await new Promise<void>(res => { tapResolve.current = res; });
-        if (!mounted.current) return;
+        if (cancelled()) return;
         setTest(x => ({ ...x, waitTap: null, caption: `${who(holder)} used the Key. The Gate opens.` }));
         await sc.release(g, releaseFlows(build, sinks, g, true, simLabel), 'sim', land);
       } else {
         setTest(x => ({ ...x, caption: holder ? 'This bread never arrived. Nobody confirms…' : 'Nobody holds the Key. Nobody can confirm…' }));
-        await simClock.wait(1300);
+        await simClock.wait(1300);if(cancelled())return;
         setTest(x => ({ ...x, caption: 'Time is up: the Gate sends the money down its “time up” exit.' }));
         await sc.release(g, releaseFlows(build, sinks, g, false, simLabel), 'sim', land);
       }
     }
+    if(cancelled())return;
     sc.customerLeave();
     if (i === 0) reveal(job.requirements.filter(q => q.id !== 'refund').map(q => q.id));
     setTest(x => ({ ...x, shown: i + 1 }));
@@ -566,7 +573,7 @@ export function JobsGame() {
   const runHere = !restarting && !(guide && tutorialReplay && job.n===1) && run && run.job === job.n ? run : null;
   const shipping = !!runHere && !['done', 'error'].includes(runHere.phase);
   const shipped = runHere?.phase === 'done';
-  const momentOn = !!runHere?.payoutId && !momentClosed && !runClosed && (runHere.phase === 'portal' || (runHere.phase === 'done' && !!payout));
+  const momentOn = lsGet('ww-skip-portal')!=='1' && !!runHere?.payoutId && !momentClosed && !runClosed && (runHere.phase === 'portal' || (runHere.phase === 'done' && !!payout));
   useEffect(() => { sceneRef.current?.focus(momentOn ? 'portal' : (!prog.intro || title) ? 'title' : test.running ? 'test' : 'all'); }, [momentOn, prog.intro, title, test.running]);
   useEffect(() => { sound.portal(momentOn && !!payout && !payout.stalled && !payout.readFailed && !['confirmed', 'signature_failed'].includes(payout.status)); if (momentOn && payout?.status === 'confirmed') sound.play('gem'); }, [momentOn, payout?.status, payout?.stalled, payout?.readFailed]);
   useEffect(() => {
@@ -663,6 +670,37 @@ export function JobsGame() {
     return 'Everything is placed. Press Test to try it with 3 customers.';
   })();
 
+  const closeCard = () => {setCardOpen(false);update(o=>({seen:{...o.seen,[job.n]:true}}));};
+  const activeOverlay = tipClose?{id:'tooltip',selector:'.j-reason-tooltip',close:tipClose}
+    :help?{id:'help',selector:'.j-help',close:()=>setHelp(false)}
+    :(!prog.intro||title)?null
+    :soundOpen?{id:'sound',selector:'[data-testid="sound-popover"]',close:()=>setSoundOpen(false)}
+    :menu?{id:'menu',selector:'[data-testid="menu-sheet"]',close:()=>setMenu(false)}
+    :ledger?{id:'ledger',selector:'.ledger',close:()=>setLedger(false)}
+    :levels?{id:'levels',selector:'.j-levels',close:()=>setLevels(false)}
+    :shopSetup?{id:'shop',selector:'[data-testid="shop-setup"]',close:()=>setShopEdit(false)}
+    :test.waitTap?{id:'test-wait',selector:'.j-tapcard,[data-testid="skip-test"]',close:()=>skipTest()}
+    :test.running?{id:'test-animation',selector:'.jobs-game',close:()=>skipTest()}
+    :editing?{id:'part',selector:'.j-sheet',close:()=>setEditing(null)}
+    :guideStep?{id:'guide',selector:'.j-guide-bubble,[data-testid="tutorial-skip"],[data-testid="'+guideStep.target+'"]',close:dismissGuide}
+    :momentOn?{id:'portal',selector:'.j-moment-top,.j-moment-bottom',close:()=>{setMomentClosed(true);setRunClosed(true);}}
+    :!overview&&cardOpen&&(!runHere||runClosed)&&!test.running?{id:'card',selector:'.j-card',close:closeCard}
+    :!overview&&runHere&&!runClosed?{id:'run',selector:'.j-ship,.j-inside',close:()=>setRunClosed(true)}
+    :hint===job.n&&!overview&&!cardOpen&&!shipping?{id:'hint',selector:'.j-new-hint',close:()=>{setHint(0);lsSet(`ww-hint4-${scope()}-${job.n}`,'done');}}
+    :!overview?{id:'editor',selector:'.jobs-game',close:()=>{dismissGuide();setOverview(true);setCardOpen(false);setRunClosed(true);setMomentClosed(true);}}
+    :null;
+  useDismiss(activeOverlay);
+  useEffect(()=>{sound.portal(shipping||momentOn);},[shipping,momentOn]);
+  useEffect(()=>{if(run?.phase)sound.play(run.phase==='done'?'gem':run.phase==='error'?'fail':'ship');},[run?.phase]);
+  const skipTest = () => {
+    const r=test.result;if(!r)return;
+    testEpoch.current++;tapResolve.current?.();tapResolve.current=null;sceneRef.current?.stopSim();sceneRef.current?.setPortal('idle','sim');
+    setTest(x=>({...x,running:false,waitTap:null,caption:'',shown:3,revealed:job.requirements.map(q=>q.id),fix:r.ok?null:fixTarget(job,build,r)}));
+    sound.play(r.ok?'pass':'fail');
+    if(r.ok)for(let i=0;i<(r.score?.stars??1);i++)setTimeout(()=>sound.play('star'),i*230);
+    if(r.ok){update(o=>({solved:{...o.solved,[job.n]:Math.max(o.solved[job.n]??0,r.score?.stars??1)},builds:{...o.builds,[job.n]:structuredClone(build)}}));if(job.n===1){dismissGuide();setOverview(true);}}
+  };
+  useEffect(()=>{const show=(e:KeyboardEvent)=>{if(e.key==='?'&&!(e.target instanceof Element&&e.target.closest('input,textarea'))){e.preventDefault();setHelp(true);}};addEventListener('keydown',show);return()=>removeEventListener('keydown',show);},[]);
   // ---------- render ----------
   const reqRows = job.requirements.filter(r => r.id !== 'friends' || friendIds.length || (result?.rows.some(x => x.id === 'friends'))).map(r => {
     const row = result?.rows.find(x => x.id === r.id);
@@ -687,7 +725,7 @@ export function JobsGame() {
   useEffect(() => {
     if ((prog.intro && !title) || help) return;
     const startOnEnter = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' && !e.repeat && !(e.target instanceof Element && e.target.closest('button,a,input'))) {
+      if (!['Tab','Shift','Control','Alt','Meta'].includes(e.key) && !e.repeat && !(e.target instanceof Element && e.target.closest('input,textarea,select'))) {
         e.preventDefault(); update({intro:true}); setTitle(false);
       }
     };
@@ -698,7 +736,7 @@ export function JobsGame() {
 
   return (
     <div className={`ww-game jobs-game ${new URLSearchParams(location.search).get('lowfx') === '1' ? 'lowfx' : ''} ${is2d ? 'is-2d' : ''} ${test.running || shipping ? 'is-running' : ''} ${momentOn ? 'is-moment' : ''} ${!prog.intro || title ? 'is-title' : ''} ${overview && prog.intro && !title ? 'is-factory' : ''}`} onClickCapture={e => { if ((e.target as HTMLElement).closest('button')) sound.play('tap'); if ((e.target as HTMLElement).closest('[data-testid="fail-why"]')) setReviewedFail(true); }} data-testid="jobs-game" data-job={job.n} data-next={next}>
-      <ReasonTooltip />
+      <ReasonTooltip onDismissChange={reportTip} />
       <canvas ref={canvasRef} className="j-canvas" aria-hidden />
       <div ref={overlayRef} className="j-overlay">
         {active.filter(s=>s.parent && s.role==='node').map(s=><div key={`belt:${s.id}`} className="j-anchor" data-anchor={`belt:${s.id}`}><button className="j-belt-hit" aria-label={`Inspect belt ${s.id}`} data-reason={`Belt to ${s.id}: ${partReason(build,s.id,ctx)}`} /></div>)}
@@ -733,7 +771,7 @@ export function JobsGame() {
       {FACTORY_ENABLED && overview && prog.intro && !title && <FactoryView progress={prog} ctx={factoryCtx} onOpen={openJob} caption={factoryCaption} fast={fast} setFast={setFast} live={liveClock} storageKey={`ww-factory6-${scope()}`} balance={run?.job===5?run.balanceAfter:undefined} />}
       {/* top bar: job chip + requirement pills */}
       <header className="j-top">
-        <button type="button" className="j-home j-mini" aria-label="Factory" data-testid="factory-home" disabled={test.running} onClick={() => { if(FACTORY_ENABLED) {dismissGuide();setOverview(true);setHelp(false);setMenu(false);setEditing(null);setCardOpen(false);setRunClosed(true);setMomentClosed(true);} else setLevels(true); }}><img className="j-brand-mark" src="/brand/mark-64.png" alt="" width="28" height="28" /><span className="j-home-brand"><img src="/brand/wordmark.webp" alt="WORLDWORKS" width="100" height="20" /><span>Factory</span></span></button>
+        <button type="button" className="j-home j-mini" aria-label="Factory" data-testid="factory-home" disabled={test.running} onClick={() => { if(FACTORY_ENABLED) {dismissGuide();setOverview(true);setHelp(false);setMenu(false);setEditing(null);setCardOpen(false);setRunClosed(true);setMomentClosed(true);} else setLevels(true); }}><img className="j-brand-mark" src="/brand/mark-64.png" alt="" width="28" height="28" /><span className="j-home-brand"><img src="/brand/wordmark.webp" alt="WORLDWORKS" width="100" height="20" /><span>{overview?'Factory':'← Back to factory'}</span></span></button>
         <button type="button" className={`j-chip${cardOpen ? '' : isNext('card')}`} onClick={() => { setRunClosed(true); setCardOpen(o => !o); }} data-testid="job-chip" aria-expanded={cardOpen}>
           <Face id={job.client} size={24} /><span><b>{job.n < 5 ? `${job.n}. ` : ''}{job.title}</b>{prog.solved[job.n] ? <em className="j-stars">{stars(prog.solved[job.n])}</em> : null}</span>
         </button>
@@ -752,7 +790,7 @@ export function JobsGame() {
       )}
 
       {levels && (
-        <div className="j-levels g-card" data-testid="level-list">
+        <div className="j-levels g-card" data-testid="level-list"><OverlayClose onClose={()=>setLevels(false)} />
           {JOBS.map(j => {
             const sh = prog.shipped[j.n];
             return (
@@ -767,23 +805,26 @@ export function JobsGame() {
         </div>
       )}
 
-      {menu && <section className="j-hud-sheet g-card" data-testid="menu-sheet" aria-label="Game menu">
+      {menu && <section className="j-hud-sheet g-card" data-testid="menu-sheet" aria-label="Game menu"><OverlayClose onClose={()=>setMenu(false)} />
         <button onClick={()=>{setLevels(true);setMenu(false);}} data-testid="levels">Jobs</button>
         <button onClick={()=>{setLedger(true);setMenu(false);}}>Real transactions</button>
-        <button onClick={()=>{setHelp(true);setMenu(false);}} data-testid="help">Help</button>
+        <button onClick={()=>{setHelp(true);setMenu(false);}} data-testid="help">? Help</button>
         <button onClick={()=>{replayHint();setMenu(false);}}>Replay tutorial</button>
         <button disabled={busy} onClick={()=>{setRestarting(true);setSt(initialState(job));setTest(freshTest);setCardOpen(true);setEditing(null);setMenu(false);setRunClosed(true);setMomentClosed(true);}}>Restart this job</button>
         <button onClick={()=>{setTitle(true);setMenu(false);}}>Title screen</button>
         <button onClick={()=>setMenu(false)}>Close</button>
       </section>}
-      {soundOpen && <section className="j-hud-sheet g-card" data-testid="sound-popover" aria-label={`Sound settings: ${audio.music?'music on':'music off'}, ${audio.effects?'effects on':'effects off'}`}>
+      {soundOpen && <section className="j-hud-sheet g-card" data-testid="sound-popover" aria-label={`Sound settings: ${audio.music?'music on':'music off'}, ${audio.effects?'effects on':'effects off'}`}><OverlayClose onClose={()=>setSoundOpen(false)} />
         <label><input type="checkbox" checked={audio.music} onChange={e=>configureAudio({music:e.target.checked})} />Music</label>
         <label><input type="checkbox" checked={audio.effects} onChange={e=>configureAudio({effects:e.target.checked})} />Effects</label>
-        <label>Volume <input aria-label="Volume" type="range" min="0" max="1" step="0.05" value={audio.volume} onChange={e=>configureAudio({volume:Number(e.target.value)})} /></label>
+        <label>Volume <input aria-label="Volume" type="range" min="0" max="1" step="0.05" value={audio.volume} onChange={e=>{configureAudio({volume:Number(e.target.value)});sound.play('coin');}} /></label>
+        <label>Music volume <input aria-label="Music volume" type="range" min="0" max="1" step="0.05" value={audio.musicVolume} onChange={e=>configureAudio({musicVolume:Number(e.target.value),music:true})} /></label>
+        <label>Effects volume <input aria-label="Effects volume" type="range" min="0" max="1" step="0.05" value={audio.effectsVolume} onChange={e=>{configureAudio({effectsVolume:Number(e.target.value),effects:true});sound.play('coin');}} /></label>
+        <button aria-pressed={!audio.music&&!audio.effects} onClick={()=>configureAudio({music:!audio.music&&!audio.effects,effects:!audio.music&&!audio.effects})}>Mute / unmute</button>
         <button onClick={()=>setSoundOpen(false)}>Close</button>
       </section>}
-      {help && <section className="j-hud-sheet j-help g-card" role="dialog" aria-label={`Help: ${job.title}`} data-testid="help-sheet">
-        <h2>Job {job.n}: {job.title}</h2>
+      {help && <section className="j-hud-sheet j-help g-card" role="dialog" aria-label={`Help: ${job.title}`} data-testid="help-sheet"><OverlayClose onClose={()=>setHelp(false)} />
+        <h2>{overview?'Your factory':`Job ${job.n}: ${job.title}`}</h2>{overview&&<p>Choose the yellow Next job button to keep building. Customers run an endless simulated preview, which you can pause. Gold Real totals need confirmed receipts.</p>}
         {job.requirements.map(r=><p key={r.id}>{r.text}</p>)}
         {[...new Set(job.tray)].map(k=><p key={k}><b>{PART_INFO[k].name}</b> — {PART_INFO[k].does}</p>)}
         <button onClick={replayHint}>Show me again</button><button onClick={()=>setHelp(false)}>Close</button>
@@ -791,7 +832,7 @@ export function JobsGame() {
 
       {/* job card (expanded on tap) */}
       {cardOpen && (!runHere || runClosed) && !test.running && (
-        <section className="j-card g-card" data-testid="job-card">
+        <section className="j-card g-card" data-testid="job-card"><OverlayClose onClose={closeCard} />
           <div className="j-card-head">
             <Face id={job.client} size={44} />
             <div><small>{job.n < 5 ? `JOB ${job.n} · ` : ''}{pname(job.client)}, {PEOPLE[job.client].role}</small><q>{job.quote}</q></div>
@@ -802,10 +843,13 @@ export function JobsGame() {
           {job.explain && <p className="j-explain">{job.explain}</p>}
           <p className="j-budget">Parts budget: {job.tray.length} in the tray{job.n < 5 ? ` · fewest parts earns ★★★` : ''}</p>
           {job.n === 5 && <button type="button" className="j-mini" onClick={() => { setFriendDraft(prog.friends); setShopEdit(true); setCardOpen(false); }} data-testid="edit-friends">Change who is in my shop</button>}
+          {prog.seen[job.n] && <button className="j-mini" data-testid="skip-intro" onClick={()=>{lsSet('ww-skip-intros','1');closeCard();}}>Skip intro · remember</button>}
           <button type="button" className={`j-btn wide${isNext('card')}`} onClick={() => { setCardOpen(false); update(o => ({ seen: { ...o.seen, [job.n]: true } })); }} data-testid="card-go">{prog.seen[job.n] ? 'Back to the machine' : 'Start building'}</button>
         </section>
       )}
 
+      {test.running && <button className="j-skip-animation j-btn" data-testid="skip-test" onClick={skipTest}>Skip animation · show test result</button>}
+      {liveClock && runClosed && <button className="j-progress-chip" data-testid="run-progress" onClick={()=>{setRunClosed(false);setMomentClosed(false);}}> {api.mode==='mock'?'MOCK':'TESTNET'} · {payout?.status??run?.phase} · {Math.max(0,Math.floor((Date.now()-(run?.started??Date.now()))/1000))} s · usually ~60 s{Date.now()-(run?.started??Date.now())>90000?' · Taking longer than usual; keep playing':''} · View status</button>}
       {/* banner: one line of what is happening / what to do */}
       {(bannerText || failed || passed) && (!runHere || runClosed || !['done','error','unknown','approve'].includes(runHere.phase)) && !momentOn && !cardOpen && !shopSetup && (
         <div className={`j-banner ${failed ? 'bad' : passed ? 'good' : ''}`} data-testid="banner" aria-live="polite">
@@ -816,7 +860,7 @@ export function JobsGame() {
       )}
 
       {test.waitTap && (
-        <div className="j-tapcard g-card">
+        <div className="j-tapcard g-card"><OverlayClose onClose={()=>skipTest()} />
           <p>Customer {test.sale}: the bread arrived.</p>
           <button type="button" className={`j-btn${isNext('tap')}`} onClick={tap} data-testid="tap-approve">✓ Delivered <small>{(() => { const g = Object.keys(build).find(k => build[k]?.kind === 'Gate'); const h = g ? build[`${g}.k`]?.person : undefined; return h ? `${who(h)} uses the Key` : ''; })()}</small></button>
         </div>
@@ -824,7 +868,7 @@ export function JobsGame() {
 
       {/* settings sheet for a placed part */}
       {editingP && !busy && (
-        <div className="j-sheet g-card" data-testid="sheet">
+        <div className="j-sheet g-card" data-testid="sheet"><OverlayClose onClose={()=>setEditing(null)} />
           <header><PartChip kind={editingP.kind} /><button type="button" className="g-x" onClick={() => setEditing(null)} aria-label="Close">×</button></header>
           {editingP.kind === 'Splitter' && (
             <div className="j-shares">
@@ -878,7 +922,7 @@ export function JobsGame() {
 
       {/* Your shop: who is in it */}
       {shopSetup && (
-        <section className="j-card g-card" data-testid="shop-setup">
+        <section className="j-card g-card" data-testid="shop-setup"><OverlayClose onClose={()=>setShopEdit(false)} />
           <div className="j-card-head"><Face id="you" size={44} /><div><small>YOUR SHOP</small><q>Every sale pays you for real on NEAR testnet. Add up to two friends.</q></div></div>
           <p className="j-what">You: {session ? <b className="mono">{shortAddr(session.accountId)}</b> : 'your free test account (made when you ship, no wallet)'}</p>
           {(['f1', 'f2'] as const).map(f => {
@@ -901,12 +945,12 @@ export function JobsGame() {
       )}
 
       {/* Portal moment: the world fills the screen while NEAR signs an Ethereum payment */}
-      {momentOn && runHere && <PortalMoment run={runHere} job={job} who={who} abroad={abroad} next={isNext('moment')} onContinue={job.n<5?continueBuilding:undefined} onClose={() => { setMomentClosed(true); setReceiptsOpen(true); }} />}
+      {momentOn && runHere && <PortalMoment run={runHere} job={job} who={who} abroad={abroad} next={isNext('moment')} onContinue={job.n<5?continueBuilding:undefined} onClose={() => { setMomentClosed(true); setReceiptsOpen(true); }} onSkip={()=>{lsSet('ww-skip-portal','1');setMomentClosed(true);setReceiptsOpen(true);}} />}
 
       {factoryOn && <div className="j-factory" data-testid="factory-counter"><b>SIMULATED factory</b> · {factory.customers} customers{Object.entries(factory.totals).map(([p,n])=><span key={p}>{who(p as PersonId)} {fmtN(n!)} NEAR</span>)}{Object.entries(factory.ethTotals).map(([p,n])=><span key={p}>{who(p as PersonId)} {fmtE(n!)} ETH</span>)}</div>}
-      {hint===job.n && !cardOpen && !momentOn && !shipping && !shopEdit && <aside className="j-new-hint" data-testid="job-hint">{job.n===2?'Chain Splitters: a belt can feed another Splitter.':job.n===3?'Portal: send from NEAR to someone on Ethereum.':job.n===4?'Gate: delivery opens one exit; expiry opens the refund.':'Your own shop pays you. Add friends before building.'}<button type="button" onClick={()=>{setHint(0);lsSet(`ww-hint4-${scope()}-${job.n}`,'done');}}>Got it</button></aside>}
+      {hint===job.n && !cardOpen && !momentOn && !shipping && !shopEdit && <aside className="j-new-hint" data-testid="job-hint"><OverlayClose onClose={()=>{setHint(0);lsSet(`ww-hint4-${scope()}-${job.n}`,'done');}} />{job.n===2?'Chain Splitters: a belt can feed another Splitter.':job.n===3?'Portal: send from NEAR to someone on Ethereum.':job.n===4?'Gate: delivery opens one exit; expiry opens the refund.':'Your own shop pays you. Add friends before building.'}<button type="button" onClick={()=>{setHint(0);lsSet(`ww-hint4-${scope()}-${job.n}`,'done');}}>Got it</button></aside>}
       {run && run.job!==job.n && (run.phase!=='done' || run.backgrounded) && <button type="button" className={`j-background-run ${run.phase==='done'?'confirmed':''}`} data-testid="background-run" onClick={()=>{step({backgrounded:false});openJob(run.job);}}>Job {run.job} · {run.phase==='done'?(payout?.status==='confirmed'?'Ethereum confirmed — receipts':'Order complete — check receipts'):payout?.readFailed?'Status unavailable — check':payout?.status??run.phase}</button>}
-      {shipping && !momentOn && !runClosed && runHere && !['approve','error','unknown'].includes(runHere.phase) && <section className="j-inside g-card" data-testid="inside-machine"><h2>Inside the machine</h2><InsideMachine run={runHere} />{job.n<5 && <button type="button" className="j-mini" data-testid="continue-building" onClick={continueBuilding}>Start the next job while this finishes</button>}</section>}
+      {shipping && !momentOn && !runClosed && runHere && !['approve','error','unknown'].includes(runHere.phase) && <section className="j-inside g-card" data-testid="inside-machine"><OverlayClose onClose={()=>setRunClosed(true)} /><h2>Inside the machine</h2><button className="j-mini" data-testid="skip-wait" onClick={()=>{setRunClosed(true);setMomentClosed(true);setOverview(true);}}>Keep playing · track in background</button><p>Usually ~60 s. Network delays can take longer. Close this view to keep playing; tracking continues.</p><InsideMachine run={runHere} />{job.n<5 && <button type="button" className="j-mini" data-testid="continue-building" onClick={continueBuilding}>Start the next job while this finishes</button>}</section>}
       {/* ship panel */}
       {runHere && !runClosed && !momentOn && ['done','error','unknown','approve'].includes(runHere.phase) && (
         <section className="j-ship g-card" data-testid="ship-panel" data-phase={runHere.phase}>
@@ -960,12 +1004,12 @@ export function JobsGame() {
         <div className="j-actions">
           <button className="j-mini j-fast" data-testid="fast-forward" aria-pressed={fast && !liveClock} disabled={liveClock} title={liveClock?"Real transactions run at network speed":"Speeds simulated time only"} onClick={()=>setFast(f=>!f)}>⏩ 4×{fast && !liveClock?" · SIMULATED":""}</button>
           {!shipped && !passed && (
-            <button type="button" className={`j-btn test${isNext('test')}`} disabled={busy || todos.length > 0} onClick={startTest} data-testid="test">
+            <button type="button" className={`j-btn test${isNext('test')}`} disabled={busy || todos.length > 0} title={busy?'A test or order is running':todos.length?'Place and configure all parts first':'Run a simulated test'} onClick={startTest} data-testid="test">
               Test <small>{test.running ? `customer ${test.sale} of 3 · simulated` : `3 customers · simulated · ${parts} part${parts === 1 ? '' : 's'}`}</small>
             </button>
           )}
           {passed && !shipped && (
-            <button type="button" className={`j-btn ship${isNext('ship')}`} disabled={busy} onClick={ship} data-testid="ship">
+            <button type="button" className={`j-btn ship${isNext('ship')}`} disabled={busy} title={busy?'A test or order is running':'Run one order'} onClick={ship} data-testid="ship">
               Ship it for real <small>{api.mode === 'mock' ? 'MOCK: no chain, fake hashes' : 'Puts it on NEAR testnet and runs 1 real sale. ~1 min. No wallet.'}</small>
             </button>
           )}
@@ -981,7 +1025,7 @@ export function JobsGame() {
       {drag?.moved && <div className="j-ghost" style={{ transform: `translate(${drag.x}px, ${drag.y}px)` }}><PartChip kind={drag.kind} small /></div>}
 
       {(!prog.intro || title) && (
-        <div className="j-intro" role="dialog" aria-modal aria-label="Welcome to WORLDWORKS" data-testid="intro">
+        <div className="j-intro" role="dialog" aria-modal aria-label="Welcome to WORLDWORKS" data-testid="intro" onClick={e=>{if(!(e.target as HTMLElement).closest('button,a,input')){update({intro:true});setTitle(false);}}}>
           <picture className="j-splash-art" aria-hidden="true">
             <source media="(max-width: 640px)" srcSet="/brand/keyart-mobile.webp" />
             <img src="/brand/keyart.webp" alt="" width="1920" height="1080" />
@@ -1030,7 +1074,7 @@ function shipCaption(r: Run, job: Job, who: (p: PersonId) => string, status?: st
   }
 }
 
-function PortalMoment({ run, job, who, abroad, next, onClose, onContinue }: { run: Run; job: Job; who: (p: PersonId) => string; abroad?: PersonId; next: string; onClose: () => void; onContinue?: () => void }) {
+function PortalMoment({ run, job, who, abroad, next, onClose, onContinue, onSkip }: { run: Run; job: Job; who: (p: PersonId) => string; abroad?: PersonId; next: string; onClose: () => void; onContinue?: () => void; onSkip:()=>void }) {
   const p = useApp(s => (run.payoutId ? s.payouts[run.payoutId] : undefined));
   const liveNow = !!p && p.status !== 'confirmed' && p.status !== 'signature_failed';
   useTick(liveNow, 500);
@@ -1049,12 +1093,12 @@ function PortalMoment({ run, job, who, abroad, next, onClose, onContinue }: { ru
   const t = s === 'awaiting_signature' || s === 'waiting_for_signature' ? secs(p?.startedAt) : s === 'broadcast' ? secs(p?.stepAt.broadcast) : null;
   const rpcs = p?.confirmations?.length ?? 0;
   return (
-    <div className={`j-moment st-${s}`} data-testid="portal-moment" data-status={s}>
-      <div className="j-moment-top">
+    <div className={`j-moment st-${s}`} data-testid="portal-moment" data-status={s} onClick={e=>{if(!(e.target as HTMLElement).closest('button,a,details'))onSkip();}}>
+      <div className="j-moment-top"><OverlayClose onClose={onClose} /><button className="j-mini" data-testid="skip-portal" onClick={onSkip}>Skip animation · keep tracking</button>
         <small>{api.mode === 'mock' ? 'MOCK · timings imitate testnet, nothing is on chain' : 'LIVE · NEAR testnet → Sepolia'}</small>
         {s === 'confirmed' && <strong className="j-confirmed">✓ Confirmed{api.mode === 'mock' ? ' · MOCK' : ''}</strong>}
         <h2 data-testid="moment-head">{head}{t !== null && <span className="secs"> · {t}s</span>}</h2>
-        <p>{owner} never touched Ethereum. {owner === 'You' ? 'Your' : 'Her'} NEAR machine {s === 'confirmed' ? 'paid' : s === 'signature_failed' ? 'could not pay' : 'will pay'} {name} there by itself.</p>
+        <p>Usually ~60 s; network delays can take longer. You can keep playing.</p><p>{owner} never touched Ethereum. {owner === 'You' ? 'Your' : 'Her'} NEAR machine {s === 'confirmed' ? 'paid' : s === 'signature_failed' ? 'could not pay' : 'will pay'} {name} there by itself.</p>
       </div>
       <div className="j-moment-bottom">
         {(p?.relayError || p?.stalled || p?.readFailed) && <div className="j-moment-error" role="status">{p?.relayError || 'Payout tracking is stalled. Confirmation is not known.'}<button type="button" className="j-mini" onClick={() => retryRelay(run.payoutId!)} data-testid="moment-retry">Retry payout status</button></div>}

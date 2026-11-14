@@ -17,6 +17,7 @@ import './jobs/jobs.css';
 import { Face } from './jobs/Face';
 import { checkPortalGas, portalAdmission, checkoutRecipient, checkoutPortalRoutes } from './jobs/portalPreflight';
 import { approvalIntent, submitApproval, finishApproval } from '../lib/approvals';
+import { sound } from './jobs/sound';
 import { PEOPLE, CHI_EVM, isJobMachine, shopPeople } from './jobs/jobs';
 
 type Loaded = { doc: MachineDoc; owner: string; vaults: Record<string, string> };
@@ -24,6 +25,7 @@ type Receipt = { result: OrderResult; at: number; recipient?: string; payoutId?:
 const DEMO_RECIPIENT = CHI_EVM;
 
 export function AppPage({ machineId }: { machineId: string }) {
+  useEffect(()=>{const unlock=()=>sound.unlock();const events=['pointerup','touchend','click','keydown'] as const;events.forEach(e=>window.addEventListener(e,unlock));return()=>{events.forEach(e=>window.removeEventListener(e,unlock));sound.stop();};},[]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const tagsRef = useRef<HTMLDivElement>(null);
   const [world, setWorld] = useState<World | null>(null);
@@ -83,7 +85,7 @@ export function AppPage({ machineId }: { machineId: string }) {
 
   const pay = async (resend = false) => {
     if (!machine || paying || (!recipientOk && !pendingOrder()) || !world) return;
-    setPaying(true); setErr(null);
+    sound.play('ship');setPaying(true); setErr(null);
     world.callRealCustomer(liveKind() === 'mock' ? 'you · MOCK' : 'you · REAL');
     try {
       const s = await ensureSession();
@@ -108,7 +110,7 @@ export function AppPage({ machineId }: { machineId: string }) {
       let payoutId: string | undefined;
       if (result.observation === 'unknown') world.realCustomerLeave();
       else {
-        world.payReal(flowFromEffects(result.orderId, liveKind(), result.effects, total, result.pending));
+        sound.play('coin');world.payReal(flowFromEffects(result.orderId, liveKind(), result.effects, total, result.pending));
         for (const e of result.effects) {
           if (e.kind !== 'external') continue;
           payoutId = e.payoutId;
@@ -189,12 +191,12 @@ export function AppPage({ machineId }: { machineId: string }) {
   }));
 
   return (
-    <div className="ww-game ww-app" data-testid="app-page">
+    <div className="ww-game ww-app" data-testid="app-page" onClickCapture={e=>{if((e.target as HTMLElement).closest('button,summary'))sound.play('tap');}}>
       <canvas ref={canvasRef} className="world" aria-label={`3D view of ${displayName(machineId)}`} />
       <div ref={tagsRef} className="tags" aria-hidden />
       <div className="vignette" />
       <header className="g-app-top">
-        <button type="button" className="g-app-brand" onClick={() => navigate('/')}><img src="/brand/mark-64.png" alt="" width="32" height="32" /><span>Built in <b>WORLDWORKS</b></span></button>
+        <button type="button" className="g-app-brand" onClick={() => navigate('/')}><img src="/brand/mark-64.png" alt="" width="32" height="32" /><span>← Back to game · <b>WORLDWORKS</b></span></button>
         <span className="sp" />
         <ModePills />
       </header>
@@ -234,8 +236,9 @@ export function AppPage({ machineId }: { machineId: string }) {
               </label>
             )}
             <button type="button" className="btn pay" onClick={()=>void pay()} disabled={paying || !recipientOk || !limits} data-testid="app-pay">
-              {paying ? 'Paying on NEAR testnet…' : `Pay ${fee !== null ? near(total + fee) : near(total)} NEAR`}
+              {paying ? (api.mode==='mock'?'Paying · MOCK…':'Paying on NEAR testnet…') : `Pay ${fee !== null ? near(total + fee) : near(total)} NEAR`}
             </button>
+            {paying&&<p role="status">Usually ~60 s. Network delays can take longer. Your pending order is saved; you can return to the game using Back above.</p>}
             {(limitsError || sessionError || !contract) && <p role="status">{limitsError ?? sessionError ?? 'Contract details unavailable.'} <button className="g-mini" onClick={retryReads}>Retry</button></p>}
             {pendingOrder()?.machineId===machineId && !paying && <p><button className="g-mini" onClick={()=>void pay()}>Check again</button> <button className="g-mini" onClick={()=>void pay(true)}>Send again with the same order id</button></p>}
             <p className="g-payer g-muted">{session ? <>Paying from <b className="mono">{shortAddr(session.accountId)}</b>, a sponsored testnet account made for this browser. No wallet, no real money.</> : sessionError ? <>Could not create a testnet account: {sessionError}</> : 'A sponsored testnet account is created on your first payment. No wallet.'}</p>
