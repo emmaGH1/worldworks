@@ -125,7 +125,7 @@
 .jobs-game .j-bottom > * { pointer-events: auto; }
 .jobs-game .j-tray { flex: 1; display: flex; gap: 7px; overflow-x: auto; padding: 6px; background: rgba(255,252,245,.9); border-radius: 16px; box-shadow: 0 3px 0 rgba(0,0,0,.14); min-height: 54px; align-items: center; scrollbar-width: none; }
 .jobs-game .j-tray-empty { color: var(--ink-2); font-size: 13px; padding: 0 8px; }
-.jobs-game .j-trayitem { border: 0; flex: none; background: #fff; border-radius: 12px; padding: 5px 10px 5px 5px; box-shadow: 0 3px 0 rgba(0,0,0,.14); touch-action: none; }
+.jobs-game .j-trayitem { border: 0; flex: none; background: #fff; border-radius: 12px; padding: 5px 10px 5px 5px; box-shadow: 0 3px 0 rgba(0,0,0,.14); touch-action: pan-x; }
 .jobs-game .j-trayitem.sel, .jobs-game .j-trayitem.fits { background: #2ec4b6; } .jobs-game .j-trayitem.sel small, .jobs-game .j-trayitem.fits small { color: #06302b; }
 .jobs-game .j-trayitem:disabled { opacity: .45; }
 .jobs-game .j-actions { display: flex; flex-direction: column; align-items: stretch; gap: 4px; }

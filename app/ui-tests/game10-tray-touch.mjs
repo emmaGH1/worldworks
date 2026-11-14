@@ -1,0 +1,24 @@
+import { chromium, devices } from '/opt/ww-shot/node_modules/playwright-core/index.mjs';
+const b = await chromium.launch({ executablePath: '/data/home/.cache/ms-playwright/chromium-1243/chrome-linux64/chrome', headless: true });
+const ctx = await b.newContext({ ...devices['Pixel 7'], viewport:{width:390,height:844} });
+const page = await ctx.newPage(); const T=id=>page.getByTestId(id);
+await page.goto('process.env.BASE??'http://localhost:4311'/?webgl=0&step=1'); await T('intro').waitFor(); await page.keyboard.press('x');
+await T('tutorial-skip').waitFor(); await T('tutorial-skip').click(); await T('card-go').click();
+const tray = page.locator('.j-tray').first(); await tray.waitFor();
+const ta = await page.evaluate(()=>{const x=document.elementFromPoint(300, document.querySelector('.j-tray').getBoundingClientRect().y+25);const out=[];for(let e=x;e;e=e.parentElement)out.push(e.tagName+'.'+(e.className||'').toString().slice(0,30)+':'+getComputedStyle(e).touchAction);return out;}); console.log(ta);
+const info = await tray.evaluate(e=>({sw:e.scrollWidth,cw:e.clientWidth}));
+const box = await tray.boundingBox();
+const cdp = await ctx.newCDPSession(page);
+const y=box.y+box.height/2;let x=box.x+box.width*0.8;await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y}]});for(let i=0;i<20;i++){x-=12;await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x,y}]});await page.waitForTimeout(16);}await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+await page.waitForTimeout(500);
+console.log(info, 'scrollLeft after swipe', await tray.evaluate(e=>e.scrollLeft));
+await tray.evaluate(e=>e.scrollLeft=0);await page.waitForTimeout(300);
+const before=await page.locator('.j-bottom').innerText();
+const item=page.locator('.j-trayitem').first();const ib=await item.boundingBox();
+const slot=page.locator('[data-testid^="socket-"]').first();const sb=await slot.boundingBox().catch(()=>null);
+let X=ib.x+ib.width/2,Y=ib.y+ib.height/2;const tx=sb?sb.x+sb.width/2:X,ty=sb?sb.y+sb.height/2:Y-400;
+await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:X,y:Y}]});
+for(let i=1;i<=20;i++){await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:X+(tx-X)*i/20,y:Y+(ty-Y)*i/20}]});await page.waitForTimeout(16);}
+await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await page.waitForTimeout(500);
+console.log('slot found',!!sb,'| before:',before.replace(/\s+/g,' ').slice(-60),'| after:',(await page.locator('.j-bottom').innerText()).replace(/\s+/g,' ').slice(-60));
+await b.close();
