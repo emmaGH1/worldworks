@@ -109,7 +109,7 @@ This means “included on Sepolia, seen by two RPCs”, not Ethereum finality or
 ```yaml
 facts:
   product: WORLDWORKS
-  reviewed_head: "da3915ef0cc6e6262c10c889b640fb2378877f34"  # source reviewed; this docs pass is uncommitted
+  reviewed_head: "da3915ef0cc6e6262c10c889b640fb2378877f34"  # app source reviewed at this commit; later commits are docs only
   app_tests: 69  # npm test: 68 script tests + WASM/native parity
   network: NEAR testnet
   payout_network: Ethereum Sepolia
